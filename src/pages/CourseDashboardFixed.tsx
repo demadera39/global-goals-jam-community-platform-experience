@@ -1,0 +1,530 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import { PlayCircle, CheckCircle, Lock, Clock, BookOpen, ChevronRight } from 'lucide-react';
+import { blink, safeDbCall } from '@/lib/blink';
+import { toast } from 'sonner';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import AudioPlayer from '@/components/ui/AudioPlayer';
+import Module1Content from '@/components/Module1Content';
+import Module2Content from '@/components/Module2Content';
+import Module3Content from '@/components/Module3Content';
+import Module4Content from '@/components/Module4Content';
+import Module5Content from '@/components/Module5Content';
+import Module6Content from '@/components/Module6Content';
+import Module7Content from '@/components/Module7Content';
+import Module8Content from '@/components/Module8Content';
+import { ModuleExercisesEnhanced } from '@/components/ModuleExercisesEnhanced';
+import ModuleResources from '@/components/ModuleResources';
+import { courseResources, courseModules as staticModules } from '@/data/courseContent';
+
+interface Module {
+  id: string;
+  moduleNumber: string;
+  title: string;
+  description: string;
+  learningOutcomes: string;
+  activities: string;
+  videoUrl: string;
+  contentHtml: string;
+  templates: string;
+  exercises: string;
+  checkOfLearning: string;
+  durationMinutes: string;
+}
+
+interface ModuleProgress {
+  moduleId: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  quiz_score?: string | null;
+  quiz_answers?: string | null;
+  videoWatchedPercent: string;
+  exercisesCompleted: string;
+  notes: string;
+}
+
+export default function CourseDashboard() {
+  const navigate = useNavigate();
+  const normalizeArray = (v: any) => {
+    if (!v) return [];
+    if (Array.isArray(v)) return v;
+    try { return JSON.parse(v || '[]'); } catch { return []; }
+  };
+
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [enrollment, setEnrollment] = useState<any>(null);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [progress, setProgress] = useState<Record<string, ModuleProgress>>({});
+  const [currentModule, setCurrentModule] = useState<Module | null>(null);
+  const [checkAnswer, setCheckAnswer] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const loadCourseData = async (userId: string) => {
+      try {
+        const enrollments = await safeDbCall(() => blink.db.courseEnrollments.list({
+          where: { userId: userId },
+          limit: 1
+        }));
+        
+        if (enrollments.length === 0 || enrollments[0].status !== 'active') {
+          navigate('/course/enroll');
+          return;
+        }
+        
+        setEnrollment(enrollments[0]);
+        
+        const moduleList = await safeDbCall(() => blink.db.courseModules.list({
+          orderBy: { moduleNumber: 'asc' }
+        }));
+
+        // Deduplicate by moduleNumber and keep only live modules 1–8
+        const uniqueSorted = Array.from(
+          new Map(moduleList.map((m: any) => [String(m.moduleNumber), m])).values()
+        )
+          .filter((m: any) => {
+            const n = parseInt(String(m.moduleNumber));
+            return !Number.isNaN(n) && n >= 1 && n <= 8;
+          })
+          .sort((a: any, b: any) => parseInt(String(a.moduleNumber)) - parseInt(String(b.moduleNumber)));
+
+        setModules(uniqueSorted);
+        
+        const progressList = await safeDbCall(() => blink.db.courseProgress.list({
+          where: { userId: userId, enrollmentId: enrollments[0].id }
+        }));
+        
+        const progressMap: Record<string, ModuleProgress> = {};
+        progressList.forEach((p: any) => {
+          progressMap[p.moduleId] = {
+            moduleId: p.moduleId,
+            started_at: p.startedAt,
+            completed_at: p.completedAt,
+            quiz_score: p.quizScore,
+            quiz_answers: p.quizAnswers,
+            videoWatchedPercent: p.videoWatchedPercent || '0',
+            exercisesCompleted: p.exercisesCompleted || '[]',
+            notes: p.notes || ''
+          };
+        });
+        setProgress(progressMap);
+        
+        const currentModuleNum = parseInt(enrollments[0].currentModule || '1');
+        const current = uniqueSorted.find((m: any) => parseInt(String(m.moduleNumber)) === currentModuleNum);
+        if (current) {
+          setCurrentModule(current as any);
+        } else if (uniqueSorted.length > 0) {
+          setCurrentModule(uniqueSorted[0] as any);
+        }
+      } catch (error) {
+        console.error('Error loading course data:', error);
+        toast.error('Failed to load course data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const unsubscribe = blink.auth.onAuthStateChanged((state) => {
+      setUser(state.user);
+      setLoading(state.isLoading);
+      
+      if (state.user) {
+        loadCourseData(state.user.id);
+      }
+    });
+    return unsubscribe;
+  }, [navigate]);
+
+  const upsertProgress = async (id: string, data: any) => {
+    const existing = await safeDbCall(() => blink.db.courseProgress.list({ where: { id }, limit: 1 }));
+    if (existing.length > 0) {
+      await safeDbCall(() => blink.db.courseProgress.update(id, data));
+    } else {
+      await safeDbCall(() => blink.db.courseProgress.create({ id, ...data }));
+    }
+  };
+
+  const startModule = async (module: Module) => {
+    if (!enrollment || !user) return;
+    
+    const moduleNum = parseInt(module.moduleNumber);
+    const currentNum = parseInt(enrollment.currentModule || '0');
+    
+    if (moduleNum > currentNum + 1) {
+      toast.error('Complete previous modules first');
+      return;
+    }
+    
+    setCurrentModule(module);
+    
+    const progressId = `prog_${enrollment.id}_${module.id}`;
+    
+    try {
+      const existingProgress = progress[module.id];
+      await upsertProgress(progressId, {
+        userId: user.id,
+        enrollmentId: enrollment.id,
+        moduleId: module.id,
+        startedAt: (existingProgress as any)?.started_at || new Date().toISOString(),
+        completedAt: (existingProgress as any)?.completed_at || null,
+        quizScore: (existingProgress as any)?.quiz_score || null,
+        quizAnswers: (existingProgress as any)?.quiz_answers || null
+      });
+    } catch (error) {
+      console.error('Error updating progress record:', error);
+    }
+    
+    if (moduleNum > currentNum) {
+      await safeDbCall(() => blink.db.courseEnrollments.update(enrollment.id, {
+        currentModule: module.moduleNumber
+      }));
+      setEnrollment({ ...enrollment, currentModule: module.moduleNumber });
+    }
+  };
+
+  const submitCheckOfLearning = async () => {
+    if (!currentModule || !enrollment || !user || !checkAnswer.trim()) {
+      toast.error('Please provide an answer');
+      return;
+    }
+    
+    setSubmitting(true);
+    try {
+      const progressId = `prog_${enrollment.id}_${currentModule.id}`;
+      
+      await upsertProgress(progressId, {
+        userId: user.id,
+        enrollmentId: enrollment.id,
+        moduleId: currentModule.id,
+        startedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+        quizAnswers: checkAnswer,
+        videoWatchedPercent: '100',
+        exercisesCompleted: JSON.stringify(['check_completed'])
+      });
+      
+      const completedModules = JSON.parse(enrollment.completedModules || '[]');
+      if (!completedModules.includes(currentModule.moduleNumber)) {
+        completedModules.push(currentModule.moduleNumber);
+        await safeDbCall(() => blink.db.courseEnrollments.update(enrollment.id, {
+          completedModules: JSON.stringify(completedModules)
+        }));
+        setEnrollment({ ...enrollment, completedModules: JSON.stringify(completedModules) });
+      }
+      
+      setProgress({
+        ...progress,
+        [currentModule.id]: {
+          ...progress[currentModule.id],
+          completed_at: new Date().toISOString(),
+          exercisesCompleted: JSON.stringify(['check_completed'])
+        }
+      });
+      
+      toast.success('Module completed! Great work!');
+      setCheckAnswer('');
+      
+      if (completedModules.length === modules.length) {
+        toast.success('Congratulations! You\'ve completed the entire course!');
+        setTimeout(() => {
+          navigate('/course/certificate');
+        }, 2000);
+      } else {
+        const nextModule = modules.find(m => parseInt(m.moduleNumber) === parseInt(currentModule.moduleNumber) + 1);
+        if (nextModule) {
+          setCurrentModule(nextModule);
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting check:', error);
+      toast.error('Failed to submit answer');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const calculateOverallProgress = () => {
+    if (!enrollment || modules.length === 0) return 0;
+    const completed = JSON.parse(enrollment.completedModules || '[]').length;
+    return (completed / modules.length) * 100;
+  };
+
+  const isModuleLocked = (moduleNum: string) => {
+    if (!enrollment) return true;
+    const currentNum = parseInt(enrollment.currentModule || '0');
+    return parseInt(moduleNum) > currentNum + 1;
+  };
+
+  const isModuleCompleted = (moduleId: string) => {
+    return progress[moduleId]?.completed_at !== null && progress[moduleId]?.completed_at !== undefined;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading course...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!enrollment || !currentModule) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>No Active Enrollment</CardTitle>
+            <CardDescription>Please enroll in the course to access the dashboard</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate('/course/enroll')} className="w-full">
+              Enroll Now
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Compute media URL with fallback to static content sheet
+  const dbUrl = currentModule.videoUrl || '';
+  const fallbackFromStatic = staticModules.find((m: any) => m.id === currentModule.id || String(m.moduleNumber) === String(currentModule.moduleNumber));
+  const fallbackUrl = fallbackFromStatic?.videoUrl || '';
+  const overviewMediaUrl = dbUrl || fallbackUrl;
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">GGJ Host Certification Course</h1>
+              <p className="text-muted-foreground">Welcome back, {user?.displayName || user?.email}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Overall Progress</p>
+              <div className="flex items-center gap-2">
+                <Progress value={calculateOverallProgress()} className="w-32" />
+                <span className="text-sm font-medium">{Math.round(calculateOverallProgress())}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Module List */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Course Modules</CardTitle>
+                <CardDescription>Your learning journey</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[600px]">
+                  <div className="p-4 space-y-2">
+                    {Array.from(new Map(modules.map((m) => [String(m.moduleNumber), m])).values()).map((module) => {
+                      const locked = isModuleLocked(module.moduleNumber);
+                      const completed = isModuleCompleted(module.id);
+                      const current = currentModule?.id === module.id;
+                      
+                      return (
+                        <button
+                          key={module.id}
+                          onClick={() => !locked && startModule(module)}
+                          disabled={locked}
+                          className={`w-full text-left p-4 rounded-lg border transition-colors ${
+                            current ? 'bg-primary/10 border-primary' : 
+                            completed ? 'bg-green-50 border-green-200' :
+                            locked ? 'opacity-50 cursor-not-allowed' : 
+                            'hover:bg-accent'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="mt-1">
+                              {completed ? (
+                                <CheckCircle className="h-5 w-5 text-green-500" />
+                              ) : locked ? (
+                                <Lock className="h-5 w-5 text-muted-foreground" />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full border-2 border-primary" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-muted-foreground">Module {module.moduleNumber}</span>
+                                {current && <Badge variant="default" className="text-xs">Current</Badge>}
+                              </div>
+                              <h4 className="font-medium mt-1">{module.title}</h4>
+                              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {module.durationMinutes} min
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Module Content */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Module {currentModule.moduleNumber}: {currentModule.title}</CardTitle>
+                    <CardDescription>{currentModule.description}</CardDescription>
+                  </div>
+                  <Badge variant="outline">
+                    <Clock className="mr-1 h-3 w-3" />
+                    {currentModule.durationMinutes} min
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="overview" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="content">Content</TabsTrigger>
+                    <TabsTrigger value="exercises">Exercises</TabsTrigger>
+                    <TabsTrigger value="resources">Resources</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="overview" className="space-y-6">
+                    <div>
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        Learning Outcomes
+                      </h3>
+                      <ul className="space-y-2">
+                        {normalizeArray(currentModule.learningOutcomes).map((outcome: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <ChevronRight className="h-4 w-4 text-primary mt-0.5" />
+                            <span className="text-sm">{outcome}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    {(() => {
+                      const url = overviewMediaUrl;
+                      const isAudio = /\.(mp3|m4a|wav|ogg)(\?|$)/i.test(url);
+                      const isYouTube = /youtube\.com|youtu\.be/i.test(url);
+                      const allowPlaceholder = !['5','6','7','8'].includes(currentModule.moduleNumber);
+
+                      if (isAudio) {
+                        return (
+                          <Card className="bg-primary/5 border-primary/20">
+                            <CardContent className="pt-6">
+                              <div className="mb-3">
+                                <p className="font-medium">Audio Lesson</p>
+                                <p className="text-sm text-muted-foreground">Listen to this module's audio overview</p>
+                              </div>
+                              <AudioPlayer src={url} title={`Module ${currentModule.moduleNumber} — ${currentModule.title}`} />
+                            </CardContent>
+                          </Card>
+                        );
+                      }
+
+                      if (isYouTube) {
+                        const embedUrl = url.includes('watch?v=') ? url.replace('watch?v=', 'embed/') : url;
+                        return (
+                          <Card className="bg-primary/5 border-primary/20">
+                            <CardContent className="pt-6">
+                              <div className="mb-3">
+                                <p className="font-medium">Video Lesson</p>
+                                <p className="text-sm text-muted-foreground">Watch the module video</p>
+                              </div>
+                              <AspectRatio ratio={16/9}>
+                                <iframe
+                                  src={embedUrl}
+                                  className="w-full h-full"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  title={`Module ${currentModule.moduleNumber} video`}
+                                />
+                              </AspectRatio>
+                            </CardContent>
+                          </Card>
+                        );
+                      }
+
+                      if (!isAudio && !isYouTube && allowPlaceholder) {
+                        return (
+                          <Card className="bg-primary/5 border-primary/20">
+                            <CardContent className="pt-6">
+                              <div className="flex items-center gap-3">
+                                <PlayCircle className="h-8 w-8 text-primary" />
+                                <div>
+                                  <p className="font-medium">Video Lesson</p>
+                                  <p className="text-sm text-muted-foreground">Watch the module video to get started</p>
+                                </div>
+                              </div>
+                              <Button className="w-full mt-4" disabled>
+                                <PlayCircle className="mr-2 h-4 w-4" />
+                                Video Coming Soon
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        );
+                      }
+
+                      return null;
+                    })()}
+                  </TabsContent>
+                  
+                  <TabsContent value="content" className="space-y-4">
+                    <ScrollArea className="h-[500px] w-full rounded-md border p-4">
+                      {currentModule.moduleNumber === '1' && <Module1Content />}
+                      {currentModule.moduleNumber === '2' && <Module2Content />}
+                      {currentModule.moduleNumber === '3' && <Module3Content />}
+                      {currentModule.moduleNumber === '4' && <Module4Content />}
+                      {currentModule.moduleNumber === '5' && <Module5Content />}
+                      {currentModule.moduleNumber === '6' && <Module6Content />}
+                      {currentModule.moduleNumber === '7' && <Module7Content />}
+                      {currentModule.moduleNumber === '8' && <Module8Content />}
+                      {!['1', '2', '3', '4', '5', '6', '7', '8'].includes(currentModule.moduleNumber) && (
+                        <div 
+                          className="prose max-w-none text-sm"
+                          dangerouslySetInnerHTML={{ __html: currentModule.contentHtml || '<p>Content loading...</p>' }}
+                        />
+                      )}
+                    </ScrollArea>
+                  </TabsContent>
+                  
+                  <TabsContent value="exercises" className="space-y-4">
+                    <ModuleExercisesEnhanced moduleNumber={parseInt(currentModule.moduleNumber)} />
+                  </TabsContent>
+                  
+                  <TabsContent value="resources" className="space-y-6">
+                    <ModuleResources 
+                      moduleNumber={parseInt(currentModule.moduleNumber)} 
+                      resources={(courseResources as any)[parseInt(currentModule.moduleNumber)] || []} 
+                    />
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
