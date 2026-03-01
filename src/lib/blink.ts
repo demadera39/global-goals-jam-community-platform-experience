@@ -1,10 +1,20 @@
 import { createClient } from '@blinkdotnew/sdk'
 import { config } from './config'
+import { db as supabaseDb } from './supabase-db'
+import { storage as supabaseStorage } from './supabase-storage'
 
-export const blink = createClient({
+const originalBlink = createClient({
   projectId: config.app.projectId,
   authRequired: false,
   auth: { mode: 'managed' }
+})
+
+export const blink = new Proxy(originalBlink as any, {
+  get(target, prop) {
+    if (prop === 'db') return supabaseDb
+    if (prop === 'storage') return supabaseStorage
+    return target[prop]
+  }
 })
 
 // Proactively disable analytics to prevent noisy console errors if backend is unavailable
@@ -41,11 +51,10 @@ export async function safeDbCall<T>(fn: () => Promise<T>, options?: { retries?: 
       return await fn()
     } catch (err: any) {
       // If not a rate limit / network error, rethrow immediately
-      const status = err?.status
-      const details = err?.details
-      const code = details?.code || err?.code
+      // Supabase errors might have different structure
+      const status = err?.status || err?.code
 
-      const isRateLimit = status === 429 || code === 'RATE_LIMIT_EXCEEDED'
+      const isRateLimit = status === 429 || status === '429'
 
       if (!isRateLimit) {
         throw err
@@ -60,9 +69,9 @@ export async function safeDbCall<T>(fn: () => Promise<T>, options?: { retries?: 
       // Compute backoff: use server reset time if provided
       let backoff = initialDelayMs * Math.pow(2, attempt)
 
-      if (details?.reset) {
+      if (err?.details?.reset) {
         try {
-          const resetTime = new Date(details.reset).getTime()
+          const resetTime = new Date(err.details.reset).getTime()
           const now = Date.now()
           const untilReset = Math.max(0, resetTime - now)
           // Wait at least until reset, or our exponential backoff, whichever is larger

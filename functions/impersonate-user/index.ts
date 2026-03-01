@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "npm:@blinkdotnew/sdk"
+import { db } from "../_db.ts"
 
 // Env
 const JWT_SECRET = Deno.env.get('JWT_SECRET')
@@ -107,7 +108,7 @@ serve(async (req) => {
     }
 
     // Confirm requester is admin
-    const admins = await blink.db.users.list({ where: { id: requesterId }, limit: 1 })
+    const admins = await (db as any).users.list({ where: { id: requesterId }, limit: 1 })
     const admin = admins?.[0]
     if (!admin || String(admin.role) !== 'admin') {
       return json({ error: 'Forbidden' }, 403)
@@ -118,10 +119,10 @@ serve(async (req) => {
 
     let target: any = null
     if (userId) {
-      const rows = await blink.db.users.list({ where: { id: String(userId) }, limit: 1 })
+      const rows = await (db as any).users.list({ where: { id: String(userId) }, limit: 1 })
       target = rows?.[0]
     } else if (email) {
-      const rows = await blink.db.users.list({ where: { email: String(email).trim().toLowerCase() }, limit: 1 })
+      const rows = await (db as any).users.list({ where: { email: String(email).trim().toLowerCase() }, limit: 1 })
       target = rows?.[0]
     }
 

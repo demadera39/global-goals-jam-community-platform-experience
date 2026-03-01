@@ -33,6 +33,38 @@ const TABLES_TO_MIGRATE = [
   'jam_highlights'
 ];
 
+/**
+ * Helper to convert camelCase to snake_case
+ */
+const camelToSnake = (str: string) => str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+
+/**
+ * Helper to convert camelCase keys in object to snake_case
+ */
+const objToSnake = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map((v) => objToSnake(v));
+  } else if (obj !== null && obj.constructor === Object) {
+    return Object.keys(obj).reduce((result, key) => {
+      const snakeKey = camelToSnake(key);
+      result[snakeKey] = objToSnake(obj[key]);
+      return result;
+    }, {} as any);
+  }
+  return obj;
+};
+
+const BOOLEAN_COLS: Record<string, string[]> = {
+  'users': ['email_verified', 'phone_verified'],
+  'media': ['is_featured'],
+  'toolkits': ['is_public'],
+  'forum_categories': ['is_host_only'],
+  'forum_threads': ['is_pinned', 'is_locked'],
+  'forum_posts': ['is_first_post'],
+  'jam_highlights': ['is_verified'],
+  'password_resets': ['used']
+};
+
 export default function MigratePage() {
   const [status, setStatus] = useState<Record<string, { state: 'pending' | 'migrating' | 'success' | 'error'; count: number; error?: string }>>(
     Object.fromEntries(TABLES_TO_MIGRATE.map(t => [t, { state: 'pending', count: 0 }]))
@@ -51,12 +83,25 @@ export default function MigratePage() {
         return;
       }
 
-      // 2. Clear existing in Supabase (optional, but good for idempotent migration)
-      // await supabase.from(tableName).delete().neq('id', 'placeholder');
+      // 2. Transform to snake_case and handle booleans
+      const transformedRecords = records.map(record => {
+        const snakeRecord = objToSnake(record);
+        
+        // Handle booleans for specific columns
+        if (BOOLEAN_COLS[tableName]) {
+          BOOLEAN_COLS[tableName].forEach(col => {
+            if (snakeRecord[col] !== undefined) {
+              snakeRecord[col] = Boolean(Number(snakeRecord[col]) > 0 || snakeRecord[col] === '1' || snakeRecord[col] === true);
+            }
+          });
+        }
+        
+        return snakeRecord;
+      });
 
       // 3. Insert into Supabase
       // We use upsert to handle existing records
-      const { error } = await supabase.from(tableName).upsert(records, { onConflict: 'id' });
+      const { error } = await supabase.from(tableName).upsert(transformedRecords, { onConflict: 'id' });
 
       if (error) throw error;
 

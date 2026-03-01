@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import Stripe from "npm:stripe";
 import { createClient } from "npm:@blinkdotnew/sdk";
+import { db } from "../_db.ts"
 
 // Blink SDK in Edge (no auth required)
 const blink = createClient({ projectId: "global-goals-jam-community-platform-7uamgc2j", authRequired: false });
@@ -82,7 +83,7 @@ serve(async (req) => {
 
     if (!userId && email) {
       try {
-        const users = await (blink.db as any).users.list({ where: { email }, limit: 1 });
+        const users = await (db as any).users.list({ where: { email }, limit: 1 });
         if (users?.[0]?.id) userId = users[0].id;
       } catch (_) {}
     }
@@ -93,12 +94,12 @@ serve(async (req) => {
     let enrollment: any = null;
     try {
       if (enrollmentId) {
-        const rows = await (blink.db as any).courseEnrollments.list({ where: { id: enrollmentId }, limit: 1 });
+        const rows = await (db as any).courseEnrollments.list({ where: { id: enrollmentId }, limit: 1 });
         enrollment = rows?.[0] || null;
       }
       // Fallback: latest pending for user
       if (!enrollment && userId) {
-        const rows = await (blink.db as any).courseEnrollments.list({ where: { userId }, orderBy: { createdAt: 'desc' }, limit: 1 });
+        const rows = await (db as any).courseEnrollments.list({ where: { userId }, orderBy: { createdAt: 'desc' }, limit: 1 });
         enrollment = rows?.[0] || null;
       }
     } catch (_) {}
@@ -108,7 +109,7 @@ serve(async (req) => {
       if (!userId) {
         return new Response(JSON.stringify({ error: "Could not determine user for enrollment" }), { status: 400, headers: cors() });
       }
-      enrollment = await (blink.db as any).courseEnrollments.create({
+      enrollment = await (db as any).courseEnrollments.create({
         id: enrollmentId || undefined,
         userId,
         status: "pending",
@@ -120,7 +121,7 @@ serve(async (req) => {
     const amount = (typeof session.amount_total === "number" ? session.amount_total : 0) / 100;
     const paymentIntent = (typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent as any)?.id) || "";
 
-    await (blink.db as any).courseEnrollments.update(enrollment.id, {
+    await (db as any).courseEnrollments.update(enrollment.id, {
       status: "active",
       stripeSessionId: session.id,
       stripePaymentIntent: paymentIntent,
@@ -131,14 +132,14 @@ serve(async (req) => {
 
     // Optionally schedule the 8-day email sequence (idempotent best-effort)
     try {
-      const existingEmails = await (blink.db as any).emailSchedule.list({ where: { enrollmentId: enrollment.id }, limit: 1 });
+      const existingEmails = await (db as any).emailSchedule.list({ where: { enrollmentId: enrollment.id }, limit: 1 });
       if (!existingEmails || existingEmails.length === 0) {
         const startDate = new Date();
         for (let day = 1; day <= 8; day++) {
           const scheduledDate = new Date(startDate);
           scheduledDate.setDate(scheduledDate.getDate() + (day - 1));
           scheduledDate.setHours(9, 0, 0, 0);
-          await (blink.db as any).emailSchedule.create({
+          await (db as any).emailSchedule.create({
             id: `email_${enrollment.id}_${day}`,
             enrollmentId: enrollment.id,
             userId: userId,
@@ -164,7 +165,7 @@ serve(async (req) => {
     }
 
     // Return enrollment
-    const fresh = await (blink.db as any).courseEnrollments.list({ where: { id: enrollment.id }, limit: 1 });
+    const fresh = await (db as any).courseEnrollments.list({ where: { id: enrollment.id }, limit: 1 });
     return new Response(JSON.stringify({ ok: true, enrollment: fresh?.[0] || enrollment }), { status: 200, headers: cors() });
   } catch (err: any) {
     console.error("confirm-course-enrollment error", err?.message || err);

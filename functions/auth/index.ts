@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "npm:@blinkdotnew/sdk"
 import bcrypt from "npm:bcryptjs"
+import { db } from "../_db.ts"
 
 // Environment validation
 const JWT_SECRET = Deno.env.get('JWT_SECRET')
@@ -349,7 +350,7 @@ async function handleSignup(data: SignupData) {
 
   try {
     // Check if user already exists
-    const existingUsers = await blink.db.users.list({
+    const existingUsers = await (db as any).users.list({
       where: { email: email.toLowerCase() },
       limit: 1
     })
@@ -372,7 +373,7 @@ async function handleSignup(data: SignupData) {
 
     // Try to create user record
     try {
-      await blink.db.users.create({
+      await (db as any).users.create({
         id: userId,
         email: email.toLowerCase(),
         displayName: fullName || email.split('@')[0],
@@ -394,7 +395,7 @@ async function handleSignup(data: SignupData) {
         console.log('Unique constraint hit, trying upsert approach for email:', email.toLowerCase())
         
         try {
-          await blink.db.users.upsertMany([{
+          await (db as any).users.upsertMany([{
             id: userId,
             email: email.toLowerCase(),
             displayName: fullName || email.split('@')[0],
@@ -498,14 +499,14 @@ async function handleLogin(data: LoginData) {
   try {
     // Find user by email (case-insensitive attempts)
     const normalized = email.toLowerCase().trim()
-    let candidates = await blink.db.users.list({
+    let candidates = await (db as any).users.list({
       where: { email: normalized },
       orderBy: { updatedAt: 'desc' },
       limit: 5
     })
     if (!candidates || candidates.length === 0) {
       try {
-        candidates = await blink.db.users.list({
+        candidates = await (db as any).users.list({
           where: { OR: [{ email }, { email: normalized.toUpperCase() }] },
           orderBy: { updatedAt: 'desc' },
           limit: 5
@@ -516,7 +517,7 @@ async function handleLogin(data: LoginData) {
     if (!candidates || candidates.length === 0) {
       // Fallback: scan recent users for case/whitespace anomalies
       try {
-        const recent = await blink.db.users.list({ orderBy: { createdAt: 'desc' }, limit: 1000 })
+        const recent = await (db as any).users.list({ orderBy: { createdAt: 'desc' }, limit: 1000 })
         const found = recent.find((u: any) => ((u.email || '').trim().toLowerCase()) === normalized)
         if (found) {
           candidates = [found]
@@ -636,14 +637,14 @@ async function handleForgotPassword(data: ForgotPasswordData) {
   try {
     // Find user by email (case-insensitive attempts)
     const normalized = email.toLowerCase().trim()
-    let users = await blink.db.users.list({
+    let users = await (db as any).users.list({
       where: { email: normalized },
       limit: 1
     })
     console.log('[ForgotPassword] primary lookup by email:', normalized, '→ count:', users?.length || 0)
     if (!users || users.length === 0) {
       try {
-        users = await blink.db.users.list({
+        users = await (db as any).users.list({
           where: { OR: [{ email }, { email: normalized.toUpperCase() }] },
           limit: 1
         })
@@ -654,7 +655,7 @@ async function handleForgotPassword(data: ForgotPasswordData) {
     // Fallback: scan recent users and match in code (handles stray whitespace/case anomalies)
     if (!users || users.length === 0) {
       try {
-        const recent = await blink.db.users.list({ orderBy: { createdAt: 'desc' }, limit: 500 })
+        const recent = await (db as any).users.list({ orderBy: { createdAt: 'desc' }, limit: 500 })
         const found = recent.find((u: any) => ((u.email || '').trim().toLowerCase()) === normalized)
         if (found) {
           users = [found]
@@ -692,7 +693,7 @@ async function handleForgotPassword(data: ForgotPasswordData) {
     const resetId = `reset_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
     
     try {
-      await blink.db.passwordResets.create({
+      await (db as any).passwordResets.create({
         id: resetId,
         userId: user.id,
         email: user.email,
@@ -838,7 +839,7 @@ async function handleResetPassword(data: ResetPasswordData) {
     }
 
     // Find user
-    const users = await blink.db.users.list({
+    const users = await (db as any).users.list({
       where: { id: userId },
       limit: 1
     })
@@ -859,7 +860,7 @@ async function handleResetPassword(data: ResetPasswordData) {
     const hashedPassword = await pbkdf2Hash(password)
 
     // Update user password
-    await blink.db.users.update(user.id, {
+    await (db as any).users.update(user.id, {
       passwordHash: hashedPassword,
       password_hash: hashedPassword,
       updatedAt: new Date().toISOString(),
@@ -908,11 +909,9 @@ async function handleAdminSetPassword(req: Request, data: AdminSetPasswordData) 
       })
     }
 
-    try {
-      // Set Blink auth token to identify requester
-      // @ts-ignore
-      blink.auth.setToken(token)
-    } catch (_) { /* ignore */ }
+    // Set Blink auth token to identify requester
+    // @ts-ignore
+    blink.auth.setToken(token)
 
     let me: any = null
     try {
@@ -927,7 +926,7 @@ async function handleAdminSetPassword(req: Request, data: AdminSetPasswordData) 
     }
 
     // Check requester role in DB
-    const profiles = await blink.db.users.list({ where: { id: me.id }, limit: 1 })
+    const profiles = await (db as any).users.list({ where: { id: me.id }, limit: 1 })
     const profile = profiles?.[0]
     if (!profile || (profile.role !== 'admin')) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
@@ -946,7 +945,7 @@ async function handleAdminSetPassword(req: Request, data: AdminSetPasswordData) 
 
     let targetId = userId || ''
     if (!targetId && email) {
-      const rows = await blink.db.users.list({ where: { email: (email || '').trim().toLowerCase() }, limit: 1 })
+      const rows = await (db as any).users.list({ where: { email: (email || '').trim().toLowerCase() }, limit: 1 })
       if (!rows || rows.length === 0) {
         return new Response(JSON.stringify({ error: 'User not found' }), {
           status: 404,
@@ -957,11 +956,11 @@ async function handleAdminSetPassword(req: Request, data: AdminSetPasswordData) 
     }
 
     // Hash new password (PBKDF2)
-    const hashed = await pbkdf2Hash(password)
+    const hashedPassword = await pbkdf2Hash(password)
 
-    await blink.db.users.update(targetId, {
-      passwordHash: hashed,
-      password_hash: hashed,
+    await (db as any).users.update(targetId, {
+      passwordHash: hashedPassword,
+      password_hash: hashedPassword,
       updatedAt: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
@@ -980,44 +979,32 @@ async function handleAdminSetPassword(req: Request, data: AdminSetPasswordData) 
 }
 
 async function handleVerify(req: Request, data: VerifyData) {
+  const authHeader = req.headers.get('authorization') || ''
+  let token = (data && data.token) || (authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '')
+
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Unauthorized', code: 'missing_token' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    })
+  }
+
   try {
-    const authHeader = req.headers.get('authorization') || ''
-    let token = (data && data.token) || (authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '')
-
-    if (!token) {
-      return new Response(JSON.stringify({ error: 'Unauthorized', code: 'missing_token' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      })
+    const { valid, payload, error } = await verifyJWT(token, JWT_SECRET!)
+    if (!valid) {
+      return new Response(JSON.stringify({ valid: false, error }), { status: 401, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } })
     }
 
-    const result = await verifyJWT(token, JWT_SECRET!)
-    if (!result.valid || !result.payload) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired token', code: 'invalid_token' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      })
-    }
-
-    const payload = result.payload || {}
-    const userId = payload.userId
-    if (!userId) {
-      return new Response(JSON.stringify({ error: 'Invalid token payload', code: 'invalid_payload' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      })
-    }
-
-    // Load latest user from DB
-    const rows = await blink.db.users.list({ where: { id: userId }, limit: 1 })
-    const dbUser = rows?.[0]
-    if (!dbUser) {
+    // Double check user still exists
+    const users = await (db as any).users.list({ where: { id: payload.userId }, limit: 1 })
+    if (!users || users.length === 0) {
       return new Response(JSON.stringify({ error: 'User not found', code: 'user_not_found' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       })
     }
 
+    const dbUser = users[0]
     const user = {
       id: dbUser.id,
       email: dbUser.email,

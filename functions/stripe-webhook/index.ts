@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import Stripe from 'npm:stripe'
 import { createClient } from 'npm:@blinkdotnew/sdk'
+import { db } from '../_db.ts'
 
 const blink = createClient({ projectId: 'global-goals-jam-community-platform-7uamgc2j', authRequired: false })
 
@@ -202,7 +203,7 @@ serve(async (req: Request) => {
       } else {
         try {
           // Try to create a stripe_events record - if it already exists, skip processing
-          await blink.db.stripeEvents.create({ id: incomingEventId, status: 'received', rawEvent: JSON.stringify(event) })
+          await (db as any).stripeEvents.create({ id: incomingEventId, status: 'received', rawEvent: JSON.stringify(event) })
         } catch (e) {
           // If insertion fails because event already exists, assume it's a retry and skip processing
           console.log(`Stripe event already processed or recorded: ${incomingEventId} - skipping.`)
@@ -231,7 +232,7 @@ serve(async (req: Request) => {
       if (enrollmentId && purpose !== 'platform_donation') {
         try {
           // Update enrollment status to active
-          await blink.db.courseEnrollments.update(enrollmentId, {
+          await (db as any).courseEnrollments.update(enrollmentId, {
             status: 'active',
             stripePaymentIntent: paymentIntent,
             paymentId: paymentIntent,
@@ -288,7 +289,7 @@ serve(async (req: Request) => {
           const amountDisplay = `${(amount / 100).toFixed(0)}`
 
           // Create donation record
-          await blink.db.donations.create({
+          await (db as any).donations.create({
             id: donationId,
             userId: userId || null,
             stripeSessionId: session.id,

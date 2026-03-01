@@ -1,12 +1,9 @@
 // Helper module to check and upgrade user role after course payment/completion
 // This is a simplified version that works in Deno edge functions
 
-import { createClient } from 'npm:@blinkdotnew/sdk'
+import { db as blinkDb } from './_db.ts'
 
-const blink = createClient({ 
-  projectId: 'global-goals-jam-community-platform-7uamgc2j', 
-  authRequired: false 
-})
+const db = blinkDb as any
 
 const USER_ROLES = {
   PARTICIPANT: 'participant',
@@ -28,7 +25,7 @@ const COURSE_STATUS = {
 export async function checkAndUpgradeUser(userId: string): Promise<boolean> {
   try {
     // Get user record
-    const users = await blink.db.users.list({
+    const users = await db.users.list({
       where: { id: userId },
       limit: 1
     })
@@ -45,7 +42,7 @@ export async function checkAndUpgradeUser(userId: string): Promise<boolean> {
     }
     
     // Get latest course enrollment
-    const enrollments = await blink.db.courseEnrollments.list({
+    const enrollments = await db.courseEnrollments.list({
       where: { userId },
       orderBy: { enrolledAt: 'desc' },
       limit: 1
@@ -77,7 +74,7 @@ export async function checkAndUpgradeUser(userId: string): Promise<boolean> {
       console.log(`Upgrading user ${userId} to host (courseStatus: ${courseStatus}, isPaid: ${isPaid})`)
       
       // Update the user role
-      await blink.db.users.update(userId, {
+      await db.users.update(userId, {
         role: USER_ROLES.HOST,
         status: 'approved',
         updatedAt: new Date().toISOString()

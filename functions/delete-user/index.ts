@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'npm:@blinkdotnew/sdk'
+import { db } from "../_db.ts"
 
 interface DeleteUserRequest {
   userId: string
@@ -89,44 +90,44 @@ serve(async (req) => {
     }
 
     // Delete user from users table
-    await blink.db.users.delete(userId)
+    await db.users.delete(userId)
     
     // Delete related records
     try {
       // Delete course enrollments
-      const enrollments = await blink.db.courseEnrollments.list({ where: { userId } })
+      const enrollments = await db.courseEnrollments.list({ where: { userId } })
       for (const enrollment of enrollments) {
-        await blink.db.courseEnrollments.delete(enrollment.id)
+        await db.courseEnrollments.delete(enrollment.id)
       }
 
       // Delete course progress
-      const progress = await blink.db.courseProgress.list({ where: { userId } })
+      const progress = await db.courseProgress.list({ where: { userId } })
       for (const prog of progress) {
-        await blink.db.courseProgress.delete(prog.id)
+        await db.courseProgress.delete(prog.id)
       }
 
       // Delete host applications
-      const applications = await blink.db.hostApplications.list({ where: { userId } })
+      const applications = await db.hostApplications.list({ where: { userId } })
       for (const app of applications) {
-        await blink.db.hostApplications.delete(app.id)
+        await db.hostApplications.delete(app.id)
       }
 
       // Delete event registrations
-      const registrations = await blink.db.eventRegistrations.list({ where: { participantId: userId } })
+      const registrations = await db.eventRegistrations.list({ where: { participantId: userId } })
       for (const reg of registrations) {
-        await blink.db.eventRegistrations.delete(reg.id)
+        await db.eventRegistrations.delete(reg.id)
       }
 
       // Delete user achievements
-      const achievements = await blink.db.userAchievements.list({ where: { userId } })
+      const achievements = await db.userAchievements.list({ where: { userId } })
       for (const achievement of achievements) {
-        await blink.db.userAchievements.delete(achievement.id)
+        await db.userAchievements.delete(achievement.id)
       }
 
       // Update events hosted by this user to mark them as orphaned
-      const hostedEvents = await blink.db.events.list({ where: { hostId: userId } })
+      const hostedEvents = await db.events.list({ where: { hostId: userId } })
       for (const event of hostedEvents) {
-        await blink.db.events.update(event.id, { 
+        await db.events.update(event.id, { 
           hostId: 'deleted-user', 
           hostName: 'Former Host (Deleted)' 
         })

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "npm:@blinkdotnew/sdk"
+import { db } from "../_db.ts"
 
 const blink = createClient({
   projectId: 'global-goals-jam-community-platform-7uamgc2j',
@@ -59,11 +60,11 @@ serve(async (req) => {
 
 async function getExistingUsers() {
   try {
-    const users = await blink.db.users.list({
+    const users = await (db as any).users.list({
       limit: 100
     })
 
-    const userSummary = users.map(user => ({
+    const userSummary = users.map((user: any) => ({
       id: user.id,
       email: user.email,
       displayName: user.displayName,
@@ -97,7 +98,7 @@ async function getExistingUsers() {
 
 async function sendMigrationEmails() {
   try {
-    const users = await blink.db.users.list({
+    const users = await (db as any).users.list({
       limit: 100
     })
 
