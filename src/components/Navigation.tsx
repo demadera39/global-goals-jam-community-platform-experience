@@ -236,6 +236,12 @@ export default function Navigation() {
                           User Management
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/migrate">
+                          <Globe className="mr-2 h-4 w-4" />
+                          Migrate Data
+                        </Link>
+                      </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuItem onClick={handleLogout}>

@@ -40,6 +40,7 @@ import SignInPage from './pages/SignInPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import StorageDebugPage from './pages/StorageDebugPage'
+import MigratePage from './pages/MigratePage'
 
 function App() {
   return (
@@ -144,6 +145,11 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/debug/storage" element={<StorageDebugPage />} />
+            <Route path="/migrate" element={
+              <ProtectedRoute requiredFeature="admin_dashboard">
+                <MigratePage />
+              </ProtectedRoute>
+            } />
           </Routes>
         </main>
         <Toaster />
