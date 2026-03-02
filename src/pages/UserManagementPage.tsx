@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Mail, Key, Trash2, Shield, User, Edit, AlertCircle, CheckCircle, Clock, X, Send, Loader2, Award, LogIn } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { db, auth, notifications } from '@/lib/supabase'
+import { db, auth, notifications, supabase } from '@/lib/supabase'
 import { config } from '@/lib/config'
 import { showCertificateInNewTab, createCertificateRecord } from '@/lib/certificates'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -513,12 +513,11 @@ export default function UserManagementPage() {
     try {
       setIsProcessing(true)
 
-      // Require custom auth token (email+password flow) and admin role
+      // Get current user from localStorage
       const currentUserStr = localStorage.getItem('user')
-      const currentToken = (localStorage.getItem('auth_token') || '').trim()
 
       if (!currentUserStr) {
-        toast({ title: 'Sign in required', description: 'Please sign in as an admin (email + password) before impersonating.', variant: 'destructive' })
+        toast({ title: 'Sign in required', description: 'Please sign in as an admin before impersonating.', variant: 'destructive' })
         return
       }
 
@@ -529,8 +528,16 @@ export default function UserManagementPage() {
         return
       }
 
+      // Get the real Supabase JWT from the active session (localStorage auth_token is not reliably stored)
+      let currentToken = (localStorage.getItem('auth_token') || '').trim()
       if (!currentToken || currentToken.length < 16) {
-        toast({ title: 'Missing token', description: 'Please re-sign in (email + password) to obtain an admin token.', variant: 'destructive' })
+        // Fallback: get token from Supabase session
+        const { data: { session } } = await supabase.auth.getSession()
+        currentToken = session?.access_token || ''
+      }
+
+      if (!currentToken || currentToken.length < 16) {
+        toast({ title: 'Missing token', description: 'Please sign out and sign back in (email + password), then try again.', variant: 'destructive' })
         return
       }
 

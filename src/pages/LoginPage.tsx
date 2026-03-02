@@ -51,6 +51,9 @@ export default function LoginPage() {
       const result = await login(formData.email, formData.password)
 
       if (result.success && result.token) {
+        // Store the Supabase JWT so features like impersonation can access it
+        localStorage.setItem('auth_token', result.token)
+
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in."
