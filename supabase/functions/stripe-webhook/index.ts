@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
 
     // Idempotency check
     const { data: existing } = await supabase
-      .from('stripeEvents')
+      .from('stripe_events')
       .select('id')
       .eq('id', event.id)
       .single()
@@ -41,10 +41,10 @@ Deno.serve(async (req) => {
     }
 
     // Store event for idempotency
-    await supabase.from('stripeEvents').insert({
+    await supabase.from('stripe_events').insert({
       id: event.id,
       status: 'processing',
-      rawEvent: JSON.stringify(event),
+      raw_event: JSON.stringify(event),
     })
 
     if (event.type === 'checkout.session.completed') {
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     }
 
     // Mark event as processed
-    await supabase.from('stripeEvents').update({ status: 'processed' }).eq('id', event.id)
+    await supabase.from('stripe_events').update({ status: 'processed' }).eq('id', event.id)
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { 'Content-Type': 'application/json' },
@@ -80,12 +80,12 @@ async function handleCourseEnrollment(supabase: any, session: any, stripeKey: st
   const amountPaid = (session.amount_total || 0) / 100
 
   if (enrollmentId) {
-    await supabase.from('courseEnrollments').update({
+    await supabase.from('course_enrollments').update({
       status: 'active',
-      stripeSessionId: session.id,
-      stripePaymentIntent: session.payment_intent,
-      amountPaid,
-      updatedAt: new Date().toISOString(),
+      stripe_session_id: session.id,
+      stripe_payment_intent: session.payment_intent,
+      amount_paid: amountPaid,
+      updated_at: new Date().toISOString(),
     }).eq('id', enrollmentId)
   }
 
@@ -96,7 +96,7 @@ async function handleCourseEnrollment(supabase: any, session: any, stripeKey: st
       await supabase.from('users').update({
         role: 'host',
         status: 'approved',
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       }).eq('id', userId)
     }
   }
@@ -145,13 +145,13 @@ async function handleDonation(supabase: any, session: any) {
   const donationId = `don_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
   await supabase.from('donations').insert({
     id: donationId,
-    stripeSessionId: session.id,
-    stripePaymentIntent: session.payment_intent,
+    stripe_session_id: session.id,
+    stripe_payment_intent: session.payment_intent,
     amount,
-    amountDisplay: `$${amount.toFixed(2)}`,
-    tierName,
+    amount_display: `$${amount.toFixed(2)}`,
+    tier_name: tierName,
     status: 'completed',
-    paidAt: new Date().toISOString(),
+    paid_at: new Date().toISOString(),
     email,
   })
 

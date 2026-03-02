@@ -59,17 +59,18 @@ Deno.serve(async (req) => {
     }
 
     // 4. Find or create enrollment
+    // NOTE: Live DB uses snake_case table/column names
     const eid = enrollmentId || session.metadata?.enrollment_id || session.client_reference_id
     let enrollment = null
 
     if (eid) {
-      const { data } = await supabase.from('courseEnrollments').select('*').eq('id', eid).single()
+      const { data } = await supabase.from('course_enrollments').select('*').eq('id', eid).single()
       enrollment = data
     }
     if (!enrollment && user) {
-      const { data } = await supabase.from('courseEnrollments').select('*')
-        .eq('userId', user.id)
-        .order('updatedAt', { ascending: false })
+      const { data } = await supabase.from('course_enrollments').select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
         .limit(1)
         .single()
       enrollment = data
@@ -77,13 +78,13 @@ Deno.serve(async (req) => {
 
     if (!enrollment && user) {
       const newId = `enr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-      const { data } = await supabase.from('courseEnrollments').insert({
+      const { data } = await supabase.from('course_enrollments').insert({
         id: newId,
-        userId: user.id,
+        user_id: user.id,
         status: 'active',
-        stripeSessionId: sessionId,
-        amountPaid: (session.amount_total || 3999) / 100,
-        enrolledAt: new Date().toISOString(),
+        stripe_session_id: sessionId,
+        amount_paid: (session.amount_total || 3999) / 100,
+        enrolled_at: new Date().toISOString(),
       }).select().single()
       enrollment = data
     }
@@ -97,13 +98,13 @@ Deno.serve(async (req) => {
 
     // 5. Update enrollment to active
     const amountPaid = (session.amount_total || 3999) / 100
-    const { data: updated } = await supabase.from('courseEnrollments').update({
+    const { data: updated } = await supabase.from('course_enrollments').update({
       status: 'active',
-      stripeSessionId: sessionId,
-      stripePaymentIntent: session.payment_intent?.id || session.payment_intent,
-      amountPaid,
-      currentModule: enrollment.currentModule || 1,
-      updatedAt: new Date().toISOString(),
+      stripe_session_id: sessionId,
+      stripe_payment_intent: session.payment_intent?.id || session.payment_intent,
+      amount_paid: amountPaid,
+      current_module: enrollment.current_module || 1,
+      updated_at: new Date().toISOString(),
     }).eq('id', enrollment.id).select().single()
 
     // 6. Schedule 8-day email sequence
@@ -115,14 +116,14 @@ Deno.serve(async (req) => {
         sendDate.setHours(9, 0, 0, 0)
         return {
           id: `sched_${enrollment.id}_m${i + 1}`,
-          enrollmentId: enrollment.id,
-          userId: user?.id || enrollment.userId,
-          moduleNumber: i + 1,
-          scheduledFor: sendDate.toISOString(),
+          enrollment_id: enrollment.id,
+          user_id: user?.id || enrollment.user_id,
+          module_number: i + 1,
+          scheduled_for: sendDate.toISOString(),
           status: 'pending',
         }
       })
-      await supabase.from('emailSchedule').upsert(emails, { onConflict: 'id' })
+      await supabase.from('email_schedule').upsert(emails, { onConflict: 'id' })
     } catch (e) {
       console.warn('Failed to schedule emails:', e)
     }
@@ -132,7 +133,7 @@ Deno.serve(async (req) => {
       await supabase.from('users').update({
         role: 'host',
         status: 'approved',
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       }).eq('id', user.id)
     }
 
