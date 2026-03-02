@@ -729,7 +729,7 @@ export default function CourseCertificate() {
                   const params = new URLSearchParams({
                     startTask: 'CERTIFICATION_NAME',
                     name: 'Global Goals Jam — Host Certification',
-                    organizationName: 'Global Goals Jam',
+                    organizationName: 'Global Goals Jam HQ',
                     issueYear: String(issueYear),
                     issueMonth: String(issueMonth),
                     certId: certId,
