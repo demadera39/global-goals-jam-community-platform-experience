@@ -100,32 +100,95 @@ export async function login(email: string, password: string) {
   const user = data.user
   if (user) {
     // Fetch profile using raw query (returns snake_case columns from DB)
-    const { data: profile } = await supabase
+    let { data: profile } = await supabase
       .from('users')
       .select('*')
       .eq('id', user.id)
       .single()
 
-    // Handle snake_case DB column names
-    const displayName = profile?.display_name || profile?.displayName || user.user_metadata?.display_name || user.email!
-    let role = profile?.role || 'participant'
+    // If no profile found by Supabase Auth ID, check by email.
+    // This handles migrated accounts (e.g. from Firebase) whose profile has
+    // a legacy ID that doesn't match the new Supabase Auth UUID.
+    if (!profile) {
+      const { data: legacyProfile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', normalizedEmail)
+        .limit(1)
+        .single()
 
-    // If no profile row exists, create one so the rest of the app works
+      if (legacyProfile) {
+        const oldId = legacyProfile.id
+        console.log(`[Auth] Migrating profile from legacy ID ${oldId} to Supabase ID ${user.id}`)
+
+        // Update the profile row to the new Supabase Auth ID
+        try {
+          // Create new profile with Supabase Auth ID, copying all data
+          await supabase.from('users').insert({
+            id: user.id,
+            email: legacyProfile.email,
+            display_name: legacyProfile.display_name,
+            role: legacyProfile.role,
+            status: legacyProfile.status,
+            location: legacyProfile.location,
+            bio: legacyProfile.bio,
+            avatar_url: legacyProfile.avatar_url,
+            password_hash: legacyProfile.password_hash,
+            created_at: legacyProfile.created_at,
+            updated_at: new Date().toISOString(),
+          })
+
+          // Re-link all events from old ID to new ID
+          await supabase.from('events').update({ host_id: user.id }).eq('host_id', oldId)
+
+          // Re-link event registrations
+          await supabase.from('event_registrations').update({ participant_id: user.id }).eq('participant_id', oldId)
+
+          // Re-link certificates
+          await supabase.from('certificates').update({ recipient_id: user.id }).eq('recipient_id', oldId)
+          await supabase.from('certificates').update({ issued_by: user.id }).eq('issued_by', oldId)
+
+          // Re-link media
+          await supabase.from('media').update({ uploaded_by: user.id }).eq('uploaded_by', oldId)
+
+          // Delete old profile row (now superseded)
+          await supabase.from('users').delete().eq('id', oldId)
+
+          console.log(`[Auth] Migration complete: ${oldId} → ${user.id}`)
+        } catch (migrationErr) {
+          console.warn('[Auth] Profile migration failed, falling back:', migrationErr)
+        }
+
+        // Re-fetch the (now migrated) profile
+        const { data: migratedProfile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        profile = migratedProfile || legacyProfile
+      }
+    }
+
+    // If still no profile, create a fresh one
     if (!profile) {
       try {
         await supabase.from('users').upsert({
           id: user.id,
           email: normalizedEmail,
-          displayName: user.user_metadata?.display_name || normalizedEmail.split('@')[0],
+          display_name: user.user_metadata?.display_name || normalizedEmail.split('@')[0],
           role: 'participant',
           status: 'approved',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
       } catch (e) {
         console.warn('Failed to create user profile row on login:', e)
       }
     }
+
+    // Handle snake_case DB column names
+    const displayName = profile?.display_name || profile?.displayName || user.user_metadata?.display_name || user.email!
+    let role = profile?.role || 'participant'
 
     // Check admin allowlist and auto-promote
     const adminEmails = Array.isArray(config.admins?.emails)
@@ -134,7 +197,7 @@ export async function login(email: string, password: string) {
     if (adminEmails.includes(normalizedEmail) && role !== 'admin') {
       role = 'admin'
       try {
-        await supabase.from('users').update({ role: 'admin', status: 'approved', updatedAt: new Date().toISOString() }).eq('id', user.id)
+        await supabase.from('users').update({ role: 'admin', status: 'approved', updated_at: new Date().toISOString() }).eq('id', user.id)
       } catch (e) {
         console.warn('Failed to auto-promote admin on login:', e)
       }
