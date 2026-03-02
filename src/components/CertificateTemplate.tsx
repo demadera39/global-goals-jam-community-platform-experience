@@ -136,13 +136,13 @@ export const CertificateTemplate = React.forwardRef<HTMLDivElement, CertificateT
 
           {/* Center brand small */}
           <div className="text-center">
-            <div className="flex items-center justify-center mx-auto" style={{ width: '56px', height: '56px' }}>
+            <div className="flex items-center justify-center mx-auto" style={{ width: '120px', height: '48px' }}>
               <img
                 src={logoSrc || 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png'}
                 crossOrigin="anonymous"
                 alt="Global Goals Jam"
                 className="max-w-full max-h-full object-contain"
-                style={{ width: 'auto', height: 'auto' }}
+                style={{ width: 'auto', height: '48px' }}
                 onError={(e) => {
                   // Fallback to Supabase hosted logo
                   const target = e.currentTarget as HTMLImageElement

@@ -138,10 +138,11 @@ export function buildCertificateHtml(data: BuildCertData) {
       font-size: 12px; 
       color: #374151; 
     }
-    .brand img { 
-      width: 56px; 
-      height: 56px; 
-      object-fit: contain; 
+    .brand img {
+      width: auto;
+      height: 48px;
+      max-width: 120px;
+      object-fit: contain;
     }
     .sig img { 
       max-height: 80px; 
