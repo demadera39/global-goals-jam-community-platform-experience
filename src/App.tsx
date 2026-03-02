@@ -40,7 +40,8 @@ import SignInPage from './pages/SignInPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import StorageDebugPage from './pages/StorageDebugPage'
-import MigratePage from './pages/MigratePage'
+import ThemePage from './pages/ThemePage'
+import ProcessPage from './pages/ProcessPage'
 
 function App() {
   return (
@@ -51,6 +52,8 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/theme" element={<ThemePage />} />
+            <Route path="/process" element={<ProcessPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/contact" element={<ContactPage />} />
@@ -145,11 +148,6 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/debug/storage" element={<StorageDebugPage />} />
-            <Route path="/migrate" element={
-              <ProtectedRoute requiredFeature="admin_dashboard">
-                <MigratePage />
-              </ProtectedRoute>
-            } />
           </Routes>
         </main>
         <Toaster />
