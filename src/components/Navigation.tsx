@@ -4,7 +4,6 @@ import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu'
 import { Globe, Menu, X, User, LogOut, Settings, BookOpen, Shield } from 'lucide-react'
-// blink import removed — was unused
 import { getUserProfile, UserProfile, COURSE_STATUS } from '../lib/userStatus'
 import { appAuth } from '../lib/simpleAuth'
 import { clearAuthToken } from '../lib/auth'

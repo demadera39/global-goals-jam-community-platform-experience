@@ -563,7 +563,7 @@ export default function UserManagementPage() {
       // Keep simple auth in sync
       appAuth.set({ id: data.user.id, email: data.user.email, displayName: data.user.displayName, role: data.user.role })
 
-      // Set token in Blink SDK so db/auth state aligns
+      // Set token so db/auth state aligns
       try { auth.setToken(data.token) } catch (_) {}
 
       setIsImpersonating(true)
@@ -593,7 +593,7 @@ export default function UserManagementPage() {
       const adminUser = JSON.parse(adminUserStr)
       appAuth.set({ id: adminUser.id, email: adminUser.email, displayName: adminUser.displayName, role: adminUser.role })
 
-      // Restore Blink SDK token as well
+      // Restore auth token as well
       try { auth.setToken(adminToken) } catch (_) {}
 
       setIsImpersonating(false)

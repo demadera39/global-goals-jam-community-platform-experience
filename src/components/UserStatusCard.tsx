@@ -15,7 +15,6 @@ import {
 } from 'lucide-react'
 import { UserProfile, getUserStatusSummary, canAccessFeature } from '../lib/userStatus'
 import { useNavigate } from 'react-router-dom'
-// blink import removed — was unused
 
 interface UserStatusCardProps {
   profile: UserProfile | null

@@ -123,7 +123,7 @@ Display verified jam highlights from database, with ability to scrape web for ne
 ```
 1. Component mounts
 2. useEffect → loadHighlights()
-3. blink.database.list('jam_highlights', { filter: { is_verified: '1' } })
+3. db.jamHighlights.list({ where: { is_verified: '1' } })
 4. Results shuffled, limited to 20
 5. State updated with highlights array
 6. Carousel renders with auto-play enabled

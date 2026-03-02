@@ -1,6 +1,6 @@
 /**
  * Configuration helper — centralizes environment variables and app settings.
- * All Blink references removed; endpoints point to Supabase Edge Functions.
+ * Centralizes environment variables and app settings.
  */
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''

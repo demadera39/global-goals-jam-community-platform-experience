@@ -154,7 +154,7 @@ class SupabaseTable {
 }
 
 /**
- * Proxy object that mimics blink.db
+ * Proxy object providing a table-based DB API
  * Example: db.hostInvites.list() calls supabase.from('host_invites').select('*')
  */
 export const db = new Proxy({} as any, {

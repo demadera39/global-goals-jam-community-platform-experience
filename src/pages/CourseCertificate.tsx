@@ -226,7 +226,7 @@ export default function CourseCertificate() {
         // ignore
       }
 
-      // Also listen to Blink managed auth (original flow)
+      // Also listen to auth state changes
       unsubscribe = auth.onAuthStateChanged((state) => {
         setUser(state.user);
         setLoading(state.isLoading);

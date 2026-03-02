@@ -10,7 +10,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 export const supabase = createClient(SUPABASE_URL || '', SUPABASE_ANON_KEY || '')
 
 // ---------------------------------------------------------------------------
-// Retry helper with exponential backoff (replaces Blink's safeDbCall)
+// Retry helper with exponential backoff
 // ---------------------------------------------------------------------------
 function sleep(ms: number) {
   return new Promise((res) => setTimeout(res, ms))
@@ -45,8 +45,8 @@ export async function safeDbCall<T>(
 }
 
 // ---------------------------------------------------------------------------
-// DB helpers — provide a table-based API compatible with old Blink patterns
-// blink.db.TABLE.list/create/update/delete → db.TABLE.list/create/update/delete
+// DB helpers — provide a table-based API
+// db.TABLE.list/create/update/delete
 // ---------------------------------------------------------------------------
 
 // The live DB uses snake_case columns (display_name, created_at, etc.)

@@ -3,7 +3,7 @@ import { Quote } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Skeleton } from './ui/skeleton'
 import { AspectRatio } from './ui/aspect-ratio'
-// PDF text extraction is done via direct fetch (Blink extractFromUrl removed)
+// PDF text extraction is done via direct fetch
 
 interface ImpactInsightsProps {
   pdfUrl: string

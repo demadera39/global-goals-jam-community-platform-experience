@@ -40,7 +40,7 @@ export default function LoginForm({ redirectUrl }: { redirectUrl?: string }) {
       const result = await login(email, password)
 
       if (result && result.success && result.token) {
-        // Set the token in Blink client and wait for auth confirmation
+        // Set the auth token and wait for confirmation
         const authReady = await setAuthToken(result.token)
         
         if (authReady) {

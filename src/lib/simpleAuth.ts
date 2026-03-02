@@ -1,6 +1,6 @@
 /**
  * Simplified auth compatibility layer.
- * All Blink SDK references removed — delegates to Supabase via ./supabase.
+ * Simplified auth compatibility layer — delegates to Supabase via ./supabase.
  */
 import { supabase, db, safeDbCall, notifications } from './supabase'
 

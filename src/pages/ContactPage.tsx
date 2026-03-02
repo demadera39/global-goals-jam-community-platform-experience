@@ -38,7 +38,7 @@ export default function ContactPage() {
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true)
     try {
-      // Send email to Marco via Blink notifications
+      // Send email to Marco via Resend
       const emailHtml = `
         <div style="font-family: Inter, Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #0B1324;">
           <div style="padding: 20px 0; text-align: center;">

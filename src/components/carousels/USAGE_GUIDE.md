@@ -201,7 +201,7 @@ export default function Page() {
 2. ✅ `jam_highlights` table exists in database
 3. ✅ Records have `is_verified = 1` status
 4. ✅ Edge function `scrape-jam-images` deployed (for web scraping)
-5. ✅ Blink SDK initialized with database access
+5. ✅ Supabase DB configured with database access
 
 ---
 

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Loader2, Shield, AlertCircle } from 'lucide-react'
-// blink import removed — was unused
 import { getUserProfile, canAccessFeature, UserProfile } from '../lib/userStatus'
 import { appAuth } from '../lib/simpleAuth'
 import { getStoredUser } from '@/lib/auth'

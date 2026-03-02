@@ -189,7 +189,7 @@ export default function ToolkitPage() {
 
       return list
     } catch (err) {
-      console.error('[ToolkitPage] Error fetching toolkits (Blink DB):', err)
+      console.error('[ToolkitPage] Error fetching toolkits:', err)
       return []
     }
   }, [])

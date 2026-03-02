@@ -119,7 +119,7 @@ Both carousels are already integrated in **HomePage.tsx**:
 ### Minimum Setup
 - ✅ Supabase connected
 - ✅ `.env.local` configured
-- ✅ Blink SDK initialized
+- ✅ Supabase DB configured
 
 ### For JamDiversityCarousel
 - ✅ Create `jams` bucket in Supabase Storage

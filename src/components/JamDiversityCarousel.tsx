@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Card } from '@/components/ui/card'
 import { ChevronLeft, ChevronRight, MapPin, Calendar, Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { listBucketFilesWithUrls } from '@/lib/supabase'
@@ -320,51 +319,43 @@ export default function JamDiversityCarousel() {
             >
               {highlights.map((highlight, index) => (
                 <div key={highlight.name} className="min-w-full relative">
-                  <div className="aspect-[16/9] relative bg-muted">
+                  <div className="aspect-[16/9] relative bg-muted overflow-hidden group">
+                    {/* Fallback gradient - behind the image */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30" />
                     <img
                       src={highlight.url}
                       alt={`Global Goals Jam ${formatLocation(highlight)}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover relative z-[1] transition-transform duration-700 group-hover:scale-105"
                       loading={index === currentIndex ? 'eager' : 'lazy'}
                       crossOrigin="anonymous"
                       onError={(e) => {
-                        console.error('[JamDiversityCarousel] Failed to load image:', highlight.url)
-                        console.error('[JamDiversityCarousel] Image name:', highlight.name)
-                        console.error('[JamDiversityCarousel] Image folder:', highlight.folder)
-                        console.error('[JamDiversityCarousel] Network error details:', (e.target as any)?.error)
-                        // Show placeholder gradient on error
                         const img = e.target as HTMLImageElement
                         img.style.display = 'none'
                       }}
-                      onLoad={() => {
-                        console.log('[JamDiversityCarousel] Successfully loaded image:', highlight.name)
-                      }}
                     />
-                    {/* Fallback placeholder if image fails */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-40" style={{
-                      backgroundImage: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%)'
-                    }} />
-                    
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    
+
+                    {/* Bottom gradient for text readability */}
+                    <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
                     {/* Content Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-                      <Card className="bg-white/10 backdrop-blur-md border-white/20 p-6">
-                        <div className="flex flex-wrap items-center gap-4 mb-2">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-5 h-5 text-primary" />
-                            <span className="text-xl font-semibold">{formatLocation(highlight)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-accent" />
-                            <span className="text-lg">{formatDate(highlight)}</span>
-                          </div>
+                    <div className="absolute bottom-0 left-0 right-0 z-[3] p-6 sm:p-8 lg:p-10">
+                      <div className="max-w-3xl">
+                        {/* Location badge */}
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                          <span className="inline-flex items-center gap-2 bg-primary/90 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg">
+                            <MapPin className="w-4 h-4" />
+                            {formatLocation(highlight)}
+                          </span>
+                          <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium">
+                            <Calendar className="w-4 h-4 text-amber-300" />
+                            {formatDate(highlight)}
+                          </span>
                         </div>
-                        <p className="text-sm text-white/80">
+                        {/* Description */}
+                        <p className="text-white/90 text-base sm:text-lg font-medium leading-relaxed drop-shadow-lg">
                           Changemakers collaborating to design solutions for the Global Goals
                         </p>
-                      </Card>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -375,18 +366,18 @@ export default function JamDiversityCarousel() {
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border-none shadow-card"
+              className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white border-none shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 w-10 h-10 sm:w-12 sm:h-12 rounded-full"
               onClick={goToPrev}
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border-none shadow-card"
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white border-none shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 w-10 h-10 sm:w-12 sm:h-12 rounded-full"
               onClick={goToNext}
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
           </div>
 

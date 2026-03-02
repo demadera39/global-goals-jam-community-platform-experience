@@ -2,9 +2,7 @@ import { supabase } from './supabase'
 
 class SupabaseStorage {
   async upload(path: string, file: File | Blob, options?: any) {
-    // Determine bucket from path if possible, or use a default 'public' bucket
-    // Blink paths are usually like 'events/ID/image.jpg'
-    // I'll assume 'jams' bucket for now as it seems to be used in scrape-jam-images
+    // Default to 'jams' bucket
     const bucket = options?.bucket || 'jams'
     
     const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
