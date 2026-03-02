@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { blink } from '../lib/blink'
+import { db } from '../lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
@@ -25,7 +25,7 @@ export default function SupportersPage() {
     let mounted = true
     const load = async () => {
       try {
-        const donations = await blink.db.donations.list({
+        const donations = await db.donations.list({
           where: { status: 'completed' },
           orderBy: { amount: 'desc' }
         })
@@ -67,7 +67,7 @@ export default function SupportersPage() {
             <div className="h-8 bg-muted rounded w-1/3"></div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1,2,3,4,5,6].map(i => (
-                <div key={i} className="h-64 bg-muted rounded-lg"></div>
+                <div key={i} className="h-64 bg-muted rounded-xl"></div>
               ))}
             </div>
           </div>
@@ -80,29 +80,26 @@ export default function SupportersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="mb-12">
-          <div className="flex items-center gap-4 mb-6">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Link>
-            </Button>
-          </div>
-          
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Heart className="w-6 h-6 text-primary" />
-              <h1 className="text-4xl font-bold tracking-tight">Our Supporters</h1>
-            </div>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              These organizations and individuals make the Global Goals Jam possible, 
-              supporting everything from host training to toolkit development.
-            </p>
-          </div>
+      {/* Hero Section */}
+      <section className="relative py-20 hero-pattern">
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">Thank You</p>
+          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
+            <Heart className="w-4 h-4 mr-2" />
+            Our Community
+          </Badge>
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
+            Our <span className="text-primary-solid">Supporters</span>
+          </h1>
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            These organizations and individuals make the Global Goals Jam possible,
+            supporting everything from host training to toolkit development.
+          </p>
         </div>
+      </section>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
         {/* Support CTA */}
         <div className="mb-12 text-center">
@@ -132,7 +129,7 @@ export default function SupportersPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {supporters.map((supporter) => (
-              <Card key={supporter.id} className="group hover:shadow-lg transition-all duration-200">
+              <Card key={supporter.id} className="group shadow-soft hover:shadow-card-hover transition-all duration-200">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
@@ -199,7 +196,7 @@ export default function SupportersPage() {
           <div className="mt-16">
             <Card className="bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-8 text-center">
-                <h3 className="text-2xl font-bold mb-4">Community Impact</h3>
+                <h3 className="text-2xl font-bold font-display mb-4">Community Impact</h3>
                 <div className="grid sm:grid-cols-3 gap-6">
                   <div>
                     <div className="text-3xl font-bold text-primary">

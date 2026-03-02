@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Mail, Key, Trash2, Shield, User, Edit, AlertCircle, CheckCircle, Clock, X, Send, Loader2, Award, LogIn } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { blink } from '@/lib/blink'
+import { db, auth, notifications } from '@/lib/supabase'
 import { config } from '@/lib/config'
 import { showCertificateInNewTab, createCertificateRecord } from '@/lib/certificates'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -73,7 +73,7 @@ export default function UserManagementPage() {
 
   const loadUsers = async () => {
     try {
-      const data = await blink.db.users.list({
+      const data = await db.users.list({
         orderBy: { createdAt: 'desc' },
         limit: 100
       })
@@ -90,7 +90,7 @@ export default function UserManagementPage() {
 
   const loadPasswordResets = async () => {
     try {
-      const data = await blink.db.passwordResets.list({
+      const data = await db.passwordResets.list({
         orderBy: { createdAt: 'desc' },
         limit: 50
       })
@@ -102,7 +102,7 @@ export default function UserManagementPage() {
 
   const loadEnrollments = async () => {
     try {
-      const list = await blink.db.courseEnrollments.list({
+      const list = await db.courseEnrollments.list({
         orderBy: { enrolledAt: 'desc' },
         limit: 1000
       }) as any[]
@@ -153,7 +153,7 @@ export default function UserManagementPage() {
 
     setIsProcessing(true)
     try {
-      await blink.db.users.update(selectedUser.id, {
+      await db.users.update(selectedUser.id, {
         displayName: editForm.displayName,
         role: editForm.role,
         status: editForm.status,
@@ -163,7 +163,7 @@ export default function UserManagementPage() {
 
       // Update course enrollment based on edit form
       try {
-        const existing = await blink.db.courseEnrollments.list({
+        const existing = await db.courseEnrollments.list({
           where: { userId: selectedUser.id },
           orderBy: { createdAt: 'desc' },
           limit: 1
@@ -172,7 +172,7 @@ export default function UserManagementPage() {
         const desired = editForm.courseStatus
         if (desired === 'not_enrolled') {
           if (rec) {
-            await blink.db.courseEnrollments.delete(rec.id)
+            await db.courseEnrollments.delete(rec.id)
           }
         } else {
           const update: any = {
@@ -186,7 +186,7 @@ export default function UserManagementPage() {
               update.amountPaid = '39.99'
               update.stripePaymentIntent = `manual_${Date.now()}`
             }
-            await blink.db.courseEnrollments.create(update)
+            await db.courseEnrollments.create(update)
           } else {
             if (editForm.markPaid) {
               update.amountPaid = rec.amountPaid || '39.99'
@@ -195,7 +195,7 @@ export default function UserManagementPage() {
               update.amountPaid = rec.amountPaid || null
               update.stripePaymentIntent = rec.stripePaymentIntent || null
             }
-            await blink.db.courseEnrollments.update(rec.id, update)
+            await db.courseEnrollments.update(rec.id, update)
           }
         }
         await loadEnrollments()
@@ -288,7 +288,7 @@ export default function UserManagementPage() {
       // Edge-safe PBKDF2 password hashing (matches functions/auth implementation)
       const hashedPassword = await pbkdf2Hash(newPassword)
 
-      await blink.db.users.update(selectedUser.id, {
+      await db.users.update(selectedUser.id, {
         passwordHash: hashedPassword,
         password_hash: hashedPassword,
         updatedAt: new Date().toISOString(),
@@ -320,7 +320,7 @@ export default function UserManagementPage() {
 
     setIsProcessing(true)
     try {
-      await blink.db.users.delete(selectedUser.id)
+      await db.users.delete(selectedUser.id)
       
       toast({
         title: 'User deleted',
@@ -412,34 +412,21 @@ export default function UserManagementPage() {
           if (!recipient || !recipient.includes('@')) {
             throw new Error('Invalid recipient email')
           }
-          const res = await blink.notifications.email({
+          const res = await notifications.email({
             to: recipient,
-            from: 'marco@globalgoalsjam.org',
-            replyTo: 'marco@globalgoalsjam.org',
-            subject: 'A personal invite to the GGJ Certification Course',
-            html: `
-          <div style="font-family: Inter, Arial, sans-serif; max-width: 640px; margin: 0 auto;">
-            <div style="background: #00A651; padding: 20px; color: white; border-radius: 12px 12px 0 0;">
-              <h1 style="margin: 0;">Global Goals Jam</h1>
-            </div>
-            <div style="background: #ffffff; padding: 24px; border-radius: 0 0 12px 12px;">
-              <p>Hi ${firstName},</p>
-              <p><strong>Marco here!</strong> I’m really happy you’ve joined our community. Your energy and experience make the Global Goals Jam stronger.</p>
-              <p>I’d love to personally invite you to our Train‑the‑Trainer Certification Course. Enrolling directly supports the platform and unlocks all host tools and methods.</p>
-              <ul>
-                <li>Unlock the complete host toolkit: methods, templates, and session plans</li>
-                <li>Access exclusive brand assets and facilitation resources</li>
-                <li>Join the global network of certified GGJ hosts</li>
-              </ul>
-              <div style="text-align:center; margin: 28px 0;">
-                <a href="${enrollUrl}" style="background:#00A651; color:white; padding: 12px 22px; text-decoration:none; border-radius:8px; font-weight:600;">Enroll now</a>
+            from: 'Global Goals Jam <marco@globalgoalsjam.org>',
+            subject: 'You\'re Invited to the GGJ Host Certification Course!',
+            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: #00A651; padding: 24px; text-align: center;">
+                <h1 style="color: white; margin: 0;">You're Invited!</h1>
               </div>
-              <p>Thank you for supporting the platform and our work as a community. If you already enrolled, you can access your course dashboard anytime from the website.</p>
-              <p style="margin-top:24px;">Warmly,<br/>Marco — Global Goals Jam</p>
-            </div>
-          </div>
-        `,
-            text: `Hi ${firstName},\n\nMarco here! I’m really happy you’ve joined our community. I’d love to personally invite you to our Train-the-Trainer Certification Course. It supports the platform and unlocks all host tools and methods.\n\nEnroll now: ${enrollUrl}\n\nWarmly,\nMarco — Global Goals Jam`
+              <div style="padding: 24px;">
+                <p>Hi ${firstName},</p>
+                <p>You've been invited to enroll in the <strong>GGJ Host Certification Course</strong>.</p>
+                <p>This course will equip you with the skills and knowledge to host a Global Goals Jam in your community.</p>
+                <p><a href="${enrollUrl}" style="display:inline-block;padding:12px 24px;background:#00A651;color:white;text-decoration:none;border-radius:8px;font-weight:bold;">Enroll Now</a></p>
+              </div>
+            </div>`,
           })
           clearTimeout(timer)
           resolve(res)
@@ -491,10 +478,10 @@ export default function UserManagementPage() {
       let eventLocation = '—'
       let eventDate = new Date().toISOString()
       try {
-        const regs = await blink.db.eventRegistrations.list({ where: { participantId: user.id }, orderBy: { registrationDate: 'desc' }, limit: 1 }) as any[]
+        const regs = await db.eventRegistrations.list({ where: { participantId: user.id }, orderBy: { registrationDate: 'desc' }, limit: 1 }) as any[]
         const reg = regs?.[0]
         if (reg?.eventId) {
-          const evs = await blink.db.events.list({ where: { id: reg.eventId }, limit: 1 }) as any[]
+          const evs = await db.events.list({ where: { id: reg.eventId }, limit: 1 }) as any[]
           const ev = evs?.[0]
           if (ev) {
             eventTitle = ev.title || eventTitle
@@ -577,7 +564,7 @@ export default function UserManagementPage() {
       appAuth.set({ id: data.user.id, email: data.user.email, displayName: data.user.displayName, role: data.user.role })
 
       // Set token in Blink SDK so db/auth state aligns
-      try { blink.auth.setToken(data.token) } catch (_) {}
+      try { auth.setToken(data.token) } catch (_) {}
 
       setIsImpersonating(true)
       toast({ title: 'Now impersonating', description: `${user.email}` })
@@ -607,7 +594,7 @@ export default function UserManagementPage() {
       appAuth.set({ id: adminUser.id, email: adminUser.email, displayName: adminUser.displayName, role: adminUser.role })
 
       // Restore Blink SDK token as well
-      try { blink.auth.setToken(adminToken) } catch (_) {}
+      try { auth.setToken(adminToken) } catch (_) {}
 
       setIsImpersonating(false)
       toast({ title: 'Returned to admin session' })

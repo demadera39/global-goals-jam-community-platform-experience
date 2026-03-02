@@ -3,7 +3,7 @@ import { Quote } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Skeleton } from './ui/skeleton'
 import { AspectRatio } from './ui/aspect-ratio'
-import blink from '../lib/blink'
+// PDF text extraction is done via direct fetch (Blink extractFromUrl removed)
 
 interface ImpactInsightsProps {
   pdfUrl: string
@@ -127,8 +127,9 @@ export default function ImpactInsights({ pdfUrl, count = 3, title, images, start
       try {
         setLoading(true)
         setError(null)
-        const extracted = await (blink.data as any).extractFromUrl(safeUrl, { chunking: true, chunkSize: 2500 })
-        const text: string = Array.isArray(extracted) ? extracted.join('\n\n') : String(extracted || '')
+        // Fetch the PDF as text (basic extraction — full PDF parsing would need a library)
+        const response = await fetch(safeUrl)
+        const text: string = await response.text()
         const parsedAll = parseQuotesFromText(text, Math.max(count + startIndex, count * 2))
         const picked = parsedAll.slice(startIndex, startIndex + count)
 

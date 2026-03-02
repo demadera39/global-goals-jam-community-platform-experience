@@ -7,10 +7,10 @@ const Module6Content = () => {
   return (
     <div className="space-y-8">
       {/* Module Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8">
-        <Badge className="mb-4 bg-blue-600">Module 6</Badge>
+      <div className="bg-gradient-to-r from-pastel-sky to-pastel-violet/70 rounded-lg p-8">
+        <Badge className="mb-4 bg-sky-600">Module 6</Badge>
         <h1 className="text-4xl font-bold mb-4">Monitoring, Evaluation & Impact</h1>
-        <p className="text-xl text-gray-700">Learn to design monitoring frameworks, measure meaningful impact, and demonstrate the value of your Global Goals Jam to participants and stakeholders.</p>
+        <p className="text-xl text-foreground/80">Learn to design monitoring frameworks, measure meaningful impact, and demonstrate the value of your Global Goals Jam to participants and stakeholders.</p>
       </div>
 
       {/* Video Section - Removed empty video */}
@@ -18,27 +18,27 @@ const Module6Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-blue-600" />
+            <BarChart3 className="h-5 w-5 text-sky-600" />
             Why Monitoring & Evaluation Matters
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>Monitoring and evaluation (M&E) isn't just about proving impact—it's about improving impact. A good M&E framework helps you understand what's working, what isn't, and how to make your jams more effective over time.</p>
           
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-blue-900 mb-2">The Three Purposes of M&E</h4>
+          <div className="bg-pastel-sky p-4 rounded-lg">
+            <h4 className="font-semibold text-sky-900 mb-2">The Three Purposes of M&E</h4>
             <div className="grid md:grid-cols-3 gap-4 text-sm">
               <div>
-                <h5 className="font-medium text-blue-800 mb-1">Learning</h5>
-                <p className="text-blue-700">Understand what methods work best for different contexts and participants.</p>
+                <h5 className="font-medium text-sky-800 mb-1">Learning</h5>
+                <p className="text-sky-700">Understand what methods work best for different contexts and participants.</p>
               </div>
               <div>
-                <h5 className="font-medium text-blue-800 mb-1">Improving</h5>
-                <p className="text-blue-700">Use insights to continuously enhance your jam design and facilitation.</p>
+                <h5 className="font-medium text-sky-800 mb-1">Improving</h5>
+                <p className="text-sky-700">Use insights to continuously enhance your jam design and facilitation.</p>
               </div>
               <div>
-                <h5 className="font-medium text-blue-800 mb-1">Demonstrating</h5>
-                <p className="text-blue-700">Show stakeholders and funders the value and impact of your work.</p>
+                <h5 className="font-medium text-sky-800 mb-1">Demonstrating</h5>
+                <p className="text-sky-700">Show stakeholders and funders the value and impact of your work.</p>
               </div>
             </div>
           </div>
@@ -49,7 +49,7 @@ const Module6Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-green-600" />
+            <Target className="h-5 w-5 text-primary" />
             Defining Success for Your Jam
           </CardTitle>
         </CardHeader>
@@ -57,12 +57,12 @@ const Module6Content = () => {
           <p>Before you can measure impact, you need to be clear about what success looks like. Different stakeholders may have different definitions of success.</p>
           
           <div className="space-y-4">
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-semibold text-green-900 mb-2">Participant Success Metrics</h4>
+            <div className="p-4 bg-pastel-green rounded-lg">
+              <h4 className="font-semibold text-primary mb-2">Participant Success Metrics</h4>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <h5 className="font-medium mb-1">Learning Outcomes</h5>
-                  <ul className="space-y-1 text-green-800">
+                  <ul className="space-y-1 text-primary/80">
                     <li>• Increased understanding of SDGs</li>
                     <li>• New skills in collaboration and problem-solving</li>
                     <li>• Systems thinking capabilities</li>
@@ -71,7 +71,7 @@ const Module6Content = () => {
                 </div>
                 <div>
                   <h5 className="font-medium mb-1">Behavioral Changes</h5>
-                  <ul className="space-y-1 text-green-800">
+                  <ul className="space-y-1 text-primary/80">
                     <li>• Taking action on SDG-related issues</li>
                     <li>• Joining or starting initiatives</li>
                     <li>• Changing personal practices</li>
@@ -81,12 +81,12 @@ const Module6Content = () => {
               </div>
             </div>
             
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <h4 className="font-semibold text-purple-900 mb-2">Community Impact Metrics</h4>
+            <div className="p-4 bg-pastel-violet rounded-lg">
+              <h4 className="font-semibold text-violet-900 mb-2">Community Impact Metrics</h4>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <h5 className="font-medium mb-1">Network Effects</h5>
-                  <ul className="space-y-1 text-purple-800">
+                  <ul className="space-y-1 text-violet-800">
                     <li>• New partnerships formed</li>
                     <li>• Cross-sector collaborations</li>
                     <li>• Knowledge sharing between organizations</li>
@@ -95,7 +95,7 @@ const Module6Content = () => {
                 </div>
                 <div>
                   <h5 className="font-medium mb-1">Solution Implementation</h5>
-                  <ul className="space-y-1 text-purple-800">
+                  <ul className="space-y-1 text-violet-800">
                     <li>• Ideas turned into projects</li>
                     <li>• Funding secured for solutions</li>
                     <li>• Policy changes influenced</li>
@@ -105,7 +105,7 @@ const Module6Content = () => {
               </div>
             </div>
             
-            <div className="p-4 bg-orange-50 rounded-lg">
+            <div className="p-4 bg-pastel-amber/70 rounded-lg">
               <h4 className="font-semibold text-orange-900 mb-2">Organizational Success Metrics</h4>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div>
@@ -136,7 +136,7 @@ const Module6Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-indigo-600" />
+            <FileText className="h-5 w-5 text-violet-600" />
             A Simple M&E Framework
           </CardTitle>
         </CardHeader>
@@ -144,8 +144,8 @@ const Module6Content = () => {
           <p>You don't need a complex system to track meaningful impact. Here's a simple framework that captures the most important information:</p>
           
           <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 bg-indigo-50 rounded-lg">
-              <div className="w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-violet/70 rounded-lg">
+              <div className="w-8 h-8 bg-violet-500 text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
               <div>
                 <h4 className="font-semibold mb-1">Pre-Jam Baseline</h4>
                 <p className="text-sm text-muted-foreground mb-2">Understand where participants are starting from.</p>
@@ -158,8 +158,8 @@ const Module6Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-green-50 rounded-lg">
-              <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-green rounded-lg">
+              <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
               <div>
                 <h4 className="font-semibold mb-1">During-Jam Observations</h4>
                 <p className="text-sm text-muted-foreground mb-2">Track engagement and learning in real-time.</p>
@@ -172,8 +172,8 @@ const Module6Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-purple-50 rounded-lg">
-              <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-violet rounded-lg">
+              <div className="w-8 h-8 bg-violet-500 text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
               <div>
                 <h4 className="font-semibold mb-1">Post-Jam Immediate Feedback</h4>
                 <p className="text-sm text-muted-foreground mb-2">Capture immediate reactions and commitments.</p>
@@ -186,8 +186,8 @@ const Module6Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-orange-50 rounded-lg">
-              <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-amber/70 rounded-lg">
+              <div className="w-8 h-8 bg-amber-500 text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">4</div>
               <div>
                 <h4 className="font-semibold mb-1">Follow-up Impact Assessment</h4>
                 <p className="text-sm text-muted-foreground mb-2">Track longer-term changes and actions taken.</p>
@@ -298,7 +298,7 @@ const Module6Content = () => {
               </div>
             </div>
             
-            <div className="p-4 bg-yellow-50 rounded-lg">
+            <div className="p-4 bg-pastel-amber rounded-lg">
               <h4 className="font-semibold text-yellow-900 mb-2">Key Questions to Ask</h4>
               <ul className="text-sm space-y-1 text-yellow-800">
                 <li>• What worked best for different types of participants?</li>
@@ -316,7 +316,7 @@ const Module6Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-purple-600" />
+            <Award className="h-5 w-5 text-violet-600" />
             Reporting Your Impact
           </CardTitle>
         </CardHeader>
@@ -379,30 +379,30 @@ const Module6Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-red-600" />
+            <AlertCircle className="h-5 w-5 text-destructive" />
             Common M&E Pitfalls to Avoid
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-3">
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
               <p className="text-sm"><strong>Over-measuring:</strong> Don't burden participants with excessive surveys. Focus on the most important metrics.</p>
             </div>
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
               <p className="text-sm"><strong>Measuring too early:</strong> Real impact often takes time to emerge. Plan for longer-term follow-up.</p>
             </div>
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
               <p className="text-sm"><strong>Ignoring negative feedback:</strong> Criticism and challenges are valuable learning opportunities.</p>
             </div>
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
               <p className="text-sm"><strong>Focusing only on outputs:</strong> Count participants and activities, but also measure outcomes and impact.</p>
             </div>
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
               <p className="text-sm"><strong>Not using the data:</strong> Analysis is worthless if you don't use insights to improve future jams.</p>
             </div>
           </div>
@@ -413,34 +413,34 @@ const Module6Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-blue-600" />
+            <MapPin className="h-5 w-5 text-sky-600" />
             Key Takeaways
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-sky-600 mt-0.5" />
               <p className="text-sm"><strong>Start with clear success definitions:</strong> Know what you're trying to achieve before you start measuring.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-sky-600 mt-0.5" />
               <p className="text-sm"><strong>Keep it simple and focused:</strong> A few meaningful metrics are better than many superficial ones.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-sky-600 mt-0.5" />
               <p className="text-sm"><strong>Mix quantitative and qualitative data:</strong> Numbers tell you what happened; stories tell you why it matters.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-sky-600 mt-0.5" />
               <p className="text-sm"><strong>Plan for follow-up:</strong> Real impact often emerges weeks or months after your jam.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-sky-600 mt-0.5" />
               <p className="text-sm"><strong>Use insights to improve:</strong> M&E is most valuable when it helps you design better jams.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-sky-600 mt-0.5" />
               <p className="text-sm"><strong>Share your learnings:</strong> Help the global community by sharing what works and what doesn't.</p>
             </div>
           </div>

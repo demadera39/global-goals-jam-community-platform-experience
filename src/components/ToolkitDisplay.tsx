@@ -60,10 +60,10 @@ const sdgOptions = [
 ]
 
 const sprintIcons = [
-  { icon: Target, color: 'text-blue-500', bg: 'bg-blue-50' },
-  { icon: Lightbulb, color: 'text-yellow-500', bg: 'bg-yellow-50' },
-  { icon: Zap, color: 'text-purple-500', bg: 'bg-purple-50' },
-  { icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-50' }
+  { icon: Target, color: 'text-sky-600', bg: 'bg-pastel-sky' },
+  { icon: Lightbulb, color: 'text-amber-600', bg: 'bg-pastel-amber' },
+  { icon: Zap, color: 'text-violet-600', bg: 'bg-pastel-violet' },
+  { icon: TrendingUp, color: 'text-primary', bg: 'bg-pastel-green' }
 ]
 
 export default function ToolkitDisplay({
@@ -464,7 +464,7 @@ export default function ToolkitDisplay({
                   <div className={`w-80 ${locked ? 'relative' : ''}}`}
                   >
                     {locked && (
-                      <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-sm border border-dashed border-primary/30 rounded-md flex items-center justify-center text-sm">
+                      <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-sm border border-dashed border-primary/30 rounded-xl flex items-center justify-center text-sm">
                         <div className="text-center">
                           <div className="font-semibold mb-1">Locked preview</div>
                           <Button size="sm" onClick={() => onUnlock?.()} className="bg-primary-solid text-white hover:bg-primary/90">Unlock</Button>
@@ -496,7 +496,7 @@ export default function ToolkitDisplay({
                   {methodCardsToShow.map((card, index) => (
                     <div key={index} className="relative">
                       {locked && (
-                        <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-sm rounded-md flex items-center justify-center">
+                        <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-sm rounded-xl flex items-center justify-center">
                           <div className="text-center">
                             <div className="font-semibold mb-2">Locked preview</div>
                             <Button size="sm" onClick={() => onUnlock?.()} className="bg-primary-solid text-white hover:bg-primary/90">Unlock</Button>
@@ -536,7 +536,7 @@ export default function ToolkitDisplay({
                 {participantTemplatesToShow.map((template, index) => (
                   <div key={index} className="relative">
                     {locked && (
-                      <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-sm rounded-md flex items-center justify-center">
+                      <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-sm rounded-xl flex items-center justify-center">
                         <div className="text-center">
                           <div className="font-semibold mb-2">Locked preview</div>
                           <Button size="sm" onClick={() => onUnlock?.()} className="bg-primary-solid text-white hover:bg-primary/90">Unlock</Button>

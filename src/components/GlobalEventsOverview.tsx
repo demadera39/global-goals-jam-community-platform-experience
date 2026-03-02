@@ -166,13 +166,13 @@ export default function GlobalEventsOverview() {
   }
 
   return (
-    <section className="py-12 bg-gradient-to-b from-background to-muted/20">
+    <section className="py-20 bg-section-alt">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-end justify-between mb-8">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">Global Impact</p>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+            <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-1">Global Impact</p>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
               Creating <span className="text-primary-solid">Global Impact</span> Together
             </h2>
             <p className="text-sm text-muted-foreground mt-2">
@@ -188,82 +188,82 @@ export default function GlobalEventsOverview() {
 
         {/* Global Impact Stats */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="overflow-hidden border-primary/20 hover:shadow-lg transition-shadow">
+          <Card variant="stat" className="overflow-hidden bg-pastel-green">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Global Events</p>
+                  <p className="text-sm text-primary/80 dark:text-green-300 mb-1">Global Events</p>
                   <p className={cn(
-                    "text-4xl font-bold text-primary-solid transition-all duration-1000",
+                    "font-display text-4xl font-extrabold text-primary/90 dark:text-green-200 transition-all duration-1000",
                     animateNumbers ? "opacity-100 scale-100" : "opacity-0 scale-95"
                   )}>
                     ~55
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-primary dark:text-green-400 mt-2">
                     Events per year
                   </p>
                 </div>
-                <Calendar className="w-8 h-8 text-primary/30" />
+                <Calendar className="w-8 h-8 text-primary/40" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden border-primary/20 hover:shadow-lg transition-shadow">
+          <Card variant="stat" className="overflow-hidden bg-pastel-amber">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Countries</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 mb-1">Countries</p>
                   <p className={cn(
-                    "text-4xl font-bold text-primary-solid transition-all duration-1000 delay-100",
+                    "font-display text-4xl font-extrabold text-amber-800 dark:text-amber-200 transition-all duration-1000 delay-100",
                     animateNumbers ? "opacity-100 scale-100" : "opacity-0 scale-95"
                   )}>
                     20+
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
                     Countries reached
                   </p>
                 </div>
-                <Globe className="w-8 h-8 text-primary/30" />
+                <Globe className="w-8 h-8 text-amber-500/40" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden border-primary/20 hover:shadow-lg transition-shadow">
+          <Card variant="stat" className="overflow-hidden bg-pastel-rose">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Changemakers</p>
+                  <p className="text-sm text-rose-700 dark:text-rose-300 mb-1">Changemakers</p>
                   <p className={cn(
-                    "text-4xl font-bold text-primary-solid transition-all duration-1000 delay-200",
+                    "font-display text-4xl font-extrabold text-rose-800 dark:text-rose-200 transition-all duration-1000 delay-200",
                     animateNumbers ? "opacity-100 scale-100" : "opacity-0 scale-95"
                   )}>
                     ~2,750
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-2">
                     Changemakers yearly
                   </p>
                 </div>
-                <Users className="w-8 h-8 text-primary/30" />
+                <Users className="w-8 h-8 text-rose-500/40" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden border-primary/20 hover:shadow-lg transition-shadow">
+          <Card variant="stat" className="overflow-hidden bg-pastel-violet">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Cities</p>
+                  <p className="text-sm text-violet-700 dark:text-violet-300 mb-1">Cities</p>
                   <p className={cn(
-                    "text-4xl font-bold text-primary-solid transition-all duration-1000 delay-300",
+                    "font-display text-4xl font-extrabold text-violet-800 dark:text-violet-200 transition-all duration-1000 delay-300",
                     animateNumbers ? "opacity-100 scale-100" : "opacity-0 scale-95"
                   )}>
                     50+
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs text-violet-600 dark:text-violet-400 mt-2">
                     Cities engaged
                   </p>
                 </div>
-                <MapPin className="w-8 h-8 text-primary/30" />
+                <MapPin className="w-8 h-8 text-violet-500/40" />
               </div>
             </CardContent>
           </Card>
@@ -301,7 +301,7 @@ export default function GlobalEventsOverview() {
                         <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/5" />
                       )}
                       <div className="absolute top-2 right-2">
-                        <Badge variant={isPast ? "secondary" : "default"} className="bg-white/90 text-foreground">
+                        <Badge variant={isPast ? "secondary" : "default"} className="bg-card/90 text-foreground">
                           {isPast ? 'Completed' : 'Upcoming'}
                         </Badge>
                       </div>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Button } from './ui/button'
 import { X, Star, ArrowRight } from 'lucide-react'
 import { getUserProfile, UserProfile, COURSE_STATUS } from '../lib/userStatus'
-import blink from '../lib/blink'
+import { auth } from '../lib/supabase'
 
 interface EnrollmentNudgeBannerProps {
   onDismiss?: () => void
@@ -33,7 +33,7 @@ export default function EnrollmentNudgeBanner({ onDismiss }: EnrollmentNudgeBann
       }
     }
 
-    const unsubscribe = blink.auth.onAuthStateChanged(() => {
+    const unsubscribe = auth.onAuthStateChanged(() => {
       checkUserStatus()
     })
 
@@ -90,7 +90,7 @@ export default function EnrollmentNudgeBanner({ onDismiss }: EnrollmentNudgeBann
   const { title, message, cta } = getNudgeMessage()
 
   return (
-    <div className="fixed top-16 left-0 right-0 z-40 bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg">
+    <div className="fixed top-16 left-0 right-0 z-40 bg-gradient-to-r from-primary to-primary/90 text-white shadow-card">
       <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 flex-1">
@@ -108,7 +108,7 @@ export default function EnrollmentNudgeBanner({ onDismiss }: EnrollmentNudgeBann
               asChild
               variant="secondary"
               size="sm"
-              className="bg-white text-primary hover:bg-gray-100 font-medium"
+              className="bg-white text-primary hover:bg-muted font-medium"
             >
               <Link to="/course/enroll" className="flex items-center space-x-1">
                 <span>{cta}</span>

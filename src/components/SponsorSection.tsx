@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Card } from './ui/card'
-import { blink, safeDbCall } from '../lib/blink'
+import { db, safeDbCall } from '../lib/supabase'
 
 interface Sponsor {
   id: string
@@ -89,14 +89,15 @@ const SponsorSection = () => {
           return
         }
 
-        const donations = await safeDbCall(() => (blink.db as any).donations.list({
-          where: {
-            status: 'completed',
-            donorName: { '!=': null },
-            formCompletedAt: { '!=': null }
-          },
+        const allDonations = await safeDbCall(() => (db as any).donations.list({
+          where: { status: 'completed' },
           orderBy: { amount: 'desc' }
         }))
+
+        // Filter in memory: only sponsors who completed the form and provided a name
+        const donations = (allDonations || []).filter(
+          (d: any) => d.donorName && d.formCompletedAt
+        )
 
         if (cancelled) return
         setSponsors(donations)
@@ -208,7 +209,7 @@ const SponsorSection = () => {
             {regularSponsors.length > visibleRegular.length && (
               <div className="mt-6 text-center">
                 <button
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:opacity-95"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-soft text-primary-foreground bg-primary hover:opacity-95"
                   onClick={() => setShowAll(!showAll)}
                 >
                   {showAll ? 'Show less' : `View all ${regularSponsors.length} supporters`}

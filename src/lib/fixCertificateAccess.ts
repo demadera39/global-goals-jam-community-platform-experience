@@ -3,7 +3,7 @@
  * but have sync issues with their enrollment status
  */
 
-import { blink } from './blink';
+import { db } from './supabase';
 
 export interface CertificateFixResult {
   userId: string;
@@ -24,7 +24,7 @@ export async function fixUserCertificateAccess(email: string): Promise<Certifica
   try {
     // 1. Find user by email (case-insensitive search by fetching all users and filtering)
     const normalizedEmail = email.trim().toLowerCase();
-    const allUsers = await blink.db.users.list({
+    const allUsers = await db.users.list({
       limit: 1000 // Get all users to search case-insensitively
     });
 
@@ -39,7 +39,7 @@ export async function fixUserCertificateAccess(email: string): Promise<Certifica
     const user = users[0];
 
     // 2. Find their enrollment(s)
-    const enrollments = await blink.db.courseEnrollments.list({
+    const enrollments = await db.courseEnrollments.list({
       where: { userId: user.id },
       orderBy: { updatedAt: 'desc' },
       limit: 1
@@ -63,7 +63,7 @@ export async function fixUserCertificateAccess(email: string): Promise<Certifica
 
     // 4. Check course progress records for reconciliation
     try {
-      const allModules = await blink.db.courseModules.list({
+      const allModules = await db.courseModules.list({
         orderBy: { moduleNumber: 'asc' }
       });
 
@@ -72,7 +72,7 @@ export async function fixUserCertificateAccess(email: string): Promise<Certifica
         moduleIdToNumber[m.id] = String(m.moduleNumber);
       });
 
-      const progress = await blink.db.courseProgress.list({
+      const progress = await db.courseProgress.list({
         where: { userId: user.id, enrollmentId: enrollment.id }
       });
 
@@ -92,7 +92,7 @@ export async function fixUserCertificateAccess(email: string): Promise<Certifica
     }
 
     // 5. Update enrollment to completed status
-    await blink.db.courseEnrollments.update(enrollment.id, {
+    await db.courseEnrollments.update(enrollment.id, {
       status: 'completed',
       completedModules: JSON.stringify(completedModules),
       certificateIssuedAt: enrollment.certificateIssuedAt || new Date().toISOString(),
@@ -133,7 +133,7 @@ export async function fixAllPendingCertificates(): Promise<CertificateFixResult[
 
   try {
     // Get all enrollments
-    const enrollments = await blink.db.courseEnrollments.list({
+    const enrollments = await db.courseEnrollments.list({
       limit: 1000
     });
 
@@ -155,7 +155,7 @@ export async function fixAllPendingCertificates(): Promise<CertificateFixResult[
       // Check if they have 6+ modules completed
       if (completedModules.length >= 6) {
         // Get user info
-        const users = await blink.db.users.list({
+        const users = await db.users.list({
           where: { id: enrollment.userId },
           limit: 1
         });
@@ -165,7 +165,7 @@ export async function fixAllPendingCertificates(): Promise<CertificateFixResult[
           const previousStatus = enrollment.status || 'unknown';
 
           // Update to completed
-          await blink.db.courseEnrollments.update(enrollment.id, {
+          await db.courseEnrollments.update(enrollment.id, {
             status: 'completed',
             certificateIssuedAt: enrollment.certificateIssuedAt || new Date().toISOString(),
             updatedAt: new Date().toISOString()

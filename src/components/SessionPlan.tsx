@@ -41,9 +41,9 @@ interface SessionPlanProps {
 }
 
 const energyConfig = {
-  low: { color: 'bg-blue-100 text-blue-800', icon: '🧘' },
-  medium: { color: 'bg-yellow-100 text-yellow-800', icon: '⚡' },
-  high: { color: 'bg-red-100 text-red-800', icon: '🔥' }
+  low: { color: 'bg-pastel-sky text-sky-800', icon: '🧘' },
+  medium: { color: 'bg-pastel-amber text-amber-800', icon: '⚡' },
+  high: { color: 'bg-pastel-rose text-red-800', icon: '🔥' }
 }
 
 const phaseIcons = {
@@ -163,19 +163,19 @@ export default function SessionPlan({
               <h3 className="font-semibold text-foreground mb-2">Pre-Session Checklist</h3>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <CheckCircle className="w-4 h-4 text-primary" />
                   Room setup with moveable furniture
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <CheckCircle className="w-4 h-4 text-primary" />
                   Materials and supplies ready
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <CheckCircle className="w-4 h-4 text-primary" />
                   Digital tools tested and accessible
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <CheckCircle className="w-4 h-4 text-primary" />
                   Participant list and name tags
                 </li>
               </ul>
@@ -205,11 +205,11 @@ export default function SessionPlan({
                   </p>
                 </div>
                 {day._adjusted ? (
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-900 border-yellow-300">
+                  <Badge variant="secondary" className="bg-pastel-amber text-amber-900 border-amber-300">
                     Schedule normalized to 09:00–17:00
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="bg-green-100 text-green-900 border-green-300">
+                  <Badge variant="secondary" className="bg-pastel-green text-primary/90 border-primary/30">
                     Schedule valid (480 min)
                   </Badge>
                 )}
@@ -289,9 +289,9 @@ export default function SessionPlan({
 
                         {/* Facilitator Notes */}
                         {activity.facilitatorNotes.length > 0 && (
-                          <div className="bg-yellow-50 p-3 rounded-lg">
+                          <div className="bg-pastel-amber p-3 rounded-lg">
                             <div className="flex items-center gap-2 mb-2">
-                              <AlertCircle className="w-4 h-4 text-yellow-600" />
+                              <AlertCircle className="w-4 h-4 text-amber-600" />
                               <h5 className="text-xs font-semibold text-yellow-800">
                                 Facilitator Notes:
                               </h5>

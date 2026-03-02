@@ -52,7 +52,8 @@ import {
 } from 'lucide-react'
 import SupportersAdmin from '../components/SupportersAdmin'
 import CourseManagement from '../components/CourseManagement'
-import blink, { getFullUser } from '../lib/blink'
+import { db } from '../lib/supabase'
+import { getFullUser } from '../lib/userProfile'
 import { config } from '../lib/config'
 import toast from 'react-hot-toast'
 import { invalidateEventsCache } from '../hooks/usePublishedEvents'
@@ -144,10 +145,10 @@ export default function AdminDashboard() {
       }
 
       const [usersData, eventsData, applicationsData, mediaData] = await Promise.all([
-        blink.db.users.list({ orderBy: { createdAt: 'desc' } }),
-        blink.db.events.list({ orderBy: { createdAt: 'desc' } }),
-        blink.db.hostApplications.list({ orderBy: { createdAt: 'desc' } }),
-        blink.db.media.list({ orderBy: { createdAt: 'desc' } })
+        db.users.list({ orderBy: { createdAt: 'desc' } }),
+        db.events.list({ orderBy: { createdAt: 'desc' } }),
+        db.hostApplications.list({ orderBy: { createdAt: 'desc' } }),
+        db.media.list({ orderBy: { createdAt: 'desc' } })
       ])
 
       setUsers(usersData || [])
@@ -164,7 +165,7 @@ export default function AdminDashboard() {
 
   const approveHostApplication = async (applicationId: string) => {
     try {
-      await blink.db.hostApplications.update(applicationId, {
+      await db.hostApplications.update(applicationId, {
         status: 'approved',
         reviewedBy: currentUser?.id,
         reviewedAt: new Date().toISOString()
@@ -172,7 +173,7 @@ export default function AdminDashboard() {
       
       const application = hostApplications.find(app => app.id === applicationId)
       if (application?.userId) {
-        await blink.db.users.update(application.userId, {
+        await db.users.update(application.userId, {
           role: 'host',
           status: 'approved'
         })
@@ -188,7 +189,7 @@ export default function AdminDashboard() {
 
   const rejectHostApplication = async (applicationId: string) => {
     try {
-      await blink.db.hostApplications.update(applicationId, {
+      await db.hostApplications.update(applicationId, {
         status: 'rejected',
         reviewedBy: currentUser?.id,
         reviewedAt: new Date().toISOString()
@@ -203,7 +204,7 @@ export default function AdminDashboard() {
 
   const updateEventStatus = async (eventId: string, status: string) => {
     try {
-      await blink.db.events.update(eventId, { status })
+      await db.events.update(eventId, { status })
       // Optimistic local update
       setEvents(prev => prev.map(e => e.id === eventId ? { ...e, status } : e))
       invalidateEventsCache()
@@ -293,11 +294,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b bg-white">
+      <div className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+              <h1 className="text-3xl font-display font-bold text-foreground">Admin Dashboard</h1>
               <p className="text-muted-foreground mt-1">
                 Global Goals Jam Platform Administration
               </p>
@@ -364,52 +365,52 @@ export default function AdminDashboard() {
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
+              <Card variant="stat" className="bg-pastel-green">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary">{stats.totalUsers}</div>
+                  <div className="text-2xl font-display font-bold text-foreground">{stats.totalUsers}</div>
                   <p className="text-xs text-muted-foreground">
                     {stats.recentSignups} new this week
                   </p>
                 </CardContent>
               </Card>
-              
-              <Card>
+
+              <Card variant="stat" className="bg-pastel-amber">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Active Hosts</CardTitle>
                   <Shield className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{stats.totalHosts}</div>
+                  <div className="text-2xl font-display font-bold text-foreground">{stats.totalHosts}</div>
                   <p className="text-xs text-muted-foreground">
                     {stats.pendingApplications} pending approval
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card variant="stat" className="bg-pastel-violet">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Events</CardTitle>
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{stats.totalEvents}</div>
+                  <div className="text-2xl font-display font-bold text-foreground">{stats.totalEvents}</div>
                   <p className="text-xs text-muted-foreground">
                     {stats.publishedEvents} published
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card variant="stat" className="bg-pastel-sky">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Media Files</CardTitle>
                   <ImageIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-purple-600">{stats.totalMedia}</div>
+                  <div className="text-2xl font-display font-bold text-foreground">{stats.totalMedia}</div>
                   <p className="text-xs text-muted-foreground">
                     Uploaded content
                   </p>
@@ -510,7 +511,7 @@ export default function AdminDashboard() {
 
                   <div className="space-y-2">
                     {users.slice(0, 10).map(user => (
-                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-xl">
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -592,7 +593,7 @@ export default function AdminDashboard() {
                         return matchesSearch && matchesStatus
                       })
                       .map(event => (
-                      <div key={event.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={event.id} className="flex items-center justify-between p-4 border rounded-xl">
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
                             <Calendar className="w-5 h-5 text-primary" />
@@ -678,7 +679,7 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="space-y-4">
                       {hostApplications.filter(app => app.status === 'pending').map(application => (
-                        <div key={application.id} className="p-6 border rounded-lg space-y-4">
+                        <div key={application.id} className="p-6 border rounded-xl space-y-4">
                           <div className="flex items-start justify-between">
                             <div>
                               <h3 className="font-semibold">{application.email}</h3>
@@ -705,7 +706,7 @@ export default function AdminDashboard() {
                           <div className="flex gap-3">
                             <Button 
                               onClick={() => approveHostApplication(application.id)}
-                              className="bg-green-600 hover:bg-green-700"
+                              className="bg-primary hover:bg-primary/80"
                             >
                               <CheckCircle className="w-4 h-4 mr-2" />
                               Approve
@@ -762,11 +763,11 @@ export default function AdminDashboard() {
                         <CardContent className="p-4">
                           <div className="flex items-center gap-3 mb-3">
                             {file.fileType.startsWith('image/') ? (
-                              <ImageIcon className="w-8 h-8 text-blue-500" />
+                              <ImageIcon className="w-8 h-8 text-sky-500" />
                             ) : file.fileType.startsWith('video/') ? (
-                              <Video className="w-8 h-8 text-green-500" />
+                              <Video className="w-8 h-8 text-primary" />
                             ) : (
-                              <FileText className="w-8 h-8 text-gray-500" />
+                              <FileText className="w-8 h-8 text-muted-foreground" />
                             )}
                             <div className="flex-1">
                               <p className="font-medium text-sm">{file.title}</p>

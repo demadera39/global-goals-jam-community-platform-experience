@@ -1,4 +1,4 @@
-import blink, { safeDbCall } from './blink'
+import { db, safeDbCall, supabase } from './supabase'
 import { config } from './config'
 
 // Simple timeout helper to avoid indefinite hangs
@@ -12,7 +12,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 // Define clear user status hierarchy
 export const USER_ROLES = {
   PARTICIPANT: 'participant',
-  HOST: 'host', 
+  HOST: 'host',
   ADMIN: 'admin'
 } as const
 
@@ -53,48 +53,40 @@ export interface UserProfile {
 export async function getUserProfile(userId?: string): Promise<UserProfile | null> {
   try {
     let targetUserId = userId
-    
-    // If no userId provided, try to get from Blink auth; if that fails, fall back to our local JWT/user
+
+    // If no userId provided, get from Supabase auth
     if (!targetUserId) {
       try {
-        const authUser = await withTimeout(blink.auth.me(), 1500).catch(() => null)
+        const { data: { user: authUser } } = await withTimeout(supabase.auth.getUser(), 1500)
         targetUserId = authUser?.id
-      } catch (authError) {
-        // Try to extract user ID from stored JWT
-        let token = localStorage.getItem('blink-token') || sessionStorage.getItem('blink-token')
-        if (!token) {
-          token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || ''
-        }
+      } catch {
+        // Try stored auth token
+        const token = localStorage.getItem('auth_token') || ''
         if (token) {
           try {
             const part = token.split('.')[1] || ''
-            // Decode base64url safely: replace -/_ and pad to length % 4 === 0
             const b64 = part.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((part.length + 3) % 4)
             const payload = JSON.parse(atob(b64))
             targetUserId = payload.userId || payload.sub || payload.id
-          } catch (tokenError) {
-            console.warn('Failed to parse custom JWT token:', tokenError)
+          } catch {
+            // ignore parse errors
           }
         }
       }
     }
 
-    // If we still don't have a userId, try our stored user and return a minimal approved profile so basic pages (e.g., profile) work
     if (!targetUserId) {
       return null
     }
 
-    // Proceed with DB calls; custom auth does not rely on Blink auth state
-    
     // Get user record
-    const users = await safeDbCall(() => blink.db.users.list({
+    const users = await safeDbCall(() => db.users.list({
       where: { id: targetUserId },
       limit: 1
     }))
-    
+
     let user = users?.[0]
-    
-    // If DB lookup fails to find a user, fall back to stored user (minimal profile)
+
     if (!user) {
       return null
     }
@@ -104,45 +96,44 @@ export async function getUserProfile(userId?: string): Promise<UserProfile | nul
       const emailLc = String(user.email || '').toLowerCase()
       const allow = Array.isArray(config.admins?.emails) ? config.admins.emails.map((e: string) => e.toLowerCase()) : []
       if (emailLc && allow.includes(emailLc) && user.role !== 'admin') {
-        await safeDbCall(() => (blink.db as any).users.update(user.id, { role: 'admin', status: 'approved', updatedAt: new Date().toISOString() }))
-        const refreshed = await safeDbCall(() => (blink.db as any).users.list({ where: { id: user.id }, limit: 1 }))
+        await safeDbCall(() => db.users.update(user.id, { role: 'admin', status: 'approved', updatedAt: new Date().toISOString() }))
+        const refreshed = await safeDbCall(() => db.users.list({ where: { id: user.id }, limit: 1 }))
         user = refreshed?.[0] ?? user
       }
     } catch (e) {
       console.warn('getUserProfile: allowlist promotion failed', e)
     }
-    
+
     // Get latest course enrollment
-    const enrollments = await safeDbCall(() => blink.db.courseEnrollments.list({
+    const enrollments = await safeDbCall(() => db.courseEnrollments.list({
       where: { userId: targetUserId },
       orderBy: { enrolledAt: 'desc' },
       limit: 1
     }))
-    
+
     const enrollment = enrollments?.[0]
-    
+
     // Determine course status and payment status
     let courseStatus: CourseStatus = COURSE_STATUS.NOT_ENROLLED
     let isPaid = false
-    
+
     if (enrollment) {
       courseStatus = enrollment.status === 'completed' ? COURSE_STATUS.COMPLETED :
                     enrollment.status === 'active' ? COURSE_STATUS.ACTIVE :
                     enrollment.status === 'pending' ? COURSE_STATUS.PENDING :
                     COURSE_STATUS.NOT_ENROLLED
-      
-      // Treat ACTIVE/COMPLETED enrollment as paid even if amountPaid is missing
+
       isPaid = !!(
         (enrollment.amountPaid && parseFloat(enrollment.amountPaid) > 0) ||
         enrollment.status === 'active' ||
         enrollment.status === 'completed'
       )
     }
-    
+
     // ROLE-ONLY host eligibility
     const hostEligible = user.role === 'host' || user.role === 'admin'
-    
-    return {
+
+    const profile: UserProfile = {
       id: user.id,
       email: user.email,
       displayName: user.displayName,
@@ -154,8 +145,15 @@ export async function getUserProfile(userId?: string): Promise<UserProfile | nul
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     }
+
+    // Cache profile so ProtectedRoute timeout fallback can use it
+    try {
+      localStorage.setItem('ggj_user_profile', JSON.stringify(profile))
+    } catch {}
+
+    return profile
   } catch (error: any) {
-    const isNetwork = error?.name === 'BlinkNetworkError' || error?.status === 0 || error?.code === 'NETWORK_ERROR'
+    const isNetwork = error?.status === 0 || error?.code === 'NETWORK_ERROR'
 
     if (isNetwork) {
       console.warn('Network unavailable while getting user profile. Returning null.')
@@ -172,30 +170,25 @@ export async function getUserProfile(userId?: string): Promise<UserProfile | nul
 export async function updateUserRole(userId: string, newRole: UserRole, updatedBy?: string): Promise<boolean> {
   try {
     console.log(`Attempting to update user ${userId} role to ${newRole}`)
-    
-    // First, check if user exists
-    const existingUsers = await safeDbCall(() => blink.db.users.list({
+
+    const existingUsers = await safeDbCall(() => db.users.list({
       where: { id: userId },
       limit: 1
     }))
-    
+
     if (!existingUsers || existingUsers.length === 0) {
       console.error(`User ${userId} not found`)
       return false
     }
-    
+
     console.log(`User ${userId} found, current role: ${existingUsers[0].role}`)
-    
-    // Update the user
-    const result = await safeDbCall(() => blink.db.users.update(userId, {
+
+    await safeDbCall(() => db.users.update(userId, {
       role: newRole,
       status: USER_STATUS.APPROVED,
       updatedAt: new Date().toISOString()
     }))
-    
-    console.log(`Update result:`, result)
-    
-    // Log role change
+
     console.log(`User ${userId} role updated to ${newRole} by ${updatedBy || 'system'}`)
     return true
   } catch (error) {
@@ -209,32 +202,28 @@ export async function updateUserRole(userId: string, newRole: UserRole, updatedB
  */
 export function canAccessFeature(profile: UserProfile | null, feature: string): boolean {
   if (!profile) return false
-  
+
   switch (feature) {
     case 'forum':
     case 'profile':
-      // Basic features - available to all approved users
       return profile.status === USER_STATUS.APPROVED
-    
+
     case 'host_dashboard':
-      // ROLE-ONLY gating: host or admin immediately get access
       return profile.role === USER_ROLES.HOST || profile.role === USER_ROLES.ADMIN
     case 'create_events':
     case 'manage_events':
-      // ROLE-ONLY gating: host or admin can create/manage regardless of status
       return (profile.role === USER_ROLES.HOST || profile.role === USER_ROLES.ADMIN)
-    
+
     case 'admin_dashboard':
     case 'approve_hosts':
     case 'manage_users':
-      // Admin features - admin only
       return profile.role === USER_ROLES.ADMIN && profile.status === USER_STATUS.APPROVED
-    
+
     case 'course_content':
-      // Course access - allow admins, or any user with an active/completed enrollment
       if (profile.role === USER_ROLES.ADMIN) return true
+      if (profile.role === USER_ROLES.HOST) return true // hosts have already qualified
       return (profile.courseStatus === COURSE_STATUS.ACTIVE || profile.courseStatus === COURSE_STATUS.COMPLETED)
-    
+
     default:
       return false
   }
@@ -257,8 +246,7 @@ export function getUserStatusSummary(profile: UserProfile | null): {
       variant: 'secondary'
     }
   }
-  
-  // Admin users
+
   if (profile.role === USER_ROLES.ADMIN) {
     return {
       status: 'Administrator',
@@ -267,8 +255,7 @@ export function getUserStatusSummary(profile: UserProfile | null): {
       variant: 'default'
     }
   }
-  
-  // Host users
+
   if (profile.role === USER_ROLES.HOST && profile.hostEligible) {
     return {
       status: 'Certified Host',
@@ -277,8 +264,7 @@ export function getUserStatusSummary(profile: UserProfile | null): {
       variant: 'default'
     }
   }
-  
-  // Users with completed course but not host role yet
+
   if (profile.courseStatus === COURSE_STATUS.COMPLETED && profile.role === USER_ROLES.PARTICIPANT) {
     return {
       status: 'Course Complete',
@@ -287,8 +273,7 @@ export function getUserStatusSummary(profile: UserProfile | null): {
       variant: 'default'
     }
   }
-  
-  // Users with active course enrollment
+
   if (profile.courseStatus === COURSE_STATUS.ACTIVE) {
     return {
       status: 'Course In Progress',
@@ -297,8 +282,7 @@ export function getUserStatusSummary(profile: UserProfile | null): {
       variant: 'secondary'
     }
   }
-  
-  // Users with pending payment
+
   if (profile.courseStatus === COURSE_STATUS.PENDING) {
     return {
       status: 'Payment Pending',
@@ -307,8 +291,7 @@ export function getUserStatusSummary(profile: UserProfile | null): {
       variant: 'secondary'
     }
   }
-  
-  // Regular participants
+
   if (profile.role === USER_ROLES.PARTICIPANT) {
     return {
       status: 'Community Member',
@@ -321,8 +304,7 @@ export function getUserStatusSummary(profile: UserProfile | null): {
       variant: 'secondary'
     }
   }
-  
-  // Fallback
+
   return {
     status: 'Pending Approval',
     message: 'Account under review',
@@ -338,20 +320,18 @@ export async function checkAndUpgradeUser(userId: string): Promise<boolean> {
   try {
     const profile = await getUserProfile(userId)
     if (!profile) return false
-    
-    // If user has paid enrollment (completed OR active) but is still participant, upgrade to host
-    // Active status means they've paid and started the course, which qualifies them for host privileges
-    if (profile.role === USER_ROLES.PARTICIPANT && 
+
+    if (profile.role === USER_ROLES.PARTICIPANT &&
         (profile.courseStatus === COURSE_STATUS.COMPLETED || profile.courseStatus === COURSE_STATUS.ACTIVE) &&
         profile.isPaid) {
-      
+
       const success = await updateUserRole(userId, USER_ROLES.HOST, 'auto-upgrade')
       if (success) {
         console.log(`Auto-upgraded user ${userId} to host after course enrollment/completion`)
       }
       return success
     }
-    
+
     return false
   } catch (error) {
     console.error('Error checking for user upgrade:', error)
@@ -369,27 +349,26 @@ export async function getAllUsersWithStatus(filters?: {
   limit?: number
 }): Promise<UserProfile[]> {
   try {
-    const users = await safeDbCall(() => blink.db.users.list({
+    const users = await safeDbCall(() => db.users.list({
       orderBy: { createdAt: 'desc' },
       limit: filters?.limit || 100
     }))
-    
+
     if (!users?.length) return []
-    
+
     const profiles: UserProfile[] = []
-    
+
     for (const user of users) {
       const profile = await getUserProfile(user.id)
       if (profile) {
-        // Apply filters
         if (filters?.role && profile.role !== filters.role) continue
         if (filters?.status && profile.status !== filters.status) continue
         if (filters?.courseStatus && profile.courseStatus !== filters.courseStatus) continue
-        
+
         profiles.push(profile)
       }
     }
-    
+
     return profiles
   } catch (error) {
     console.error('Error getting users with status:', error)

@@ -34,7 +34,7 @@ export default function HostAssets() {
       {/* Sections */}
       <div className="grid md:grid-cols-3 gap-6">
         {/* Brand */}
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-soft transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-primary" /> Brand Assets
@@ -58,7 +58,7 @@ export default function HostAssets() {
         </Card>
 
         {/* Instruction Guide */}
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-soft transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-primary" /> Instruction Guide
@@ -82,7 +82,7 @@ export default function HostAssets() {
         </Card>
 
         {/* Organizer Booklet */}
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-soft transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-primary" /> Organizer Booklet

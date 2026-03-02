@@ -92,7 +92,7 @@ export default function EventsSpotlight() {
               
               return (
                 <Link key={e.id} to={`/events/${e.id}`} className="group">
-                  <Card className={`h-full overflow-hidden transition-all group-hover:shadow-md ${isPast ? 'opacity-60 grayscale' : ''}`}>
+                  <Card className={`h-full overflow-hidden transition-all group-hover:shadow-soft ${isPast ? 'opacity-60 grayscale' : ''}`}>
                     <div className="h-28">
                       {e.coverImage ? (
                         <img src={e.coverImage} alt={e.title} className="w-full h-full object-cover" loading="lazy" />

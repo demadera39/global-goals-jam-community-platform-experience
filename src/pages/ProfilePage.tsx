@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useToast } from '@/hooks/use-toast'
-import blink from '@/lib/blink'
+import { db, auth } from '@/lib/supabase'
 import { appAuth } from '@/lib/simpleAuth'
 import EnrollmentNudgeBanner from '@/components/EnrollmentNudgeBanner'
 
@@ -44,7 +44,7 @@ export default function ProfilePage() {
         setEmail(stored.email)
         setRole(stored.role || 'participant')
         // Load DB record (best-effort)
-        const rows = await blink.db.users.list({ where: { id: stored.id }, limit: 1 })
+        const rows = await db.users.list({ where: { id: stored.id }, limit: 1 })
         const row = rows?.[0]
         setForm({
           displayName: row?.displayName || stored.displayName || '',
@@ -54,7 +54,7 @@ export default function ProfilePage() {
         })
         // Check active course enrollment
         try {
-          const enrollments = await blink.db.courseEnrollments.list({ where: { userId: stored.id }, limit: 1 })
+          const enrollments = await db.courseEnrollments.list({ where: { userId: stored.id }, limit: 1 })
           const e = enrollments?.[0]
           setHasActiveCourse(!!(e && (e.status === 'active' || e.status === 'completed')))
         } catch (_) {
@@ -106,7 +106,7 @@ export default function ProfilePage() {
     if (!userId) return
     setSaving(true)
     try {
-      await blink.db.users.update(userId, {
+      await db.users.update(userId, {
         displayName: form.displayName?.trim() || undefined,
         bio: form.bio?.trim() || undefined,
         location: form.location?.trim() || undefined,
@@ -134,18 +134,18 @@ export default function ProfilePage() {
       <EnrollmentNudgeBanner />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">My Profile</h1>
+          <h1 className="text-3xl font-display font-bold">My Profile</h1>
           <p className="text-muted-foreground">Manage your name, photo, and details used across the platform.</p>
           {hasActiveCourse && (
             <div className="mt-4">
-              <Button className="bg-primary-solid text-white hover:bg-primary/90" onClick={() => navigate('/course/dashboard')}>
+              <Button variant="pill" onClick={() => navigate('/course/dashboard')}>
                 Go to Course
               </Button>
             </div>
           )}
         </div>
 
-        <Card className="overflow-hidden">
+        <Card variant="elevated" className="overflow-hidden">
           <CardHeader>
             <CardTitle>Profile</CardTitle>
           </CardHeader>
@@ -187,8 +187,8 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => blink.auth.logout()}>Sign out</Button>
-              <Button onClick={saveProfile} className="bg-primary-solid text-white hover:bg-primary/90" disabled={saving}>
+              <Button variant="outline" onClick={() => auth.logout()}>Sign out</Button>
+              <Button onClick={saveProfile} variant="pill" disabled={saving}>
                 {saving ? 'Saving…' : 'Save changes'}
               </Button>
             </div>

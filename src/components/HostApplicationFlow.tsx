@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertCircle, ArrowRight, BookOpen, CreditCard, Award } from 'lucide-react';
-import { blink } from '@/lib/blink';
+import { db, auth } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 export default function HostApplicationFlow() {
@@ -28,10 +28,10 @@ export default function HostApplicationFlow() {
 
     setLoading(true);
     try {
-      const user = await blink.auth.me();
+      const user = await auth.me();
       
       // Create host application
-      await blink.db.hostApplications.create({
+      await db.hostApplications.create({
         id: `app_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId: user.id,
         email: formData.email,

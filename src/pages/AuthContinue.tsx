@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
-import blink, { getFullUser } from '@/lib/blink'
+import { auth } from '@/lib/supabase'
+import { getFullUser } from '@/lib/userProfile'
 
 export default function AuthContinue() {
   const navigate = useNavigate()
@@ -18,7 +19,7 @@ export default function AuthContinue() {
 
         // If not authenticated, redirect to our sign-in with redirect back to target
         try {
-          const me = await blink.auth.me()
+          const me = await auth.me()
           if (!me) {
             window.location.href = `/sign-in?redirect=${encodeURIComponent(target)}`
             return

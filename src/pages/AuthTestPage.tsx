@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { callAuth, signup, login } from '@/lib/auth'
-import blink from '@/lib/blink'
+import { db } from '@/lib/supabase'
 
 export default function AuthTestPage() {
   const [email, setEmail] = useState('test@globalgoalsjam.org')
@@ -77,7 +77,7 @@ export default function AuthTestPage() {
 
   const checkUsers = async () => {
     try {
-      const users = await blink.db.users.list({
+      const users = await db.users.list({
         where: { email },
         limit: 1
       })

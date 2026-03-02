@@ -7,10 +7,10 @@ const Module8Content = () => {
   return (
     <div className="space-y-8">
       {/* Module Header */}
-      <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-8">
-        <Badge className="mb-4 bg-green-600">Module 8</Badge>
+      <div className="bg-gradient-to-r from-pastel-green to-pastel-sky rounded-lg p-8">
+        <Badge className="mb-4 bg-primary">Module 8</Badge>
         <h1 className="text-4xl font-bold mb-4">Best Practices, Follow-Ups & Community</h1>
-        <p className="text-xl text-gray-700">Build lasting impact through community engagement and systematic follow-up.</p>
+        <p className="text-xl text-foreground/80">Build lasting impact through community engagement and systematic follow-up.</p>
       </div>
 
       {/* Important: Peer Review Policy */}
@@ -32,30 +32,30 @@ const Module8Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-green-600" />
+            <Heart className="h-5 w-5 text-primary" />
             Capstone Journey
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>The capstone project is your opportunity to demonstrate mastery of the Global Goals Jam methodology by designing, facilitating, and documenting a complete jam experience.</p>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-green-900 mb-2">Planning Your Capstone Jam</h4>
+          <div className="bg-pastel-green p-4 rounded-lg">
+            <h4 className="font-semibold text-primary mb-2">Planning Your Capstone Jam</h4>
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>
-                <h5 className="font-medium text-green-800 mb-1">Choose Your Challenge</h5>
-                <p className="text-green-700">Select a specific, local SDG-related challenge</p>
+                <h5 className="font-medium text-primary/80 mb-1">Choose Your Challenge</h5>
+                <p className="text-primary/80">Select a specific, local SDG-related challenge</p>
               </div>
               <div>
-                <h5 className="font-medium text-green-800 mb-1">Recruit Participants</h5>
-                <p className="text-green-700">Aim for 8-15 diverse participants</p>
+                <h5 className="font-medium text-primary/80 mb-1">Recruit Participants</h5>
+                <p className="text-primary/80">Aim for 8-15 diverse participants</p>
               </div>
               <div>
-                <h5 className="font-medium text-green-800 mb-1">Design Your Session</h5>
-                <p className="text-green-700">Create a 3-4 hour session plan</p>
+                <h5 className="font-medium text-primary/80 mb-1">Design Your Session</h5>
+                <p className="text-primary/80">Create a 3-4 hour session plan</p>
               </div>
               <div>
-                <h5 className="font-medium text-green-800 mb-1">Prepare Documentation</h5>
-                <p className="text-green-700">Set up systems to capture process and outcomes</p>
+                <h5 className="font-medium text-primary/80 mb-1">Prepare Documentation</h5>
+                <p className="text-primary/80">Set up systems to capture process and outcomes</p>
               </div>
             </div>
           </div>
@@ -66,7 +66,7 @@ const Module8Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-blue-600" />
+            <Award className="h-5 w-5 text-sky-600" />
             Certification Criteria
           </CardTitle>
         </CardHeader>
@@ -74,7 +74,7 @@ const Module8Content = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">🎯 Methodological Competence (30%)</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">🎯 Methodological Competence (30%)</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Appropriate method selection and adaptation</li>
                   <li>• Effective session design and flow</li>
@@ -83,7 +83,7 @@ const Module8Content = () => {
                 </ul>
               </div>
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">👥 Facilitation Skills (25%)</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">👥 Facilitation Skills (25%)</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Group engagement and participation</li>
                   <li>• Inclusive and safe environment creation</li>
@@ -92,7 +92,7 @@ const Module8Content = () => {
                 </ul>
               </div>
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">🌍 SDG Alignment (20%)</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">🌍 SDG Alignment (20%)</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Clear connection to SDG challenges</li>
                   <li>• Local relevance and context sensitivity</li>
@@ -103,7 +103,7 @@ const Module8Content = () => {
             </div>
             <div className="space-y-4">
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">📝 Documentation Quality (15%)</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">📝 Documentation Quality (15%)</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Comprehensive and well-organized</li>
                   <li>• Clear evidence of outcomes and impact</li>
@@ -112,7 +112,7 @@ const Module8Content = () => {
                 </ul>
               </div>
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">🤔 Reflective Practice (10%)</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">🤔 Reflective Practice (10%)</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Honest self-assessment and learning</li>
                   <li>• Insights about methodology and context</li>
@@ -129,15 +129,15 @@ const Module8Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-purple-600" />
+            <TrendingUp className="h-5 w-5 text-violet-600" />
             Your Journey Forward
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-4">
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <h4 className="font-semibold text-purple-900 mb-2">Immediate Next Steps (First 30 Days)</h4>
-              <ul className="text-sm space-y-1 text-purple-800">
+            <div className="p-4 bg-pastel-violet rounded-lg">
+              <h4 className="font-semibold text-violet-900 mb-2">Immediate Next Steps (First 30 Days)</h4>
+              <ul className="text-sm space-y-1 text-violet-800">
                 <li>• Join the Global Goals Jam Host Community</li>
                 <li>• Schedule your first official jam within 60 days</li>
                 <li>• Connect with other hosts in your region</li>
@@ -145,9 +145,9 @@ const Module8Content = () => {
                 <li>• Begin planning your regular jam schedule</li>
               </ul>
             </div>
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">Building Your Practice (First 6 Months)</h4>
-              <ul className="text-sm space-y-1 text-blue-800">
+            <div className="p-4 bg-pastel-sky rounded-lg">
+              <h4 className="font-semibold text-sky-900 mb-2">Building Your Practice (First 6 Months)</h4>
+              <ul className="text-sm space-y-1 text-sky-800">
                 <li>• Host at least 3 jams with different audiences</li>
                 <li>• Experiment with new methods and approaches</li>
                 <li>• Build partnerships with local organizations</li>
@@ -155,9 +155,9 @@ const Module8Content = () => {
                 <li>• Seek feedback and continuous improvement</li>
               </ul>
             </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-semibold text-green-900 mb-2">Growing Your Impact (First Year)</h4>
-              <ul className="text-sm space-y-1 text-green-800">
+            <div className="p-4 bg-pastel-green rounded-lg">
+              <h4 className="font-semibold text-primary mb-2">Growing Your Impact (First Year)</h4>
+              <ul className="text-sm space-y-1 text-primary/80">
                 <li>• Develop a signature approach or specialization</li>
                 <li>• Mentor new hosts in your community</li>
                 <li>• Contribute to the global knowledge base</li>
@@ -173,34 +173,34 @@ const Module8Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-green-600" />
+            <MapPin className="h-5 w-5 text-primary" />
             Key Takeaways
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>Choose an authentic challenge:</strong> Your capstone should address a real problem with genuine stakeholders.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>Demonstrate methodological mastery:</strong> Show that you can skillfully apply and adapt the jam methodology.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>Document comprehensively:</strong> Capture the full story from planning to impact for evaluation and learning.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>Reflect deeply:</strong> Show honest self-assessment and commitment to continuous improvement.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>Present confidently:</strong> Share your experience in a way that inspires and teaches others.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>Embrace the journey:</strong> Certification is the beginning of your impact as a Global Goals Jam host.</p>
             </div>
           </div>

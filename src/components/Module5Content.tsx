@@ -10,10 +10,10 @@ const Module5Content = () => {
   return (
     <div className="space-y-8">
       {/* Module Header */}
-      <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-8">
-        <Badge className="mb-4 bg-orange-600">Module 5</Badge>
+      <div className="bg-gradient-to-r from-pastel-amber/70 to-pastel-rose rounded-lg p-8">
+        <Badge className="mb-4 bg-amber-600">Module 5</Badge>
         <h1 className="text-4xl font-bold mb-4">After Your Jam</h1>
-        <p className="text-xl text-gray-700">
+        <p className="text-xl text-foreground/80">
           Transform jam outcomes into lasting impact and build momentum for future action
         </p>
       </div>
@@ -22,7 +22,7 @@ const Module5Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Rocket className="h-5 w-5 text-orange-600" />
+            <Rocket className="h-5 w-5 text-amber-600" />
             Learning Outcomes
           </CardTitle>
         </CardHeader>
@@ -36,7 +36,7 @@ const Module5Content = () => {
               'Plan follow-up activities and next jams'
             ].map((outcome, index) => (
               <li key={index} className="flex items-start gap-2">
-                <CheckCircle2 className="h-5 w-5 text-orange-600 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-amber-600 mt-0.5" />
                 <span>{outcome}</span>
               </li>
             ))}
@@ -63,9 +63,9 @@ const Module5Content = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Documentation Checklist */}
-              <div className="bg-orange-50 rounded-lg p-6">
+              <div className="bg-pastel-amber/70 rounded-lg p-6">
                 <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <Camera className="h-5 w-5 text-orange-600" />
+                  <Camera className="h-5 w-5 text-amber-600" />
                   Documentation Checklist
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6">
@@ -128,32 +128,32 @@ const Module5Content = () => {
                   <FileText className="h-5 w-5" />
                   Jam Results Template
                 </h3>
-                <div className="border rounded-lg p-4 bg-gray-50">
+                <div className="border rounded-lg p-4 bg-muted/50">
                   <div className="space-y-4 text-sm">
                     <div>
-                      <h4 className="font-medium text-gray-700">1. Executive Summary</h4>
-                      <p className="text-gray-600 ml-4">• Date, location, number of participants</p>
-                      <p className="text-gray-600 ml-4">• SDG focus areas</p>
-                      <p className="text-gray-600 ml-4">• Key outcomes (3-5 bullet points)</p>
+                      <h4 className="font-medium text-foreground/80">1. Executive Summary</h4>
+                      <p className="text-muted-foreground ml-4">• Date, location, number of participants</p>
+                      <p className="text-muted-foreground ml-4">• SDG focus areas</p>
+                      <p className="text-muted-foreground ml-4">• Key outcomes (3-5 bullet points)</p>
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-700">2. Challenge & Context</h4>
-                      <p className="text-gray-600 ml-4">• Problem statement</p>
-                      <p className="text-gray-600 ml-4">• Why this matters locally</p>
-                      <p className="text-gray-600 ml-4">• Stakeholders involved</p>
+                      <h4 className="font-medium text-foreground/80">2. Challenge & Context</h4>
+                      <p className="text-muted-foreground ml-4">• Problem statement</p>
+                      <p className="text-muted-foreground ml-4">• Why this matters locally</p>
+                      <p className="text-muted-foreground ml-4">• Stakeholders involved</p>
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-700">3. Solutions Developed</h4>
-                      <p className="text-gray-600 ml-4">• Team name & solution title</p>
-                      <p className="text-gray-600 ml-4">• Solution description (2-3 sentences)</p>
-                      <p className="text-gray-600 ml-4">• Implementation potential</p>
-                      <p className="text-gray-600 ml-4">• Visual/prototype image</p>
+                      <h4 className="font-medium text-foreground/80">3. Solutions Developed</h4>
+                      <p className="text-muted-foreground ml-4">• Team name & solution title</p>
+                      <p className="text-muted-foreground ml-4">• Solution description (2-3 sentences)</p>
+                      <p className="text-muted-foreground ml-4">• Implementation potential</p>
+                      <p className="text-muted-foreground ml-4">• Visual/prototype image</p>
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-700">4. Next Steps</h4>
-                      <p className="text-gray-600 ml-4">• Follow-up actions planned</p>
-                      <p className="text-gray-600 ml-4">• Support needed</p>
-                      <p className="text-gray-600 ml-4">• Timeline for implementation</p>
+                      <h4 className="font-medium text-foreground/80">4. Next Steps</h4>
+                      <p className="text-muted-foreground ml-4">• Follow-up actions planned</p>
+                      <p className="text-muted-foreground ml-4">• Support needed</p>
+                      <p className="text-muted-foreground ml-4">• Timeline for implementation</p>
                     </div>
                   </div>
                 </div>
@@ -185,14 +185,14 @@ const Module5Content = () => {
                 <h3 className="font-semibold">Post-Jam Timeline</h3>
                 
                 <div className="relative">
-                  <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-300"></div>
+                  <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-muted"></div>
                   
                   <div className="space-y-6">
                     <div className="flex gap-4">
-                      <div className="bg-orange-600 text-white rounded-full w-16 h-16 flex items-center justify-center font-bold text-sm">24h</div>
+                      <div className="bg-amber-600 text-primary-foreground rounded-full w-16 h-16 flex items-center justify-center font-bold text-sm">24h</div>
                       <div className="flex-1">
                         <h4 className="font-medium">Within 24 Hours</h4>
-                        <ul className="text-sm text-gray-600 mt-1 space-y-1">
+                        <ul className="text-sm text-muted-foreground mt-1 space-y-1">
                           <li>• Send thank you message to all participants</li>
                           <li>• Share photos on social media</li>
                           <li>• Back up all documentation</li>
@@ -201,10 +201,10 @@ const Module5Content = () => {
                     </div>
                     
                     <div className="flex gap-4">
-                      <div className="bg-orange-500 text-white rounded-full w-16 h-16 flex items-center justify-center font-bold text-sm">1wk</div>
+                      <div className="bg-amber-500 text-primary-foreground rounded-full w-16 h-16 flex items-center justify-center font-bold text-sm">1wk</div>
                       <div className="flex-1">
                         <h4 className="font-medium">Within 1 Week</h4>
-                        <ul className="text-sm text-gray-600 mt-1 space-y-1">
+                        <ul className="text-sm text-muted-foreground mt-1 space-y-1">
                           <li>• Send detailed results summary</li>
                           <li>• Share presentation slides/materials</li>
                           <li>• Connect teams with relevant stakeholders</li>
@@ -214,10 +214,10 @@ const Module5Content = () => {
                     </div>
                     
                     <div className="flex gap-4">
-                      <div className="bg-orange-400 text-white rounded-full w-16 h-16 flex items-center justify-center font-bold text-sm">2wk</div>
+                      <div className="bg-amber-400 text-primary-foreground rounded-full w-16 h-16 flex items-center justify-center font-bold text-sm">2wk</div>
                       <div className="flex-1">
                         <h4 className="font-medium">Within 2 Weeks</h4>
-                        <ul className="text-sm text-gray-600 mt-1 space-y-1">
+                        <ul className="text-sm text-muted-foreground mt-1 space-y-1">
                           <li>• Schedule follow-up meetings with interested teams</li>
                           <li>• Send feedback survey results</li>
                           <li>• Plan implementation support</li>
@@ -226,10 +226,10 @@ const Module5Content = () => {
                     </div>
                     
                     <div className="flex gap-4">
-                      <div className="bg-orange-300 text-white rounded-full w-16 h-16 flex items-center justify-center font-bold text-sm">1mo</div>
+                      <div className="bg-amber-300 text-primary-foreground rounded-full w-16 h-16 flex items-center justify-center font-bold text-sm">1mo</div>
                       <div className="flex-1">
                         <h4 className="font-medium">Within 1 Month</h4>
-                        <ul className="text-sm text-gray-600 mt-1 space-y-1">
+                        <ul className="text-sm text-muted-foreground mt-1 space-y-1">
                           <li>• Check in on implementation progress</li>
                           <li>• Share success stories</li>
                           <li>• Plan next jam or follow-up event</li>
@@ -241,12 +241,12 @@ const Module5Content = () => {
               </div>
 
               {/* Support Templates */}
-              <div className="bg-blue-50 rounded-lg p-6">
+              <div className="bg-pastel-sky rounded-lg p-6">
                 <h3 className="font-semibold mb-4">Supporting Implementation</h3>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="bg-white rounded p-4">
+                  <div className="bg-card rounded p-4">
                     <h4 className="font-medium mb-2">Mentorship Program</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Connect teams with experts who can guide implementation
                     </p>
                     <ul className="text-sm mt-2 space-y-1">
@@ -255,9 +255,9 @@ const Module5Content = () => {
                       <li>• Network connections</li>
                     </ul>
                   </div>
-                  <div className="bg-white rounded p-4">
+                  <div className="bg-card rounded p-4">
                     <h4 className="font-medium mb-2">Resource Hub</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Provide ongoing access to tools and templates
                     </p>
                     <ul className="text-sm mt-2 space-y-1">
@@ -284,13 +284,13 @@ const Module5Content = () => {
               {/* Impact Metrics */}
               <div>
                 <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <TrendingUp className="h-5 w-5 text-primary" />
                   Key Impact Metrics
                 </h3>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="border rounded-lg p-4 text-center">
-                    <div className="text-3xl font-bold text-green-600">Output</div>
-                    <p className="text-sm text-gray-600 mt-2">Immediate Results</p>
+                    <div className="text-3xl font-bold text-primary">Output</div>
+                    <p className="text-sm text-muted-foreground mt-2">Immediate Results</p>
                     <ul className="text-sm mt-3 space-y-1 text-left">
                       <li>• # of participants</li>
                       <li>• # of solutions created</li>
@@ -299,8 +299,8 @@ const Module5Content = () => {
                     </ul>
                   </div>
                   <div className="border rounded-lg p-4 text-center">
-                    <div className="text-3xl font-bold text-blue-600">Outcome</div>
-                    <p className="text-sm text-gray-600 mt-2">Short-term Changes</p>
+                    <div className="text-3xl font-bold text-sky-600">Outcome</div>
+                    <p className="text-sm text-muted-foreground mt-2">Short-term Changes</p>
                     <ul className="text-sm mt-3 space-y-1 text-left">
                       <li>• Solutions implemented</li>
                       <li>• People reached</li>
@@ -309,8 +309,8 @@ const Module5Content = () => {
                     </ul>
                   </div>
                   <div className="border rounded-lg p-4 text-center">
-                    <div className="text-3xl font-bold text-purple-600">Impact</div>
-                    <p className="text-sm text-gray-600 mt-2">Long-term Effects</p>
+                    <div className="text-3xl font-bold text-violet-600">Impact</div>
+                    <p className="text-sm text-muted-foreground mt-2">Long-term Effects</p>
                     <ul className="text-sm mt-3 space-y-1 text-left">
                       <li>• SDG indicators improved</li>
                       <li>• Systems changed</li>
@@ -322,42 +322,42 @@ const Module5Content = () => {
               </div>
 
               {/* Impact Story Template */}
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6">
+              <div className="bg-gradient-to-r from-pastel-green to-emerald-50 rounded-lg p-6">
                 <h3 className="font-semibold mb-4">Impact Story Framework</h3>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">1</div>
+                    <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">1</div>
                     <div>
                       <h4 className="font-medium">The Challenge</h4>
-                      <p className="text-sm text-gray-600">What problem were we trying to solve?</p>
+                      <p className="text-sm text-muted-foreground">What problem were we trying to solve?</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">2</div>
+                    <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">2</div>
                     <div>
                       <h4 className="font-medium">The Solution</h4>
-                      <p className="text-sm text-gray-600">What did the team create?</p>
+                      <p className="text-sm text-muted-foreground">What did the team create?</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">3</div>
+                    <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">3</div>
                     <div>
                       <h4 className="font-medium">The Implementation</h4>
-                      <p className="text-sm text-gray-600">How was it put into action?</p>
+                      <p className="text-sm text-muted-foreground">How was it put into action?</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">4</div>
+                    <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">4</div>
                     <div>
                       <h4 className="font-medium">The Results</h4>
-                      <p className="text-sm text-gray-600">What changed? Include numbers!</p>
+                      <p className="text-sm text-muted-foreground">What changed? Include numbers!</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">5</div>
+                    <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">5</div>
                     <div>
                       <h4 className="font-medium">The Future</h4>
-                      <p className="text-sm text-gray-600">What's next? How can others replicate?</p>
+                      <p className="text-sm text-muted-foreground">What's next? How can others replicate?</p>
                     </div>
                   </div>
                 </div>
@@ -391,21 +391,21 @@ const Module5Content = () => {
                     Online Community
                   </h3>
                   <div className="space-y-3">
-                    <div className="border-l-4 border-blue-500 pl-4">
+                    <div className="border-l-4 border-sky-500 pl-4">
                       <h4 className="font-medium">Slack/Discord Channel</h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         Create dedicated channels for ongoing collaboration
                       </p>
                     </div>
-                    <div className="border-l-4 border-blue-500 pl-4">
+                    <div className="border-l-4 border-sky-500 pl-4">
                       <h4 className="font-medium">Monthly Virtual Meetups</h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         Share progress, challenges, and learnings
                       </p>
                     </div>
-                    <div className="border-l-4 border-blue-500 pl-4">
+                    <div className="border-l-4 border-sky-500 pl-4">
                       <h4 className="font-medium">Resource Library</h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         Shared drive with templates, guides, and case studies
                       </p>
                     </div>
@@ -420,19 +420,19 @@ const Module5Content = () => {
                   <div className="space-y-3">
                     <div className="border-l-4 border-yellow-500 pl-4">
                       <h4 className="font-medium">Impact Awards</h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         Quarterly recognition for implemented solutions
                       </p>
                     </div>
                     <div className="border-l-4 border-yellow-500 pl-4">
                       <h4 className="font-medium">Ambassador Program</h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         Empower champions to spread the movement
                       </p>
                     </div>
                     <div className="border-l-4 border-yellow-500 pl-4">
                       <h4 className="font-medium">Success Spotlights</h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         Feature stories in newsletters and social media
                       </p>
                     </div>
@@ -441,33 +441,33 @@ const Module5Content = () => {
               </div>
 
               {/* Alumni Engagement */}
-              <div className="bg-purple-50 rounded-lg p-6">
+              <div className="bg-pastel-violet rounded-lg p-6">
                 <h3 className="font-semibold mb-4">Alumni Engagement Ideas</h3>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="text-center">
-                    <div className="bg-purple-600 text-white rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                    <div className="bg-violet-600 text-primary-foreground rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
                       <Users className="h-6 w-6" />
                     </div>
                     <h4 className="font-medium text-sm">Mentorship</h4>
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Past participants mentor new jammers
                     </p>
                   </div>
                   <div className="text-center">
-                    <div className="bg-purple-600 text-white rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                    <div className="bg-violet-600 text-primary-foreground rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
                       <Share2 className="h-6 w-6" />
                     </div>
                     <h4 className="font-medium text-sm">Speaking</h4>
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Share experiences at future events
                     </p>
                   </div>
                   <div className="text-center">
-                    <div className="bg-purple-600 text-white rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                    <div className="bg-violet-600 text-primary-foreground rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
                       <Trophy className="h-6 w-6" />
                     </div>
                     <h4 className="font-medium text-sm">Judging</h4>
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Evaluate solutions at next jams
                     </p>
                   </div>
@@ -475,10 +475,10 @@ const Module5Content = () => {
               </div>
 
               {/* Next Steps */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Rocket className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                <Rocket className="h-12 w-12 text-muted-foreground/60 mx-auto mb-3" />
                 <h3 className="font-semibold mb-2">Ready for Your Next Jam?</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   Use learnings from this jam to make the next one even better!
                 </p>
                 <div className="flex justify-center gap-3">

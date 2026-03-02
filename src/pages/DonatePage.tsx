@@ -4,7 +4,8 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Heart, Coffee, Globe, Target, Award, ArrowLeft } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { blink } from '../lib/blink'
+import { config } from '../lib/config'
+import { callSupabaseFunction } from '../lib/supabase-functions'
 import toast from 'react-hot-toast'
 
 const DonatePage = () => {
@@ -101,30 +102,18 @@ const DonatePage = () => {
         amountCents = Math.round((tier.amount || 0) * 100)
       }
 
-      const response = await blink.data.fetch({
-        url: 'https://7uamgc2j--create-donation-session.functions.blink.new',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: {
-          priceId,
-          amount: amountCents,
-          tierName,
-          requiresForm: tier.requiresForm,
-          returnUrl: window.location.origin
-        }
+      const data = await callSupabaseFunction<{ url?: string; error?: string }>('create-donation-session', {
+        priceId,
+        amount: amountCents,
+        tierName,
+        requiresForm: tier.requiresForm,
+        returnUrl: window.location.origin
       })
 
-      if (response.status === 200) {
-        const data = response.body
-        if (data.url) {
-          window.open(data.url, '_blank')
-        } else {
-          throw new Error('No checkout URL received')
-        }
+      if (data.url) {
+        window.open(data.url, '_blank')
       } else {
-        throw new Error('Failed to create donation session')
+        throw new Error(data.error || 'Failed to create donation session')
       }
     } catch (error) {
       console.error('Donation error:', error)
@@ -136,29 +125,21 @@ const DonatePage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <section className="py-12 bg-muted/30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <Button variant="ghost" asChild className="mb-4">
-              <Link to="/">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Link>
-            </Button>
-          </div>
-          
-          <div className="text-center space-y-4">
-            <Badge variant="secondary" className="text-sm">
-              Supporting Global Goals Jam
-            </Badge>
-            <h1 className="text-4xl font-bold tracking-tight">
-              Help us scale impact worldwide
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Your donation directly supports host training, toolkit development, and platform improvements that enable communities worldwide to tackle SDG challenges.
-            </p>
-          </div>
+      {/* Hero Section */}
+      <section className="relative py-20 hero-pattern">
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">Make a Difference</p>
+          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
+            <Heart className="w-4 h-4 mr-2" />
+            Supporting Global Goals Jam
+          </Badge>
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
+            Help Us Scale <span className="text-primary-solid">Impact</span> Worldwide
+          </h1>
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Your donation directly supports host training, toolkit development, and platform improvements that enable communities worldwide to tackle SDG challenges.
+          </p>
         </div>
       </section>
 
@@ -170,14 +151,14 @@ const DonatePage = () => {
               const Icon = tier.icon
               const isCustom = tier.priceId === 'custom'
               return (
-                <Card key={tier.title + index} className={`relative transition-all duration-300 hover:shadow-lg ${index === 2 ? 'border-primary shadow-sm' : ''}`}>
+                <Card key={tier.title + index} className={`relative transition-all duration-300 hover:shadow-card-hover ${index === 2 ? 'border-primary shadow-card' : 'shadow-soft'}`}>
                   {index === 2 && (
                     <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
                       Most Popular
                     </Badge>
                   )}
                   <CardHeader className="text-center pb-4">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-pastel-green flex items-center justify-center mb-4">
                       <Icon className="w-6 h-6 text-primary" />
                     </div>
                     <CardTitle className="text-2xl">{isCustom ? '' : `$${tier.amount}`}</CardTitle>
@@ -198,13 +179,13 @@ const DonatePage = () => {
                           step={1}
                           value={customValue ?? ''}
                           onChange={(e) => setCustomValue(e.target.value === '' ? null : Number(e.target.value))}
-                          className="w-full border rounded-md p-2 text-lg"
+                          className="w-full border rounded-xl p-2 text-lg"
                           placeholder="Enter amount in USD (min $5)"
                         />
                         <Button
                           onClick={() => handleDonate(tier, customValue ?? 0)}
                           disabled={loading}
-                          className="w-full"
+                          className="w-full rounded-pill"
                           variant="default"
                         >
                           {loading ? 'Processing...' : `Donate custom amount`}
@@ -213,10 +194,10 @@ const DonatePage = () => {
                       </div>
                     ) : (
                       <>
-                        <Button 
+                        <Button
                           onClick={() => handleDonate(tier)}
                           disabled={loading}
-                          className="w-full"
+                          className="w-full rounded-pill"
                           variant={index === 2 ? 'default' : 'outline'}
                         >
                           {loading ? 'Processing...' : (
@@ -241,10 +222,10 @@ const DonatePage = () => {
       </section>
 
       {/* Impact Information */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-section-warm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-6">
-            <h2 className="text-3xl font-bold">Why Your Support Matters</h2>
+            <h2 className="text-3xl font-bold font-display">Why Your Support Matters</h2>
             <div className="grid md:grid-cols-3 gap-6 mt-8">
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-primary">50+</div>

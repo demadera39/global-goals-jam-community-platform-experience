@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { UserProfile, getUserStatusSummary, canAccessFeature } from '../lib/userStatus'
 import { useNavigate } from 'react-router-dom'
-import blink from '@/lib/blink'
+// blink import removed — was unused
 
 interface UserStatusCardProps {
   profile: UserProfile | null
@@ -93,7 +93,7 @@ export default function UserStatusCard({ profile, showActions = true }: UserStat
         <div className="space-y-2">
           <p className="text-sm font-medium">What you can access:</p>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className={`flex items-center gap-1 ${canAccessFeature(profile, 'forum') ? 'text-green-600' : 'text-muted-foreground'}`}>
+            <div className={`flex items-center gap-1 ${canAccessFeature(profile, 'forum') ? 'text-primary' : 'text-muted-foreground'}`}>
               {canAccessFeature(profile, 'forum') ? 
                 <CheckCircle className="w-3 h-3" /> : 
                 <Clock className="w-3 h-3" />
@@ -101,7 +101,7 @@ export default function UserStatusCard({ profile, showActions = true }: UserStat
               <span>Community Forum</span>
             </div>
             
-            <div className={`flex items-center gap-1 ${canAccessFeature(profile, 'host_dashboard') ? 'text-green-600' : 'text-muted-foreground'}`}>
+            <div className={`flex items-center gap-1 ${canAccessFeature(profile, 'host_dashboard') ? 'text-primary' : 'text-muted-foreground'}`}>
               {canAccessFeature(profile, 'host_dashboard') ? 
                 <CheckCircle className="w-3 h-3" /> : 
                 <Clock className="w-3 h-3" />
@@ -109,7 +109,7 @@ export default function UserStatusCard({ profile, showActions = true }: UserStat
               <span>Host Tools</span>
             </div>
             
-            <div className={`flex items-center gap-1 ${canAccessFeature(profile, 'course_content') ? 'text-green-600' : 'text-muted-foreground'}`}>
+            <div className={`flex items-center gap-1 ${canAccessFeature(profile, 'course_content') ? 'text-primary' : 'text-muted-foreground'}`}>
               {canAccessFeature(profile, 'course_content') ? 
                 <CheckCircle className="w-3 h-3" /> : 
                 <Clock className="w-3 h-3" />
@@ -117,7 +117,7 @@ export default function UserStatusCard({ profile, showActions = true }: UserStat
               <span>Course Content</span>
             </div>
             
-            <div className={`flex items-center gap-1 ${canAccessFeature(profile, 'admin_dashboard') ? 'text-green-600' : 'text-muted-foreground'}`}>
+            <div className={`flex items-center gap-1 ${canAccessFeature(profile, 'admin_dashboard') ? 'text-primary' : 'text-muted-foreground'}`}>
               {canAccessFeature(profile, 'admin_dashboard') ? 
                 <CheckCircle className="w-3 h-3" /> : 
                 <Clock className="w-3 h-3" />

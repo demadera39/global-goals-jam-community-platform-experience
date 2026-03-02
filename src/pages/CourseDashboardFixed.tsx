@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { PlayCircle, CheckCircle, Lock, Clock, BookOpen, ChevronRight } from 'lucide-react';
-import { blink, safeDbCall } from '@/lib/blink';
+import { db, auth, safeDbCall } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import AudioPlayer from '@/components/ui/AudioPlayer';
@@ -70,7 +70,7 @@ export default function CourseDashboard() {
   useEffect(() => {
     const loadCourseData = async (userId: string) => {
       try {
-        const enrollments = await safeDbCall(() => blink.db.courseEnrollments.list({
+        const enrollments = await safeDbCall(() => db.courseEnrollments.list({
           where: { userId: userId },
           limit: 1
         }));
@@ -82,7 +82,7 @@ export default function CourseDashboard() {
         
         setEnrollment(enrollments[0]);
         
-        const moduleList = await safeDbCall(() => blink.db.courseModules.list({
+        const moduleList = await safeDbCall(() => db.courseModules.list({
           orderBy: { moduleNumber: 'asc' }
         }));
 
@@ -98,7 +98,7 @@ export default function CourseDashboard() {
 
         setModules(uniqueSorted);
         
-        const progressList = await safeDbCall(() => blink.db.courseProgress.list({
+        const progressList = await safeDbCall(() => db.courseProgress.list({
           where: { userId: userId, enrollmentId: enrollments[0].id }
         }));
         
@@ -132,7 +132,7 @@ export default function CourseDashboard() {
       }
     };
 
-    const unsubscribe = blink.auth.onAuthStateChanged((state) => {
+    const unsubscribe = auth.onAuthStateChanged((state) => {
       setUser(state.user);
       setLoading(state.isLoading);
       
@@ -144,11 +144,11 @@ export default function CourseDashboard() {
   }, [navigate]);
 
   const upsertProgress = async (id: string, data: any) => {
-    const existing = await safeDbCall(() => blink.db.courseProgress.list({ where: { id }, limit: 1 }));
+    const existing = await safeDbCall(() => db.courseProgress.list({ where: { id }, limit: 1 }));
     if (existing.length > 0) {
-      await safeDbCall(() => blink.db.courseProgress.update(id, data));
+      await safeDbCall(() => db.courseProgress.update(id, data));
     } else {
-      await safeDbCall(() => blink.db.courseProgress.create({ id, ...data }));
+      await safeDbCall(() => db.courseProgress.create({ id, ...data }));
     }
   };
 
@@ -183,7 +183,7 @@ export default function CourseDashboard() {
     }
     
     if (moduleNum > currentNum) {
-      await safeDbCall(() => blink.db.courseEnrollments.update(enrollment.id, {
+      await safeDbCall(() => db.courseEnrollments.update(enrollment.id, {
         currentModule: module.moduleNumber
       }));
       setEnrollment({ ...enrollment, currentModule: module.moduleNumber });
@@ -214,7 +214,7 @@ export default function CourseDashboard() {
       const completedModules = JSON.parse(enrollment.completedModules || '[]');
       if (!completedModules.includes(currentModule.moduleNumber)) {
         completedModules.push(currentModule.moduleNumber);
-        await safeDbCall(() => blink.db.courseEnrollments.update(enrollment.id, {
+        await safeDbCall(() => db.courseEnrollments.update(enrollment.id, {
           completedModules: JSON.stringify(completedModules)
         }));
         setEnrollment({ ...enrollment, completedModules: JSON.stringify(completedModules) });
@@ -347,7 +347,7 @@ export default function CourseDashboard() {
                           disabled={locked}
                           className={`w-full text-left p-4 rounded-lg border transition-colors ${
                             current ? 'bg-primary/10 border-primary' : 
-                            completed ? 'bg-green-50 border-green-200' :
+                            completed ? 'bg-pastel-green border-primary/20' :
                             locked ? 'opacity-50 cursor-not-allowed' : 
                             'hover:bg-accent'
                           }`}
@@ -355,7 +355,7 @@ export default function CourseDashboard() {
                           <div className="flex items-start gap-3">
                             <div className="mt-1">
                               {completed ? (
-                                <CheckCircle className="h-5 w-5 text-green-500" />
+                                <CheckCircle className="h-5 w-5 text-primary" />
                               ) : locked ? (
                                 <Lock className="h-5 w-5 text-muted-foreground" />
                               ) : (

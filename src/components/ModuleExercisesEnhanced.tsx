@@ -22,7 +22,7 @@ export function ModuleExercisesEnhanced({ moduleNumber, showResources = false }:
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-gray-500">Module not found</p>
+          <p className="text-muted-foreground">Module not found</p>
         </CardContent>
       </Card>
     );
@@ -375,7 +375,7 @@ export function ModuleExercisesEnhanced({ moduleNumber, showResources = false }:
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-orange-500" />
+            <Target className="h-5 w-5 text-amber-500" />
             Module {moduleNumber} Exercises
           </CardTitle>
         </CardHeader>
@@ -386,32 +386,39 @@ export function ModuleExercisesEnhanced({ moduleNumber, showResources = false }:
             const template = getTemplate(exercise.templateId);
 
             return (
-              <Card key={exercise.id} className="border-l-4 border-orange-500">
+              <Card key={exercise.id} className="border-l-4 border-amber-500">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-semibold">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-pastel-amber text-amber-600 font-semibold">
                         {index + 1}
                       </div>
                       <div>
                         <h3 className="font-semibold text-lg">{exercise.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{exercise.description}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{exercise.description}</p>
                       </div>
                     </div>
-                    {isCompleted ? (
-                      <CheckCircle2 className="h-6 w-6 text-green-500" />
-                    ) : (
-                      <Circle className="h-6 w-6 text-gray-300" />
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleExerciseComplete(exercise.id)}
+                      className="flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
+                      aria-label={isCompleted ? 'Completed' : 'Mark as complete'}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-6 w-6 text-primary" />
+                      ) : (
+                        <Circle className="h-6 w-6 text-muted-foreground/40 hover:text-primary/60" />
+                      )}
+                    </button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Template Access */}
                   {template && (
-                    <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="bg-pastel-sky p-4 rounded-lg">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-blue-600" />
+                          <FileText className="h-5 w-5 text-sky-600" />
                           <span className="font-medium">Template: {template.title}</span>
                         </div>
                         <Button
@@ -433,7 +440,7 @@ export function ModuleExercisesEnhanced({ moduleNumber, showResources = false }:
                       <BookOpen className="h-4 w-4" />
                       Steps to Complete
                     </h4>
-                    <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 ml-6">
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-foreground/80 ml-6">
                       {details.steps.map((step, i) => (
                         <li key={i}>{step}</li>
                       ))}
@@ -442,12 +449,12 @@ export function ModuleExercisesEnhanced({ moduleNumber, showResources = false }:
 
                   {/* Pro Tips */}
                   {details.tips.length > 0 && (
-                    <div className="bg-yellow-50 p-4 rounded-lg">
+                    <div className="bg-pastel-amber p-4 rounded-lg">
                       <h4 className="font-medium flex items-center gap-2 mb-2">
-                        <Lightbulb className="h-4 w-4 text-yellow-600" />
+                        <Lightbulb className="h-4 w-4 text-amber-600" />
                         Pro Tips
                       </h4>
-                      <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                      <ul className="list-disc list-inside space-y-1 text-sm text-foreground/80">
                         {details.tips.map((tip, i) => (
                           <li key={i}>{tip}</li>
                         ))}
@@ -456,12 +463,12 @@ export function ModuleExercisesEnhanced({ moduleNumber, showResources = false }:
                   )}
 
                   {/* Check Questions */}
-                  <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="bg-pastel-green p-4 rounded-lg">
                     <h4 className="font-medium flex items-center gap-2 mb-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
                       Check Your Work
                     </h4>
-                    <ul className="space-y-1 text-sm text-gray-700">
+                    <ul className="space-y-1 text-sm text-foreground/80">
                       {details.checkQuestions.map((question, i) => (
                         <li key={i}>✓ {question}</li>
                       ))}
@@ -511,7 +518,7 @@ export function ModuleExercisesEnhanced({ moduleNumber, showResources = false }:
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-blue-500" />
+            <BookOpen className="h-5 w-5 text-sky-600" />
             Module Resources
           </CardTitle>
         </CardHeader>
@@ -523,17 +530,17 @@ export function ModuleExercisesEnhanced({ moduleNumber, showResources = false }:
                 href={resource.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-start gap-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                className="flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
               >
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <ExternalLink className="h-4 w-4 text-blue-600" />
+                  <div className="w-8 h-8 rounded-full bg-pastel-sky flex items-center justify-center">
+                    <ExternalLink className="h-4 w-4 text-sky-600" />
                   </div>
                 </div>
                 <div className="flex-1">
                   <h4 className="font-medium text-sm">{resource.title}</h4>
-                  <p className="text-xs text-gray-600 mt-1">{resource.description}</p>
-                  <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-xs rounded">
+                  <p className="text-xs text-muted-foreground mt-1">{resource.description}</p>
+                  <span className="inline-block mt-2 px-2 py-1 bg-muted text-xs rounded">
                     {resource.type}
                   </span>
                 </div>

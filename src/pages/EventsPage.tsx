@@ -16,8 +16,8 @@ import {
   Plus,
   Loader2
 } from 'lucide-react'
-import blink from '../lib/blink'
-import { cn, sdgNumberFromFocus, sdgBg, sdgText, sdgBorder } from '../lib/utils'
+import { db, auth } from '../lib/supabase'
+import { cn, sdgNumberFromFocus, sdgBg, sdgText, sdgBorder, sdgName } from '../lib/utils'
 import { useToast } from '../hooks/use-toast'
 
 interface User {
@@ -50,11 +50,11 @@ interface Event {
 }
 
 const statusColors = {
-  draft: 'bg-gray-500',
-  published: 'bg-green-500',
-  ongoing: 'bg-blue-500',
-  completed: 'bg-purple-500',
-  cancelled: 'bg-red-500'
+  draft: 'bg-pastel-amber text-amber-800',
+  published: 'bg-pastel-green text-primary/80',
+  ongoing: 'bg-pastel-sky text-sky-800',
+  completed: 'bg-pastel-violet text-violet-800',
+  cancelled: 'bg-pastel-rose text-rose-800'
 }
 
 const statusLabels = {
@@ -79,7 +79,7 @@ export default function EventsPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    const unsubscribe = blink.auth.onAuthStateChanged((state) => {
+    const unsubscribe = auth.onAuthStateChanged((state) => {
       setUser(state.user)
       setLoading(state.isLoading)
     })
@@ -89,7 +89,7 @@ export default function EventsPage() {
   const loadEvents = useCallback(async (retryCount = 0) => {
     try {
       setLoadError(null)
-      const allEvents = await blink.db.events.list({
+      const allEvents = await db.events.list({
         orderBy: { eventDate: 'asc' },
         limit: 200
       })
@@ -244,30 +244,30 @@ export default function EventsPage() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative py-20 hero-pattern">
-        <div className="absolute inset-0 bg-background/80 pointer-events-none -z-10" />
-        {/* Hero kept clean per original style (no decorative overlays) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Badge variant="secondary" className="mb-6 px-4 py-2 text-sm font-medium">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">Discover & Join</p>
+          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
             <Globe className="w-4 h-4 mr-2" />
             Global Events Network
           </Badge>
-          
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6">
+
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
             Global Goals Jam <span className="text-primary-solid">Events</span>
           </h1>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-4 mb-6 flex flex-wrap items-center justify-center gap-2">
             {Array.from({ length: 17 }, (_, i) => i + 1).map((n) => (
               <span key={n} className={cn('w-4 h-4 rounded-full inline-block', `bg-sdg-${n}`)} title={`SDG ${n}`} />
             ))}
           </div>
-          
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Join local communities worldwide in tackling the UN Sustainable Development Goals. 
+
+          <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
+            Join local communities worldwide in tackling the UN Sustainable Development Goals.
             Find events near you or discover virtual opportunities to make a global impact.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-primary-solid text-white hover:bg-primary/90" onClick={findNearMe} disabled={geolocating}>
+            <Button size="lg" className="bg-primary-solid text-white hover:bg-primary/90 rounded-xl" onClick={findNearMe} disabled={geolocating}>
               {geolocating ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Locating…
@@ -300,7 +300,7 @@ export default function EventsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Filters */}
-        <Card className="mb-8">
+        <Card className="mb-8 shadow-soft rounded-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="w-5 h-5" />
@@ -358,24 +358,25 @@ export default function EventsPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.map((event) => {
             const sdg = sdgNumberFromFocus(event.sdgFocus)
+            const isPast = event.status === 'completed' || event.status === 'cancelled' || !isEventUpcoming(event.eventDate)
             return (
-              <Card key={event.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+              <Card key={event.id} className={cn("shadow-soft hover:shadow-card transition-shadow overflow-hidden rounded-xl", isPast && "opacity-60 grayscale-[40%]")}>
                 {/* SDG top bar */}
-                <div className={cn('h-1 w-full', sdg ? sdgBg(sdg) : 'bg-primary-solid')} />
+                <div className={cn('h-1.5 w-full', sdg ? sdgBg(sdg) : 'bg-primary-solid')} />
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge 
-                          variant="secondary" 
-                          className={cn('text-xs text-white', statusColors[event.status as keyof typeof statusColors])}
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <Badge
+                          variant="secondary"
+                          className={cn('text-xs', statusColors[event.status as keyof typeof statusColors])}
                         >
                           {statusLabels[event.status as keyof typeof statusLabels]}
                         </Badge>
                         {sdg && (
-                          <Badge variant="outline" className={cn('text-xs', sdgBorder(sdg), sdgText(sdg))}>
-                            SDG {sdg}
+                          <Badge variant="outline" className={cn('text-xs font-medium', sdgBorder(sdg), sdgText(sdg))}>
+                            SDG {sdg}: {sdgName(sdg)}
                           </Badge>
                         )}
                         {isEventToday(event.eventDate) && (
@@ -446,7 +447,7 @@ export default function EventsPage() {
         </div>
 
         {filteredEvents.length === 0 && (
-          <Card>
+          <Card className="shadow-soft rounded-xl">
             <CardContent className="text-center py-12">
               <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No events found</h3>
@@ -472,10 +473,10 @@ export default function EventsPage() {
         )}
 
         {/* Call to Action */}
-        <Card className="mt-12 bg-primary-solid/5 border-primary/20">
+        <Card className="mt-12 bg-section-warm border-primary/20 shadow-soft rounded-xl">
           <CardContent className="text-center py-12">
             <Globe className="w-16 h-16 text-primary mx-auto mb-6" />
-            <h2 className="text-2xl font-bold text-foreground mb-4">
+            <h2 className="text-2xl font-display font-bold text-foreground mb-4">
               Ready to Host Your Own Global Goals Jam?
             </h2>
             <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
@@ -483,13 +484,13 @@ export default function EventsPage() {
               the UN Sustainable Development Goals through collaborative innovation.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-primary-solid text-white hover:bg-primary/90" asChild>
+              <Button size="lg" className="bg-primary-solid text-white hover:bg-primary/90 rounded-pill" asChild>
                 <Link to="/sign-in">
                   <Plus className="w-5 h-5 mr-2" />
                   Become a Host
                 </Link>
               </Button>
-              <Button size="lg" className="bg-primary-solid text-white hover:bg-primary/90" asChild>
+              <Button size="lg" className="bg-primary-solid text-white hover:bg-primary/90 rounded-pill" asChild>
                 <Link to="/about">
                   <Search className="w-5 h-5 mr-2" />
                   Learn More

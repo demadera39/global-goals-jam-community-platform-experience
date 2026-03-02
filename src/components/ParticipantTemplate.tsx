@@ -22,31 +22,31 @@ interface ParticipantTemplateProps {
 const phaseConfig = {
   understand: { 
     icon: Target, 
-    color: 'bg-blue-500', 
+    color: 'bg-sky-500',
     label: 'Understand & Empathize',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-600'
+    bgColor: 'bg-pastel-sky',
+    textColor: 'text-sky-600'
   },
-  define: { 
-    icon: Lightbulb, 
-    color: 'bg-yellow-500', 
+  define: {
+    icon: Lightbulb,
+    color: 'bg-amber-500',
     label: 'Define & Ideate',
-    bgColor: 'bg-yellow-50',
-    textColor: 'text-yellow-600'
+    bgColor: 'bg-pastel-amber',
+    textColor: 'text-amber-600'
   },
-  prototype: { 
-    icon: CheckSquare, 
-    color: 'bg-purple-500', 
+  prototype: {
+    icon: CheckSquare,
+    color: 'bg-violet-500',
     label: 'Prototype & Test',
-    bgColor: 'bg-purple-50',
-    textColor: 'text-purple-600'
+    bgColor: 'bg-pastel-violet',
+    textColor: 'text-violet-600'
   },
-  implement: { 
-    icon: Target, 
-    color: 'bg-green-500', 
+  implement: {
+    icon: Target,
+    color: 'bg-primary',
     label: 'Implement & Scale',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-600'
+    bgColor: 'bg-pastel-green',
+    textColor: 'text-primary'
   }
 }
 

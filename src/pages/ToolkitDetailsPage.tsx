@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, Download, Loader2, Users } from 'lucide-react'
-import blink, { getFullUser } from '../lib/blink'
+import { db, auth } from '../lib/supabase'
+import { getFullUser } from '../lib/userProfile'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
@@ -56,18 +57,19 @@ export default function ToolkitDetailsPage() {
     const load = async () => {
       if (!id) return
       try {
-        const list = await blink.db.toolkits.list({ where: { id }, limit: 1 })
+        const list = await db.toolkits.list({ where: { id }, limit: 1 })
         const tk = list[0] || null
         setToolkit(tk)
 
         if (tk) {
           // fetch related: same SDG, exclude current, order by downloads
-          const same = await blink.db.toolkits.list({
-            where: { sdgFocus: tk.sdgFocus, isPublic: "1", id: { NEQ: tk.id } },
+          const same = await db.toolkits.list({
+            where: { sdgFocus: tk.sdgFocus, isPublic: true },
             orderBy: { downloadCount: 'desc' },
-            limit: 6
+            limit: 7
           })
-          setRelated(same)
+          // Filter out current toolkit in memory (table helper doesn't support NEQ)
+          setRelated(same.filter((t: any) => t.id !== tk.id).slice(0, 6))
         }
       } catch (e) {
         console.error('Failed to load toolkit', e)
@@ -90,7 +92,7 @@ export default function ToolkitDetailsPage() {
         setAuthChecked(true)
       }
     }
-    const unsub = blink.auth.onAuthStateChanged(() => init().catch(() => setAuthChecked(true)))
+    const unsub = auth.onAuthStateChanged(() => init().catch(() => setAuthChecked(true)))
     init().catch(() => setAuthChecked(true))
     return unsub
   }, [])
@@ -126,7 +128,7 @@ export default function ToolkitDetailsPage() {
       return
     }
     try {
-      await blink.db.toolkits.update(toolkit.id, { downloadCount: (toolkit.downloadCount || 0) + 1 })
+      await db.toolkits.update(toolkit.id, { downloadCount: (toolkit.downloadCount || 0) + 1 })
       const html = buildToolkitHtml({
         title: toolkit.title,
         sdgLabel: sdg?.label,
@@ -219,7 +221,7 @@ export default function ToolkitDetailsPage() {
                 const sdg = sdgOptions.find(s => s.value === rt.sdgFocus)
                 return (
                   <Link key={rt.id} to={`/toolkit/${rt.id}`} className="block group">
-                    <Card className="hover:shadow-lg transition-all group-hover:-translate-y-0.5">
+                    <Card className="hover:shadow-card transition-all group-hover:-translate-y-0.5">
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">

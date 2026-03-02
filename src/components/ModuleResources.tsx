@@ -72,17 +72,17 @@ export const ModuleResources: React.FC<ModuleResourcesProps> = ({ moduleNumber, 
   const getResourceColor = (type: string) => {
     switch (type) {
       case 'template':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-pastel-sky text-sky-800 border-sky-200';
       case 'framework':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-pastel-violet text-violet-800 border-violet-200';
       case 'tool':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-pastel-green text-primary/80 border-primary/20';
       case 'article':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-pastel-amber text-amber-800 border-amber-200';
       case 'guide':
-        return 'bg-pink-100 text-pink-800 border-pink-200';
+        return 'bg-pastel-rose text-rose-800 border-rose-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -97,15 +97,15 @@ export const ModuleResources: React.FC<ModuleResourcesProps> = ({ moduleNumber, 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Module Resources</h3>
-        <p className="text-gray-600">
+        <h3 className="text-xl font-semibold text-foreground mb-2">Module Resources</h3>
+        <p className="text-muted-foreground">
           Templates, frameworks, and tools to support your learning and jam preparation.
         </p>
       </div>
 
       {Object.entries(groupedResources).map(([type, typeResources]) => (
         <div key={type} className="space-y-3">
-          <h4 className="font-semibold text-gray-800 capitalize flex items-center gap-2">
+          <h4 className="font-semibold text-foreground capitalize flex items-center gap-2">
             {getResourceIcon(type)}
             {type === 'template' ? 'Interactive Templates' : 
              type === 'framework' ? 'Frameworks & Models' :
@@ -118,7 +118,7 @@ export const ModuleResources: React.FC<ModuleResourcesProps> = ({ moduleNumber, 
             {typeResources.map((resource) => (
               <Card 
                 key={resource.id} 
-                className={`overflow-hidden hover:shadow-md transition-all cursor-pointer ${
+                className={`overflow-hidden hover:shadow-soft transition-all cursor-pointer ${
                   getResourceColor(resource.type)
                 }`}
                 onClick={() => handleResourceClick(resource)}
@@ -128,12 +128,12 @@ export const ModuleResources: React.FC<ModuleResourcesProps> = ({ moduleNumber, 
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         {getResourceIcon(resource.type)}
-                        <h5 className="font-medium text-gray-900">{resource.title}</h5>
+                        <h5 className="font-medium text-foreground">{resource.title}</h5>
                         <Badge variant="outline" className="text-xs">
                           {resource.type}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-700">
+                      <p className="text-sm text-foreground/80">
                         {resource.description}
                       </p>
                     </div>
@@ -162,15 +162,15 @@ export const ModuleResources: React.FC<ModuleResourcesProps> = ({ moduleNumber, 
 
       {resources.length === 0 && (
         <Card className="p-8 text-center">
-          <p className="text-gray-500">No resources available for this module yet.</p>
+          <p className="text-muted-foreground">No resources available for this module yet.</p>
         </Card>
       )}
 
       {moduleNumber === 2 && (
-        <Card className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+        <Card className="mt-6 bg-gradient-to-r from-pastel-violet to-pastel-rose border-violet-200">
           <CardContent className="p-6">
-            <h4 className="font-semibold mb-2 text-purple-900">🧠 Systems Thinking Resources</h4>
-            <p className="text-sm text-purple-800 mb-4">
+            <h4 className="font-semibold mb-2 text-violet-900">🧠 Systems Thinking Resources</h4>
+            <p className="text-sm text-violet-800 mb-4">
               These frameworks will help you understand and navigate complex challenges. 
               Use them to identify the right approach for your local context.
             </p>
@@ -184,10 +184,10 @@ export const ModuleResources: React.FC<ModuleResourcesProps> = ({ moduleNumber, 
       )}
 
       {moduleNumber === 1 && (
-        <Card className="mt-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+        <Card className="mt-6 bg-gradient-to-r from-pastel-green to-pastel-sky border-primary/20">
           <CardContent className="p-6">
-            <h4 className="font-semibold mb-2 text-green-900">📚 Getting Started Resources</h4>
-            <p className="text-sm text-green-800 mb-4">
+            <h4 className="font-semibold mb-2 text-primary">📚 Getting Started Resources</h4>
+            <p className="text-sm text-primary/80 mb-4">
               These templates are designed to help you prepare for hosting your first Global Goals Jam. 
               Take your time to fill them out thoughtfully - they'll guide your journey as a host.
             </p>

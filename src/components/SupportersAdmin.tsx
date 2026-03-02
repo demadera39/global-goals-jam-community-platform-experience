@@ -8,7 +8,7 @@ import { Textarea } from './ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 import { Upload, X, Edit, Trash2, Plus, Image } from 'lucide-react'
-import { blink } from '../lib/blink'
+import { db, storage } from '../lib/supabase'
 import toast from 'react-hot-toast'
 
 interface Supporter {
@@ -59,7 +59,7 @@ const SupportersAdmin = () => {
 
   const loadSupporters = async () => {
     try {
-      const donations = await blink.db.donations.list({
+      const donations = await db.donations.list({
         where: { status: 'completed' },
         orderBy: { amount: 'desc' }
       })
@@ -141,7 +141,7 @@ const SupportersAdmin = () => {
       // Upload new logo if provided
       if (form.logoFile) {
         const timestamp = Date.now()
-        const { publicUrl } = await blink.storage.upload(
+        const { publicUrl } = await storage.upload(
           form.logoFile,
           `supporter-logos/${timestamp}-${form.logoFile.name}`,
           { upsert: true }
@@ -157,7 +157,7 @@ const SupportersAdmin = () => {
 
       if (editingSupporter) {
         // Update existing supporter
-        await blink.db.donations.update(editingSupporter.id, {
+        await db.donations.update(editingSupporter.id, {
           donorName: form.donorName,
           donorOrganization: form.donorOrganization || null,
           donorLogoUrl: logoUrl || null,
@@ -166,7 +166,7 @@ const SupportersAdmin = () => {
         toast.success('Supporter updated successfully')
       } else {
         // Create new supporter entry
-        await blink.db.donations.create({
+        await db.donations.create({
           id: `supporter-${Date.now()}`,
           donorName: form.donorName,
           donorOrganization: form.donorOrganization || null,
@@ -196,7 +196,7 @@ const SupportersAdmin = () => {
     if (!confirm('Are you sure you want to delete this supporter?')) return
 
     try {
-      await blink.db.donations.delete(id)
+      await db.donations.delete(id)
       toast.success('Supporter deleted successfully')
       await loadSupporters()
     } catch (error) {

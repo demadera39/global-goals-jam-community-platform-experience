@@ -102,7 +102,7 @@ export default function LoginPage() {
       <p className="text-muted-foreground text-center mb-8">Sign in to your Global Goals Jam account</p>
 
       {/* Login Card */}
-      <Card className="w-full max-w-md shadow-lg">
+      <Card className="w-full max-w-md shadow-card">
         <CardHeader className="space-y-1 pb-4">
           <CardTitle className="text-center text-xl">Sign In</CardTitle>
         </CardHeader>

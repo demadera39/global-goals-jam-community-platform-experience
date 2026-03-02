@@ -33,7 +33,7 @@ export default function FloatingAnnouncement() {
       className="fixed inset-x-0 top-4 z-50 flex justify-center pointer-events-none"
     >
       <div className="pointer-events-auto max-w-3xl w-full mx-4">
-        <div className="flex items-center justify-between gap-4 bg-primary-solid text-white rounded-lg shadow-lg p-3 sm:p-4 transition-transform duration-300 transform translate-y-0">
+        <div className="flex items-center justify-between gap-4 bg-primary-solid text-white rounded-lg shadow-card p-3 sm:p-4 transition-transform duration-300 transform translate-y-0">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 mt-0.5">
               <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -50,12 +50,12 @@ export default function FloatingAnnouncement() {
           </div>
 
           <div className="flex items-start gap-2">
-            <a href="/host-dashboard" className="hidden sm:inline-flex items-center px-3 py-2 rounded-md bg-white/10 text-white text-sm font-medium hover:bg-white/20">For hosts →</a>
+            <a href="/host-dashboard" className="hidden sm:inline-flex items-center px-3 py-2 rounded-xl bg-white/10 text-primary-foreground text-sm font-medium hover:bg-white/20">For hosts →</a>
 
             <button
               onClick={dismiss}
               aria-label="Dismiss announcement"
-              className="p-2 rounded-md text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+              className="p-2 rounded-xl text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
             >
               <X className="w-4 h-4" />
             </button>

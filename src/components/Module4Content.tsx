@@ -7,26 +7,26 @@ const Module4Content = () => {
   return (
     <div className="space-y-8">
       {/* Module Header */}
-      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-8">
-        <Badge className="mb-4 bg-purple-600">Module 4</Badge>
+      <div className="bg-gradient-to-r from-pastel-violet to-pink-50 rounded-lg p-8">
+        <Badge className="mb-4 bg-violet-600">Module 4</Badge>
         <h1 className="text-4xl font-bold mb-4">The Jamkit Toolkit</h1>
-        <p className="text-xl text-gray-700">Master the complete toolkit of methods, materials, and approaches for running successful Global Goals Jams that create real impact.</p>
+        <p className="text-xl text-foreground/80">Master the complete toolkit of methods, materials, and approaches for running successful Global Goals Jams that create real impact.</p>
       </div>
 
       {/* Introduction */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Wrench className="h-5 w-5 text-purple-600" />
+            <Wrench className="h-5 w-5 text-violet-600" />
             Your Complete Facilitation Toolkit
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>The Jamkit isn't just a collection of methods—it's a carefully curated system of tools, techniques, and approaches designed to help you navigate the complexity of collaborative problem-solving around the SDGs.</p>
           
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-purple-900 mb-2">The Jamkit Philosophy</h4>
-            <p className="text-purple-800 text-sm">Every tool in your kit serves a purpose: to help participants move from individual perspectives to collective understanding, from problems to possibilities, and from ideas to action.</p>
+          <div className="bg-pastel-violet p-4 rounded-lg">
+            <h4 className="font-semibold text-violet-900 mb-2">The Jamkit Philosophy</h4>
+            <p className="text-violet-800 text-sm">Every tool in your kit serves a purpose: to help participants move from individual perspectives to collective understanding, from problems to possibilities, and from ideas to action.</p>
           </div>
         </CardContent>
       </Card>
@@ -35,15 +35,15 @@ const Module4Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-purple-600" />
+            <Target className="h-5 w-5 text-violet-600" />
             Four Categories of Methods
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <div className="border-l-4 border-blue-500 pl-4">
-                <h4 className="font-semibold mb-2 text-blue-900">🔍 Exploration Methods</h4>
+              <div className="border-l-4 border-sky-500 pl-4">
+                <h4 className="font-semibold mb-2 text-sky-900">🔍 Exploration Methods</h4>
                 <p className="text-sm text-muted-foreground mb-2">Help participants understand the challenge space and each other's perspectives.</p>
                 <ul className="text-sm space-y-1">
                   <li>• Stakeholder mapping</li>
@@ -54,8 +54,8 @@ const Module4Content = () => {
                 </ul>
               </div>
               
-              <div className="border-l-4 border-green-500 pl-4">
-                <h4 className="font-semibold mb-2 text-green-900">💡 Ideation Methods</h4>
+              <div className="border-l-4 border-primary pl-4">
+                <h4 className="font-semibold mb-2 text-primary">💡 Ideation Methods</h4>
                 <p className="text-sm text-muted-foreground mb-2">Generate creative solutions and breakthrough thinking.</p>
                 <ul className="text-sm space-y-1">
                   <li>• Brainstorming variations</li>
@@ -68,7 +68,7 @@ const Module4Content = () => {
             </div>
             
             <div className="space-y-4">
-              <div className="border-l-4 border-orange-500 pl-4">
+              <div className="border-l-4 border-amber-500 pl-4">
                 <h4 className="font-semibold mb-2 text-orange-900">🎯 Convergence Methods</h4>
                 <p className="text-sm text-muted-foreground mb-2">Help groups make decisions and prioritize solutions.</p>
                 <ul className="text-sm space-y-1">
@@ -80,7 +80,7 @@ const Module4Content = () => {
                 </ul>
               </div>
               
-              <div className="border-l-4 border-red-500 pl-4">
+              <div className="border-l-4 border-destructive pl-4">
                 <h4 className="font-semibold mb-2 text-red-900">🚀 Action Methods</h4>
                 <p className="text-sm text-muted-foreground mb-2">Transform ideas into concrete plans and commitments.</p>
                 <ul className="text-sm space-y-1">
@@ -100,7 +100,7 @@ const Module4Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-blue-600" />
+            <Brain className="h-5 w-5 text-sky-600" />
             Choosing the Right Methods
           </CardTitle>
         </CardHeader>
@@ -108,30 +108,30 @@ const Module4Content = () => {
           <p>The key to successful facilitation is selecting methods that match your context, participants, and objectives. Here's how to choose:</p>
           
           <div className="space-y-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">Consider Your Participants</h4>
+            <div className="p-4 bg-pastel-sky rounded-lg">
+              <h4 className="font-semibold text-sky-900 mb-2">Consider Your Participants</h4>
               <div className="grid md:grid-cols-3 gap-4 text-sm">
                 <div>
                   <h5 className="font-medium mb-1">Experience Level</h5>
-                  <p className="text-blue-800">Beginners need more structure and guidance; experts can handle open-ended methods.</p>
+                  <p className="text-sky-800">Beginners need more structure and guidance; experts can handle open-ended methods.</p>
                 </div>
                 <div>
                   <h5 className="font-medium mb-1">Group Size</h5>
-                  <p className="text-blue-800">Small groups (5-8) can use intimate methods; large groups need structured breakouts.</p>
+                  <p className="text-sky-800">Small groups (5-8) can use intimate methods; large groups need structured breakouts.</p>
                 </div>
                 <div>
                   <h5 className="font-medium mb-1">Cultural Context</h5>
-                  <p className="text-blue-800">Some cultures prefer individual reflection before group sharing; others thrive on immediate collaboration.</p>
+                  <p className="text-sky-800">Some cultures prefer individual reflection before group sharing; others thrive on immediate collaboration.</p>
                 </div>
               </div>
             </div>
             
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-semibold text-green-900 mb-2">Match Your Objectives</h4>
+            <div className="p-4 bg-pastel-green rounded-lg">
+              <h4 className="font-semibold text-primary mb-2">Match Your Objectives</h4>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <h5 className="font-medium mb-1">If you want to...</h5>
-                  <ul className="space-y-1 text-green-800">
+                  <ul className="space-y-1 text-primary/80">
                     <li>• Build empathy → Use perspective-taking exercises</li>
                     <li>• Generate many ideas → Use divergent brainstorming</li>
                     <li>• Make decisions → Use convergent prioritization</li>
@@ -140,7 +140,7 @@ const Module4Content = () => {
                 </div>
                 <div>
                   <h5 className="font-medium mb-1">Energy Management</h5>
-                  <ul className="space-y-1 text-green-800">
+                  <ul className="space-y-1 text-primary/80">
                     <li>• High energy → Use movement and interaction</li>
                     <li>• Low energy → Use reflection and individual work</li>
                     <li>• Mixed energy → Alternate between active and calm</li>
@@ -157,7 +157,7 @@ const Module4Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CheckSquare className="h-5 w-5 text-green-600" />
+            <CheckSquare className="h-5 w-5 text-primary" />
             Your Materials Checklist
           </CardTitle>
         </CardHeader>
@@ -167,7 +167,7 @@ const Module4Content = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-gray-900">📝 Writing & Documentation</h4>
+                <h4 className="font-semibold mb-2 text-foreground">📝 Writing & Documentation</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Flip chart paper (lots!)</li>
                   <li>• Sticky notes (multiple colors)</li>
@@ -179,7 +179,7 @@ const Module4Content = () => {
               </div>
               
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-gray-900">🎯 Facilitation Tools</h4>
+                <h4 className="font-semibold mb-2 text-foreground">🎯 Facilitation Tools</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Timer (visible to all)</li>
                   <li>• Bell or chime</li>
@@ -193,7 +193,7 @@ const Module4Content = () => {
             
             <div className="space-y-4">
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-gray-900">💻 Digital Tools</h4>
+                <h4 className="font-semibold mb-2 text-foreground">💻 Digital Tools</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Laptop/tablet for documentation</li>
                   <li>• Camera for capturing outputs</li>
@@ -205,7 +205,7 @@ const Module4Content = () => {
               </div>
               
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-gray-900">🏠 Space & Comfort</h4>
+                <h4 className="font-semibold mb-2 text-foreground">🏠 Space & Comfort</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Moveable chairs and tables</li>
                   <li>• Wall space for posting</li>
@@ -224,7 +224,7 @@ const Module4Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Timer className="h-5 w-5 text-orange-600" />
+            <Timer className="h-5 w-5 text-amber-600" />
             Session Planning Framework
           </CardTitle>
         </CardHeader>
@@ -232,8 +232,8 @@ const Module4Content = () => {
           <p>Use this framework to design sessions that flow naturally and achieve your objectives:</p>
           
           <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 bg-orange-50 rounded-lg">
-              <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-amber/70 rounded-lg">
+              <div className="w-8 h-8 bg-amber-500 text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
               <div>
                 <h4 className="font-semibold mb-1">Opening (15-20 minutes)</h4>
                 <p className="text-sm text-muted-foreground mb-2">Set the tone, build connection, and orient participants.</p>
@@ -246,8 +246,8 @@ const Module4Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-              <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-sky rounded-lg">
+              <div className="w-8 h-8 bg-sky-500 text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
               <div>
                 <h4 className="font-semibold mb-1">Exploration (30-45 minutes)</h4>
                 <p className="text-sm text-muted-foreground mb-2">Help participants understand the challenge and each other.</p>
@@ -260,8 +260,8 @@ const Module4Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-green-50 rounded-lg">
-              <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-green rounded-lg">
+              <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
               <div>
                 <h4 className="font-semibold mb-1">Ideation (45-60 minutes)</h4>
                 <p className="text-sm text-muted-foreground mb-2">Generate creative solutions and possibilities.</p>
@@ -274,8 +274,8 @@ const Module4Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-purple-50 rounded-lg">
-              <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-violet rounded-lg">
+              <div className="w-8 h-8 bg-violet-500 text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">4</div>
               <div>
                 <h4 className="font-semibold mb-1">Convergence (30-40 minutes)</h4>
                 <p className="text-sm text-muted-foreground mb-2">Make decisions and prioritize solutions.</p>
@@ -288,8 +288,8 @@ const Module4Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-red-50 rounded-lg">
-              <div className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">5</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-rose rounded-lg">
+              <div className="w-8 h-8 bg-destructive text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">5</div>
               <div>
                 <h4 className="font-semibold mb-1">Action Planning (20-30 minutes)</h4>
                 <p className="text-sm text-muted-foreground mb-2">Transform ideas into concrete next steps.</p>
@@ -302,8 +302,8 @@ const Module4Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-gray-500 text-white rounded-full flex items-center justify-center text-sm font-bold">6</div>
+            <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="w-8 h-8 bg-muted-foreground text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">6</div>
               <div>
                 <h4 className="font-semibold mb-1">Closing (10-15 minutes)</h4>
                 <p className="text-sm text-muted-foreground mb-2">Reflect, celebrate, and connect to next steps.</p>

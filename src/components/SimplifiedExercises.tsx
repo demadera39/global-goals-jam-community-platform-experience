@@ -9,7 +9,7 @@ export function SimplifiedExercises({ moduleNumber }: SimplifiedExercisesProps) 
   const moduleNum = parseInt(moduleNumber);
   if (!moduleNum) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-muted-foreground">
         <p>Exercises coming soon.</p>
       </div>
     );

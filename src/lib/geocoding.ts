@@ -1,5 +1,3 @@
-import blink from './blink'
-
 export interface GeoPoint {
   lat: number
   lon: number
@@ -30,25 +28,28 @@ export async function geocodeLocation(query: string): Promise<GeoPoint | null> {
   } catch (_) { void 0 }
 
   try {
-    // Use OpenStreetMap Nominatim (no API key). We proxy via blink.data.fetch to avoid CORS issues.
-    const result = await blink.data.fetch({
-      url: 'https://nominatim.openstreetmap.org/search',
-      method: 'GET',
-      query: {
-        q: query,
-        format: 'json',
-        addressdetails: '0',
-        limit: '1'
-      },
-      headers: {
-        'User-Agent': 'GGJ-Community-Platform/1.0 (map geocoding)'
-      }
+    // Use OpenStreetMap Nominatim directly (no CORS issues for GET requests)
+    const params = new URLSearchParams({
+      q: query,
+      format: 'json',
+      addressdetails: '0',
+      limit: '1'
     })
 
-    const body = Array.isArray(result.body) ? result.body : []
-    if (body.length === 0) return null
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?${params}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+        }
+      }
+    )
 
-    const first = body[0]
+    const body = await response.json()
+    const results = Array.isArray(body) ? body : []
+    if (results.length === 0) return null
+
+    const first = results[0]
     const lat = Number(first.lat)
     const lon = Number(first.lon)
     if (Number.isFinite(lat) && Number.isFinite(lon)) {

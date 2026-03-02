@@ -67,8 +67,20 @@
     --chart-3: 221 83% 53%;
     --chart-4: 262 83% 58%;
     --chart-5: 316 73% 52%;
-    --radius: 0.5rem;
-    
+    --radius: 0.75rem;
+
+    /* Pastel palette */
+    --pastel-green: 152 68% 90%;
+    --pastel-amber: 42 100% 90%;
+    --pastel-rose: 350 100% 93%;
+    --pastel-violet: 270 100% 93%;
+    --pastel-sky: 200 100% 91%;
+    --pastel-mint: 168 76% 88%;
+
+    /* Section backgrounds */
+    --section-alt: 220 20% 97%;
+    --section-warm: 35 50% 97%;
+
     /* Sidebar variables */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 220 39% 11%;
@@ -111,6 +123,18 @@
     --chart-4: 262 83% 58%;
     --chart-5: 316 73% 52%;
     
+    /* Pastel palette – dark mode (lower lightness, higher saturation) */
+    --pastel-green: 152 40% 22%;
+    --pastel-amber: 42 50% 22%;
+    --pastel-rose: 350 40% 22%;
+    --pastel-violet: 270 40% 24%;
+    --pastel-sky: 200 40% 22%;
+    --pastel-mint: 168 36% 20%;
+
+    /* Section backgrounds – dark mode */
+    --section-alt: 220 30% 14%;
+    --section-warm: 35 20% 14%;
+
     /* Sidebar variables for dark mode */
     --sidebar-background: 220 39% 11%;
     --sidebar-foreground: 220 14% 97%;
@@ -356,9 +380,11 @@
   
   .hero-pattern {
     background-color: hsl(var(--background));
-    background-image: 
-      radial-gradient(circle at 25% 25%, hsl(var(--primary) / 5%) 0%, transparent 50%),
-      radial-gradient(circle at 75% 75%, hsl(var(--accent) / 5%) 0%, transparent 50%);
+    background-image:
+      radial-gradient(circle at 20% 20%, hsl(var(--pastel-green) / 60%) 0%, transparent 40%),
+      radial-gradient(circle at 80% 30%, hsl(var(--pastel-violet) / 40%) 0%, transparent 35%),
+      radial-gradient(circle at 65% 80%, hsl(var(--pastel-amber) / 50%) 0%, transparent 40%),
+      radial-gradient(circle at 10% 70%, hsl(var(--pastel-sky) / 35%) 0%, transparent 30%);
   }
   
   .sdg-colors {
@@ -495,6 +521,38 @@
     box-shadow: 0 6px 18px hsl(208deg 64% 30% / 12%);
     border: 1px solid hsl(208deg 64% 25%);
   }
+
+  /* Shadow utilities */
+  .shadow-soft {
+    box-shadow: 0 1px 3px hsl(var(--foreground) / 4%), 0 1px 2px hsl(var(--foreground) / 6%);
+  }
+  .shadow-card {
+    box-shadow: 0 4px 14px hsl(var(--foreground) / 6%), 0 1px 3px hsl(var(--foreground) / 4%);
+  }
+  .shadow-card-hover {
+    box-shadow: 0 8px 28px hsl(var(--foreground) / 10%), 0 2px 6px hsl(var(--foreground) / 5%);
+  }
+
+  /* Display font utility */
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* Section background utilities */
+  .bg-section-alt {
+    background-color: hsl(var(--section-alt));
+  }
+  .bg-section-warm {
+    background-color: hsl(var(--section-warm));
+  }
+
+  /* Pastel background utilities */
+  .bg-pastel-green { background-color: hsl(var(--pastel-green)); }
+  .bg-pastel-amber { background-color: hsl(var(--pastel-amber)); }
+  .bg-pastel-rose { background-color: hsl(var(--pastel-rose)); }
+  .bg-pastel-violet { background-color: hsl(var(--pastel-violet)); }
+  .bg-pastel-sky { background-color: hsl(var(--pastel-sky)); }
+  .bg-pastel-mint { background-color: hsl(var(--pastel-mint)); }
 
   /* Fixed global marker (top-left corner) */
   .site-marker {

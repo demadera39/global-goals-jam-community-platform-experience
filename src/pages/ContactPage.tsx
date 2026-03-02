@@ -7,9 +7,10 @@ import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form'
 import { Card } from '../components/ui/card'
-import { AlertCircle, CheckCircle2, Mail, MapPin, Phone } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
+import { Badge } from '../components/ui/badge'
 import { toast } from 'sonner'
-import blink from '../lib/blink'
+import { notifications } from '../lib/supabase'
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -64,10 +65,9 @@ export default function ContactPage() {
         </div>
       `
 
-      const result = await blink.notifications.email({
+      const result = await notifications.email({
         to: 'marco@globalgoalsjam.org',
-        from: 'marco@globalgoalsjam.org',
-        replyTo: data.email,
+        from: 'Global Goals Jam <marco@globalgoalsjam.org>',
         subject: `Contact Form: ${data.subject}`,
         html: emailHtml,
         text: `New contact form submission from ${data.name} (${data.email})\n\nSubject: ${data.subject}\n\nMessage:\n${data.message}`,
@@ -95,21 +95,32 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-secondary to-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">Get in Touch</h1>
-          <p className="text-lg text-muted-foreground">
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative py-20 hero-pattern">
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">Reach Out</p>
+          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
+            <MessageCircle className="w-4 h-4 mr-2" />
+            Contact Us
+          </Badge>
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
+            Get in <span className="text-primary-solid">Touch</span>
+          </h1>
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Have a question or suggestion? We'd love to hear from you.
           </p>
         </div>
+      </section>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Info */}
           <div className="lg:col-span-1">
             <div className="space-y-6">
-              <Card className="p-6">
+              <Card className="p-6 shadow-soft">
                 <div className="flex items-start space-x-4">
                   <Mail className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
                   <div>
@@ -121,7 +132,7 @@ export default function ContactPage() {
                 </div>
               </Card>
 
-              <Card className="p-6">
+              <Card className="p-6 shadow-soft">
                 <div className="flex items-start space-x-4">
                   <MapPin className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
                   <div>
@@ -133,7 +144,7 @@ export default function ContactPage() {
                 </div>
               </Card>
 
-              <Card className="p-6">
+              <Card className="p-6 shadow-soft">
                 <div className="flex items-start space-x-4">
                   <Phone className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
                   <div>
@@ -151,11 +162,11 @@ export default function ContactPage() {
           <div className="lg:col-span-2">
             <Card className="p-8">
               {submitSuccess && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="mb-6 p-4 bg-pastel-green border-0 rounded-lg flex items-start space-x-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-green-900">Message Sent!</h3>
-                    <p className="text-sm text-green-800 mt-1">
+                    <h3 className="font-semibold text-foreground">Message Sent!</h3>
+                    <p className="text-sm text-foreground mt-1">
                       Thank you for contacting us. We'll get back to you shortly.
                     </p>
                   </div>
@@ -250,7 +261,7 @@ export default function ContactPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-primary hover:bg-primary/90 text-white"
+                    className="w-full bg-primary hover:bg-primary/90 text-white rounded-pill"
                   >
                     {isSubmitting ? 'Sending...' : 'Send Message'}
                   </Button>

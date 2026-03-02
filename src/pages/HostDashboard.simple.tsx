@@ -31,7 +31,8 @@ import {
   FileText,
   Clock
 } from 'lucide-react'
-import blink, { getFullUser, safeDbCall } from '../lib/blink'
+import { db, auth, storage, safeDbCall } from '../lib/supabase'
+import { getFullUser } from '../lib/userProfile'
 import { getUserProfile, canAccessFeature } from '../lib/userStatus'
 import type { UserProfile } from '../lib/userStatus'
 import { getStoredUser } from '../lib/auth'
@@ -82,10 +83,10 @@ interface Registration {
 }
 
 const statusColors: Record<string, string> = {
-  draft: 'bg-gray-500',
-  published: 'bg-green-600',
-  ongoing: 'bg-blue-600',
-  completed: 'bg-purple-600',
+  draft: 'bg-muted-foreground',
+  published: 'bg-primary',
+  ongoing: 'bg-sky-500',
+  completed: 'bg-violet-600',
   cancelled: 'bg-red-600'
 }
 
@@ -131,7 +132,7 @@ export default function HostDashboard() {
   const loadHostEvents = useCallback(async () => {
     if (!user) return
     try {
-      const hostEvents = await safeDbCall(() => blink.db.events.list({
+      const hostEvents = await safeDbCall(() => db.events.list({
         where: { hostId: user.id },
         orderBy: { createdAt: 'desc' }
       }))
@@ -145,7 +146,7 @@ export default function HostDashboard() {
     if (!user) return
     try {
       // Get all registrations then filter by host events
-      const allRegistrations = await safeDbCall(() => blink.db.eventRegistrations.list({
+      const allRegistrations = await safeDbCall(() => db.eventRegistrations.list({
         orderBy: { registrationDate: 'desc' },
         limit: 1000
       }))
@@ -159,7 +160,7 @@ export default function HostDashboard() {
   const loadCourseEnrollment = useCallback(async () => {
     if (!user) return
     try {
-      const enrollments = await safeDbCall(() => blink.db.courseEnrollments.list({
+      const enrollments = await safeDbCall(() => db.courseEnrollments.list({
         where: { userId: user.id },
         orderBy: { enrolledAt: 'desc' },
         limit: 1
@@ -211,7 +212,7 @@ export default function HostDashboard() {
       }
     }
 
-    const unsubscribe = blink.auth.onAuthStateChanged(() => {
+    const unsubscribe = auth.onAuthStateChanged(() => {
       update().catch(console.error)
     })
 
@@ -286,12 +287,12 @@ export default function HostDashboard() {
 
   const saveEvent = async () => {
     if (!user || !eventForm.title.trim() || !eventForm.description.trim() || !eventForm.location.trim() || !eventForm.startDate) {
-      alert('Please fill in all required fields')
+      toast.error('Please fill in all required fields')
       return
     }
 
     // Enforce role-based creation/editing
-    if (!canCreateEvents) { alert('Only approved hosts can create or edit events.'); return }
+    if (!canCreateEvents) { toast.error('Only approved hosts can create or edit events.'); return }
     setSubmitting(true)
     try {
       const eventData = {
@@ -313,7 +314,7 @@ export default function HostDashboard() {
       }
 
       if (selectedEvent) {
-        const updated = await safeDbCall(() => blink.db.events.update(selectedEvent.id, { ...eventData, hostId: selectedEvent.hostId || user.id }))
+        const updated = await safeDbCall(() => db.events.update(selectedEvent.id, { ...eventData, hostId: selectedEvent.hostId || user.id }))
         if (updated && Array.isArray(updated) && updated.length > 0) {
           const rec = updated[0]
           setEvents(prev => prev.map(e => e.id === rec.id ? { ...e, ...rec } as Event : e))
@@ -321,7 +322,7 @@ export default function HostDashboard() {
           setEvents(prev => prev.map(e => e.id === (updated as any).id ? { ...e, ...(updated as any) } as Event : e))
         }
       } else {
-        const created = await safeDbCall(() => blink.db.events.create({
+        const created = await safeDbCall(() => db.events.create({
           ...eventData,
           hostId: user.id
         }))
@@ -340,7 +341,7 @@ export default function HostDashboard() {
       setShowNewEventDialog(false)
     } catch (error) {
       console.error('Failed to save event:', error)
-      alert('Failed to save event. Please try again.')
+      toast.error('Failed to save event. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -348,23 +349,23 @@ export default function HostDashboard() {
 
   const publishEvent = async (eventId: string) => {
     try {
-      await safeDbCall(() => blink.db.events.update(eventId, { status: 'published' }))
+      await safeDbCall(() => db.events.update(eventId, { status: 'published' }))
       await loadHostEvents()
       toast.success('Event published')
     } catch (error) {
       console.error('Failed to publish event:', error)
-      alert('Failed to publish event. Please try again.')
+      toast.error('Failed to publish event. Please try again.')
     }
   }
 
   const completeEvent = async (eventId: string) => {
     try {
-      await safeDbCall(() => blink.db.events.update(eventId, { status: 'completed' }))
+      await safeDbCall(() => db.events.update(eventId, { status: 'completed' }))
       await loadHostEvents()
       toast.success('Event marked as completed')
     } catch (error) {
       console.error('Failed to complete event:', error)
-      alert('Failed to complete event. Please try again.')
+      toast.error('Failed to complete event. Please try again.')
     }
   }
 
@@ -376,25 +377,25 @@ export default function HostDashboard() {
 
     try {
       try {
-        const regs = await safeDbCall(() => blink.db.eventRegistrations.list({ where: { eventId }, limit: 1000 }))
-        await Promise.all((regs || []).map((r: any) => safeDbCall(() => blink.db.eventRegistrations.delete(r.id))))
+        const regs = await safeDbCall(() => db.eventRegistrations.list({ where: { eventId }, limit: 1000 }))
+        await Promise.all((regs || []).map((r: any) => safeDbCall(() => db.eventRegistrations.delete(r.id))))
       } catch {}
       try {
-        const items = await safeDbCall(() => blink.db.media.list({ where: { eventId }, limit: 1000 }))
-        await Promise.all((items || []).map((m: any) => safeDbCall(() => blink.db.media.delete(m.id))))
+        const items = await safeDbCall(() => db.media.list({ where: { eventId }, limit: 1000 }))
+        await Promise.all((items || []).map((m: any) => safeDbCall(() => db.media.delete(m.id))))
       } catch {}
       try {
-        const certs = await safeDbCall(() => blink.db.certificates.list({ where: { eventId }, limit: 1000 }))
-        await Promise.all((certs || []).map((c: any) => safeDbCall(() => blink.db.certificates.delete(c.id))))
+        const certs = await safeDbCall(() => db.certificates.list({ where: { eventId }, limit: 1000 }))
+        await Promise.all((certs || []).map((c: any) => safeDbCall(() => db.certificates.delete(c.id))))
       } catch {}
 
-      await safeDbCall(() => blink.db.events.delete(eventId))
+      await safeDbCall(() => db.events.delete(eventId))
       await loadHostEvents()
       toast.success('Event deleted')
     } catch (error) {
       console.error('Failed to delete event:', error)
       setEvents(prev)
-      alert('Failed to delete event. Please try again.')
+      toast.error('Failed to delete event. Please try again.')
     }
   }
 
@@ -426,7 +427,7 @@ export default function HostDashboard() {
     const map: Record<string, { email?: string; displayName?: string }> = {}
     await Promise.all(unique.map(async (id) => {
       try {
-        const rows = await safeDbCall(() => blink.db.users.list({ where: { id }, limit: 1 }))
+        const rows = await safeDbCall(() => db.users.list({ where: { id }, limit: 1 }))
         const u = rows?.[0]
         if (u) map[id] = { email: u.email, displayName: u.displayName }
       } catch {}
@@ -437,7 +438,7 @@ export default function HostDashboard() {
   async function exportParticipantsCSV(eventId?: string) {
     const rows = eventId ? registrations.filter(r => r.eventId === eventId) : registrations
     if (rows.length === 0) {
-      alert('No participants to export yet.')
+      toast.info('No participants to export yet.')
       return
     }
     const userMap = await fetchUsersByIds(rows.map(r => r.participantId))
@@ -500,7 +501,7 @@ export default function HostDashboard() {
 
       {certGenerating && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-white rounded-xl p-6 shadow-xl w-[320px] text-center">
+          <div className="bg-card rounded-xl p-6 shadow-xl w-[320px] text-center">
             <div className="mx-auto mb-4 w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
             <h3 className="text-lg font-semibold">Working…</h3>
             <p className="text-sm text-muted-foreground mt-1">{certStatus || 'Please wait a moment'}</p>
@@ -572,7 +573,7 @@ export default function HostDashboard() {
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
           <div className="grid md:grid-cols-3 gap-4">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { const a = document.createElement('a'); a.href = '/assets/ggj_assets.zip'; a.download = ''; document.body.appendChild(a); a.click(); document.body.removeChild(a); }} >
+            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => { const a = document.createElement('a'); a.href = '/assets/ggj_assets.zip'; a.download = ''; document.body.appendChild(a); a.click(); document.body.removeChild(a); }} >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -586,7 +587,7 @@ export default function HostDashboard() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.open('/assets/ggj_info_booklet.pdf', '_blank')}>
+            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => window.open('/assets/ggj_info_booklet.pdf', '_blank')}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -601,7 +602,7 @@ export default function HostDashboard() {
               </CardContent>
             </Card>
             <Link to="/organizer-booklet" className="block">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+              <Card className="hover:shadow-soft transition-shadow cursor-pointer h-full">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -731,7 +732,7 @@ export default function HostDashboard() {
                             if (!file) return
                             setHeaderUploading(true)
                             try {
-                              const { publicUrl } = await blink.storage.upload(
+                              const { publicUrl } = await storage.upload(
                                 file,
                                 `events/headers/${user?.id || 'unknown'}/${Date.now()}.${file.name.split('.').pop()}`,
                                 { upsert: true }
@@ -739,7 +740,7 @@ export default function HostDashboard() {
                               setEventForm(prev => ({ ...prev, coverImage: publicUrl }))
                             } catch (err) {
                               console.error('Header upload failed:', err)
-                              alert('Failed to upload image. Please try again.')
+                              toast.error('Failed to upload image. Please try again.')
                             } finally {
                               setHeaderUploading(false)
                               e.currentTarget.value = ''
@@ -775,13 +776,13 @@ export default function HostDashboard() {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => (
-                <Card key={event.id} className="hover:shadow-lg transition-shadow">
+                <Card key={event.id} className="hover:shadow-card transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
                         <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary" className={`text-xs text-white ${statusColors[event.status] || 'bg-gray-500'}`}>
+                          <Badge variant="secondary" className={`text-xs text-white ${statusColors[event.status] || 'bg-muted-foreground'}`}>
                             {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                           </Badge>
                         </div>
@@ -824,12 +825,12 @@ export default function HostDashboard() {
                             <Share2 className="w-4 h-4 mr-1" /> Share
                           </Button>
                           {event.status === 'draft' && canCreateEvents && (
-                            <Button size="sm" onClick={() => publishEvent(event.id)} className="bg-green-600 text-white hover:bg-green-700">
+                            <Button size="sm" onClick={() => publishEvent(event.id)} className="bg-primary text-white hover:bg-primary/90">
                               Publish
                             </Button>
                           )}
                           {(event.status === 'published' || event.status === 'ongoing') && canCreateEvents && (
-                            <Button size="sm" onClick={() => completeEvent(event.id)} className="bg-purple-600 text-white hover:bg-purple-700">
+                            <Button size="sm" onClick={() => completeEvent(event.id)} className="bg-violet-600 text-white hover:bg-violet-700">
                               Complete
                             </Button>
                           )}

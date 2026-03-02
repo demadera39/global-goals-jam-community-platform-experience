@@ -69,20 +69,20 @@ export default function AudioPlayer({ src, title }: Props) {
   };
 
   return (
-    <div className="w-full bg-white border rounded-lg p-4 shadow-sm">
+    <div className="w-full bg-card border rounded-lg p-4 shadow-sm">
       <div className="flex items-center gap-4">
         <button
           aria-label={isPlaying ? 'Pause audio' : 'Play audio'}
           onClick={togglePlay}
-          className="flex items-center justify-center w-12 h-12 rounded-md bg-green-600 text-white hover:brightness-95"
+          className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground hover:brightness-95"
         >
           {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
         </button>
 
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <div className="font-semibold text-gray-900">{title ?? 'Audio Lesson'}</div>
-            <div className="text-sm text-gray-500">{formatTime(progress)} / {formatTime(duration)}</div>
+            <div className="font-semibold text-foreground">{title ?? 'Audio Lesson'}</div>
+            <div className="text-sm text-muted-foreground">{formatTime(progress)} / {formatTime(duration)}</div>
           </div>
 
           <input
@@ -96,7 +96,7 @@ export default function AudioPlayer({ src, title }: Props) {
           />
 
           <div className="flex items-center gap-2 mt-3">
-            <Volume2 className="w-4 h-4 text-gray-500" />
+            <Volume2 className="w-4 h-4 text-muted-foreground" />
             <input
               aria-label="Volume"
               type="range"

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { config } from '../lib/config'
 import { Alert, AlertDescription } from '../components/ui/alert'
-import { blink } from '../lib/blink'
+import { db, notifications } from '../lib/supabase'
 
 export default function TestAuthPage() {
   const [results, setResults] = useState<string[]>([])
@@ -18,32 +18,19 @@ export default function TestAuthPage() {
     addResult('Testing email delivery to demadera@marcovanhout.com...')
     
     try {
-      // Test direct email send
-      const emailResult = await blink.notifications.email({
+      const result = await notifications.email({
         to: 'demadera@marcovanhout.com',
-        from: 'Marco <marco@globalgoalsjam.org>',
-        subject: 'Test Email from Global Goals Jam',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: #00A651; padding: 24px; text-align: center;">
-              <h1 style="color: white; margin: 0;">Test Email</h1>
-            </div>
-            <div style="padding: 24px;">
-              <p>This is a test email to verify email delivery is working.</p>
-              <p>Timestamp: ${new Date().toISOString()}</p>
-            </div>
-          </div>
-        `,
-        text: `Test Email\n\nThis is a test email to verify delivery.\n\nTimestamp: ${new Date().toISOString()}`
+        from: 'Global Goals Jam <marco@globalgoalsjam.org>',
+        subject: 'Test Email - Global Goals Jam',
+        html: '<p>This is a test email from the Global Goals Jam platform.</p>',
       })
-      
-      if (emailResult.success) {
-        addResult(`✅ Test email sent successfully! Message ID: ${emailResult.messageId}`)
+      if (result.success) {
+        addResult(`✅ Email sent successfully! Message ID: ${result.messageId || 'N/A'}`)
       } else {
-        addResult(`❌ Email send failed: ${JSON.stringify(emailResult)}`)
+        addResult('❌ Email send returned unsuccessful result')
       }
     } catch (error: any) {
-      addResult(`❌ Error sending test email: ${error?.message || 'Unknown error'}`)
+      addResult(`❌ Email test failed: ${error?.message || 'Unknown error'}`)
     }
     
     setLoading(false)
@@ -82,7 +69,7 @@ export default function TestAuthPage() {
     addResult('Checking user status for demadera@marcovanhout.com...')
     
     try {
-      const users = await blink.db.users.list({
+      const users = await db.users.list({
         where: { email: 'demadera@marcovanhout.com' },
         limit: 1
       })

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Loader2, Shield, AlertCircle } from 'lucide-react'
-import blink from '../lib/blink'
+// blink import removed — was unused
 import { getUserProfile, canAccessFeature, UserProfile } from '../lib/userStatus'
 import { appAuth } from '../lib/simpleAuth'
 import { getStoredUser } from '@/lib/auth'
@@ -43,15 +43,30 @@ export default function ProtectedRoute({
           try {
             const stored = await getStoredUser()
             if (stored?.id) {
+              // Try to use cached profile (saved by getUserProfile on success)
+              let cachedCourseStatus: string = 'not_enrolled'
+              let cachedIsPaid = false
+              try {
+                const cachedProfile = localStorage.getItem('ggj_user_profile')
+                if (cachedProfile) {
+                  const parsed = JSON.parse(cachedProfile)
+                  if (parsed?.id === stored.id) {
+                    cachedCourseStatus = parsed.courseStatus || 'not_enrolled'
+                    cachedIsPaid = !!parsed.isPaid
+                  }
+                }
+              } catch {}
+
+              const isAdmin = stored.role === 'admin'
               prof = {
                 id: stored.id,
                 email: stored.email,
                 displayName: stored.displayName,
                 role: (stored.role as any) || 'participant',
                 status: 'approved' as any,
-                courseStatus: 'not_enrolled' as any,
-                isPaid: false,
-                hostEligible: stored.role === 'host' || stored.role === 'admin',
+                courseStatus: cachedCourseStatus as any,
+                isPaid: cachedIsPaid,
+                hostEligible: stored.role === 'host' || isAdmin,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
               }
@@ -75,6 +90,46 @@ export default function ProtectedRoute({
         window.clearTimeout(timeout)
         lastUserIdRef.current = (u as any)?.id || null
         isLoadingRef.current = false
+      }
+
+      // If profile query failed but user IS authenticated, build fallback profile
+      // from stored auth data to prevent sign-in redirect loops.
+      // Check appAuth first, then fall back to the 'user' localStorage key.
+      const authUser = u?.id ? u : (() => {
+        try {
+          const raw = localStorage.getItem('user')
+          if (raw) { const p = JSON.parse(raw); if (p?.id) return p }
+        } catch {}
+        return null
+      })()
+
+      if (!prof && authUser?.id) {
+        let cachedCourseStatus: string = 'not_enrolled'
+        let cachedIsPaid = false
+        try {
+          const cachedProfile = localStorage.getItem('ggj_user_profile')
+          if (cachedProfile) {
+            const parsed = JSON.parse(cachedProfile)
+            if (parsed?.id === authUser.id) {
+              cachedCourseStatus = parsed.courseStatus || 'not_enrolled'
+              cachedIsPaid = !!parsed.isPaid
+            }
+          }
+        } catch {}
+
+        const isAdmin = authUser.role === 'admin'
+        prof = {
+          id: authUser.id,
+          email: authUser.email || '',
+          displayName: authUser.displayName,
+          role: (authUser.role as any) || 'participant',
+          status: 'approved' as any,
+          courseStatus: cachedCourseStatus as any,
+          isPaid: cachedIsPaid,
+          hostEligible: authUser.role === 'host' || isAdmin,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
       }
 
       setProfile(prof)

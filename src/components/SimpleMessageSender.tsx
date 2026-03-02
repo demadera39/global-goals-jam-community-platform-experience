@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from './ui/badge'
 import { Mail, Send, Eye, Users, User, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { config } from '../lib/config'
 
 interface SimpleUser {
   id: string
@@ -59,7 +60,7 @@ export function SimpleMessageSender({ users, onRefresh }: SimpleMessageSenderPro
 
     setIsSending(true)
     try {
-      const response = await fetch('https://7uamgc2j--send-message.functions.blink.new', {
+      const response = await fetch(config.functions.sendMessageUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -96,7 +97,7 @@ export function SimpleMessageSender({ users, onRefresh }: SimpleMessageSenderPro
   const handleDeleteUser = async (userId: string, userEmail: string, userName?: string) => {
     setDeletingUserId(userId)
     try {
-      const response = await fetch('https://7uamgc2j--delete-user.functions.blink.new', {
+      const response = await fetch(config.functions.deleteUserUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -142,7 +143,7 @@ export function SimpleMessageSender({ users, onRefresh }: SimpleMessageSenderPro
   const getWelcomeEmailContent = () => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 30px;">
-        <img src="https://global-goals-jam-community-platform-7uamgc2j.sites.blink.new/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
+        <img src="https://globalgoalsjam.org/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
         <h1 style="color: #00A651; margin: 20px 0;">Welcome to Global Goals Jam!</h1>
       </div>
       
@@ -166,7 +167,7 @@ export function SimpleMessageSender({ users, onRefresh }: SimpleMessageSenderPro
   const getPaymentReminderContent = () => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 30px;">
-        <img src="https://global-goals-jam-community-platform-7uamgc2j.sites.blink.new/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
+        <img src="https://globalgoalsjam.org/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
         <h1 style="color: #00A651; margin: 20px 0;">Complete Your Registration</h1>
       </div>
       
@@ -177,7 +178,7 @@ export function SimpleMessageSender({ users, onRefresh }: SimpleMessageSenderPro
       </div>
       
       <div style="text-align: center; margin: 30px 0;">
-        <a href="https://global-goals-jam-community-platform-7uamgc2j.sites.blink.new/course/enroll" style="background: #F59E0B; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Complete Registration</a>
+        <a href="https://globalgoalsjam.org/course/enroll" style="background: #F59E0B; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Complete Registration</a>
       </div>
       
       <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
@@ -192,7 +193,7 @@ export function SimpleMessageSender({ users, onRefresh }: SimpleMessageSenderPro
     return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 30px;">
-        <img src="https://global-goals-jam-community-platform-7uamgc2j.sites.blink.new/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
+        <img src="https://globalgoalsjam.org/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
         <h1 style="color: #00A651; margin: 20px 0;">${customSubject || 'Message from Global Goals Jam'}</h1>
       </div>
       
@@ -268,7 +269,7 @@ export function SimpleMessageSender({ users, onRefresh }: SimpleMessageSenderPro
               <label className="text-sm font-medium">Select Recipients</label>
               <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto border rounded p-2">
                 {users.map(user => (
-                  <label key={user.id} className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
+                  <label key={user.id} className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-muted/50 rounded">
                     <input
                       type="checkbox"
                       checked={selectedUsers.includes(user.id)}
@@ -282,7 +283,7 @@ export function SimpleMessageSender({ users, onRefresh }: SimpleMessageSenderPro
                     />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{user.displayName || user.email}</div>
-                      <div className="text-xs text-gray-500">{user.email}</div>
+                      <div className="text-xs text-muted-foreground">{user.email}</div>
                     </div>
                     <Badge variant="secondary" className="text-xs">{user.role}</Badge>
                     <AlertDialog>
@@ -379,11 +380,11 @@ export function SimpleMessageSender({ users, onRefresh }: SimpleMessageSenderPro
 
           {/* Target Summary */}
           {targetUsers.length > 0 && (
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="text-sm font-medium text-blue-900">
+            <div className="bg-pastel-sky p-3 rounded-lg">
+              <div className="text-sm font-medium text-sky-900">
                 Will send to {targetUsers.length} recipient{targetUsers.length > 1 ? 's' : ''}
               </div>
-              <div className="text-xs text-blue-700 mt-1">
+              <div className="text-xs text-sky-700 mt-1">
                 {targetUsers.slice(0, 3).map(u => u.displayName || u.email).join(', ')}
                 {targetUsers.length > 3 && ` and ${targetUsers.length - 3} more`}
               </div>
@@ -404,13 +405,13 @@ export function SimpleMessageSender({ users, onRefresh }: SimpleMessageSenderPro
                   <DialogTitle>Email Preview</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-muted-foreground">
                     <strong>Subject:</strong> {getEmailTemplate().subject}
                   </div>
-                  <div className="border rounded-lg p-4 bg-white">
+                  <div className="border rounded-lg p-4 bg-card">
                     <div dangerouslySetInnerHTML={{ __html: getPreviewContent() }} />
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     Preview shows sample data. Actual emails will be personalized for each recipient.
                   </div>
                 </div>

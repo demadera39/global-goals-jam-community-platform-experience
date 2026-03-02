@@ -65,11 +65,12 @@ export default function TestimonialsSection({
   const displayed = (pool || []).slice(startIndex, startIndex + count)
 
   return (
-    <section className="py-16 bg-background">
+    <section className="py-20 bg-section-warm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {showHeader && (
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight mb-4">What hosts and partners say</h2>
+            <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-2">Testimonials</p>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight mb-4">What hosts and partners say</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
               Voices from our global community of changemakers, innovators, and impact leaders
             </p>
@@ -129,7 +130,7 @@ function TestimonialCard({
 
   return (
     <Card
-      className={`relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-card/95 backdrop-blur-sm ${
+      className={`relative overflow-hidden border-0 shadow-card hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-card/95 backdrop-blur-sm ${
         compact ? 'p-3' : ''
       }`}
       style={{ animationDelay: `${index * 150}ms` }}
@@ -156,7 +157,7 @@ function TestimonialCard({
           </div>
         </div>
 
-        <blockquote className="text-foreground/90 leading-relaxed mb-4 italic">"{testimonial.quote}"</blockquote>
+        <blockquote className="text-lg sm:text-xl font-medium text-foreground/90 leading-relaxed mb-4">"{testimonial.quote}"</blockquote>
 
         <div className="flex items-center justify-between pt-4 border-t border-border/50 mt-4">
           <Badge variant="secondary" className="text-xs font-medium">

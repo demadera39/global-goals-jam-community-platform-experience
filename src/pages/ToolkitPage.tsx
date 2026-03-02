@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '../components/ui/button'
@@ -22,7 +23,8 @@ import {
   MapPin,
   Save as SaveIcon
 } from 'lucide-react'
-import blink, { safeDbCall, getFullUser } from '../lib/blink'
+import { db, auth, safeDbCall, supabase } from '../lib/supabase'
+import { getFullUser } from '../lib/userProfile'
 import ToolkitDisplay from '../components/ToolkitDisplay'
 import { buildToolkitHtml, markdownToBasicHtml } from '../lib/toolkitExport'
 
@@ -115,7 +117,7 @@ export default function ToolkitPage() {
         setLoading(false)
       }
     }
-    const unsubscribe = blink.auth.onAuthStateChanged(() => {
+    const unsubscribe = auth.onAuthStateChanged(() => {
       update().catch(console.error)
     })
     update().catch(console.error)
@@ -137,12 +139,12 @@ export default function ToolkitPage() {
       if (uid) {
         // Fallback to two simple queries (no OR support in older SDK)
         const [publicRows, myRows] = await Promise.all([
-          safeDbCall(() => (blink.db as any).toolkits.list({
-            where: { isPublic: "1" },
+          safeDbCall(() => (db as any).toolkits.list({
+            where: { isPublic: true },
             orderBy: { createdAt: 'desc' },
             limit: 50
           })),
-          safeDbCall(() => (blink.db as any).toolkits.list({
+          safeDbCall(() => (db as any).toolkits.list({
             where: { createdBy: uid },
             orderBy: { createdAt: 'desc' },
             limit: 50
@@ -162,8 +164,8 @@ export default function ToolkitPage() {
         merged = merged.slice(0, 50)
       } else {
         // Guests: only public toolkits
-        merged = (await safeDbCall(() => (blink.db as any).toolkits.list({
-          where: { isPublic: "1" },
+        merged = (await safeDbCall(() => (db as any).toolkits.list({
+          where: { isPublic: true },
           orderBy: { createdAt: 'desc' },
           limit: 50
         }))) || []
@@ -219,7 +221,7 @@ export default function ToolkitPage() {
         const results: Record<string, UserProfile> = { ...creators }
         await Promise.all(missing.map(async (id) => {
           try {
-            const rows = await safeDbCall(() => (blink.db as any).users.list({ where: { id }, limit: 1 }))
+            const rows = await safeDbCall(() => (db as any).users.list({ where: { id }, limit: 1 }))
             const row = rows?.[0]
             if (row) {
               results[id] = {
@@ -296,7 +298,7 @@ export default function ToolkitPage() {
 
   const generateToolkit = async () => {
     if (!formData.challenge || !formData.sdgFocus || !formData.jamDuration || !formData.participants) {
-      alert('Please fill in all required fields')
+      toast.error('Please fill in all required fields')
       return
     }
 
@@ -388,33 +390,16 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
       console.log('[ToolkitPage] 🚀 Starting AI generation with prompt length:', prompt.length)
       const startTime = Date.now()
 
-      // Primary model using Blink AI (no external proxy) with graceful fallback
-      const MODEL_PRIMARY = 'gpt-4.1-mini'
-      const MODEL_FALLBACK = 'gpt-4.1'
-      const MAX_TOKENS = 4000
-
       let text: string = ''
-      try {
-        const res = await blink.ai.generateText({
+      const { data: aiResult, error: aiError } = await supabase.functions.invoke('gemini-ai', {
+        body: {
           prompt: `Return ONLY valid JSON answering the following. If you cannot, fix formatting and still return a single JSON object.\n\n${prompt}`,
-          model: MODEL_PRIMARY,
-          maxTokens: MAX_TOKENS
-        })
-        text = res.text || ''
-      } catch (primaryErr) {
-        console.warn('[ToolkitPage] Primary Blink AI call failed, attempting fallback...', primaryErr)
-        try {
-          const res2 = await blink.ai.generateText({
-            prompt: `Return ONLY valid JSON answering the following. If you cannot, fix formatting and still return a single JSON object.\n\n${prompt}`,
-            model: MODEL_FALLBACK,
-            maxTokens: MAX_TOKENS
-          })
-          text = res2.text || ''
-        } catch (fallbackErr) {
-          console.error('[ToolkitPage] Fallback generation failed', fallbackErr)
-          throw fallbackErr
-        }
-      }
+          action: 'generate_toolkit',
+        },
+      })
+
+      if (aiError) throw aiError
+      text = aiResult?.text || ''
 
       const duration = ((Date.now() - startTime) / 1000).toFixed(2)
       console.log(`[ToolkitPage] ✓ AI generation complete in ${duration}s, text length:`, text?.length)
@@ -461,7 +446,7 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
 
       if (status) userMessage += ` (HTTP ${status})`
       
-      alert('⚠️ ' + userMessage)
+      toast.error(userMessage)
     } finally {
       console.log('[ToolkitPage] 🏁 Generation process finished (success or error)')
       setGenerating(false)
@@ -471,12 +456,12 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
   const downloadToolkit = async (toolkit: Toolkit) => {
     try {
       // Update download count optimistically
-      await blink.db.toolkits.update(toolkit.id, {
+      await db.toolkits.update(toolkit.id, {
         downloadCount: (toolkit.downloadCount || 0) + 1
       })
 
       // Fetch full content on-demand to avoid loading massive payloads in listings
-      const fullRows = await safeDbCall(() => (blink.db as any).toolkits.list({ where: { id: toolkit.id }, limit: 1 }))
+      const fullRows = await safeDbCall(() => (db as any).toolkits.list({ where: { id: toolkit.id }, limit: 1 }))
       const full = fullRows?.[0]
       const content = full?.content || ''
 
@@ -560,7 +545,7 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
         downloadCount: 0
       }
 
-      const saved = await (blink.db as any).toolkits.create(newToolkit)
+      const saved = await (db as any).toolkits.create(newToolkit)
       const newId = saved?.id as string
       setSavedToolkitId(newId || null)
 
@@ -585,10 +570,10 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
       setLibraryFilter('mine')
       ;(document.querySelector('[value="library"]') as HTMLElement)?.click()
 
-      alert('Toolkit saved to your library! It is now visible under "My Toolkits".')
+      toast.success('Toolkit saved to your library! It is now visible under "My Toolkits".')
     } catch (e: any) {
       console.error('[ToolkitPage] Save failed:', e)
-      alert('Failed to save toolkit. Please try again.')
+      toast.error('Failed to save toolkit. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -596,29 +581,38 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
 
   return (
     <div className={`min-h-screen bg-background ${sdgThemeClass}`}>
-      {/* Simple Header (removed duplicate/legacy generator) */}
-      <div className="pt-10 pb-2">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <Badge variant="secondary" className="mb-3 px-4 py-1.5 text-sm font-medium">
-              <Wand2 className="w-4 h-4 mr-2" />
-              AI-Powered Session Planning
-            </Badge>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">Toolkit <span className="text-primary-solid">Generator</span></h1>
-            {user && (
-              <div className="mt-3 flex justify-center">
-                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
-                  <UserIcon className="w-4 h-4" />
-                  Signed in as {user.displayName || user.email}
-                </div>
+      {/* Hero Section */}
+      <section className="relative py-20 hero-pattern">
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">AI-Powered</p>
+          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
+            <Wand2 className="w-4 h-4 mr-2" />
+            Session Planning
+          </Badge>
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
+            Toolkit <span className="text-primary-solid">Generator</span>
+          </h1>
+          {user && (
+            <div className="mb-4 flex justify-center">
+              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
+                <UserIcon className="w-4 h-4" />
+                Signed in as {user.displayName || user.email}
               </div>
-            )}
-            <p className="text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Create customized session plans with detailed guides, method cards, and templates tailored to your challenge and SDG focus.
-            </p>
-          </div>
+            </div>
+          )}
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Create customized session plans with detailed guides, method cards, and templates tailored to your challenge and SDG focus.
+          </p>
+          <p className="mt-4 text-sm text-muted-foreground max-w-2xl mx-auto">
+            The full Jamkit is available to certified hosts. Complete the{' '}
+            <Link to="/course/train-the-trainer" className="text-primary hover:underline font-medium">
+              Train-the-Trainer course
+            </Link>{' '}
+            to unlock all facilitation guides, method cards, and templates.
+          </p>
         </div>
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Tabs defaultValue="generator" className="w-full">
@@ -900,7 +894,7 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
           <TabsContent value="library" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Toolkit Library</h2>
+                <h2 className="text-2xl font-bold font-display text-foreground">Toolkit Library</h2>
                 <p className="text-muted-foreground">Browse and download community-created toolkits</p>
               </div>
               <div className="flex items-center gap-2">
@@ -939,7 +933,7 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
                 const isPublic = Boolean(toolkit.isPublic)
                 return (
                   <Link key={toolkit.id} to={`/toolkit/${toolkit.id}`} className="block group">
-                    <Card className="hover:shadow-lg transition-all group-hover:-translate-y-0.5">
+                    <Card className="shadow-soft hover:shadow-card-hover transition-all group-hover:-translate-y-0.5">
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -1017,11 +1011,11 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
                                     // optimistic update
                                     setToolkits(prev => prev.map(t => t.id === toolkit.id ? { ...t, isPublic: checked } : t))
                                     try {
-                                      await (blink.db as any).toolkits.update(toolkit.id, { isPublic: checked })
+                                      await (db as any).toolkits.update(toolkit.id, { isPublic: checked })
                                     } catch (err) {
                                       // revert
                                       setToolkits(prev => prev.map(t => t.id === toolkit.id ? { ...t, isPublic: !checked } : t))
-                                      alert('Failed to update visibility. Please try again.')
+                                      toast.error('Failed to update visibility. Please try again.')
                                     }
                                   }}
                                 />

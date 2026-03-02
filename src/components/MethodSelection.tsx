@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -90,7 +91,7 @@ export default function MethodSelection() {
 
       {/* Add New Option Form */}
       {isAdding && (
-        <div className="mb-4 p-4 border rounded-lg bg-gray-50">
+        <div className="mb-4 p-4 border rounded-lg bg-muted/50">
           <h4 className="font-medium mb-3">Add New Method</h4>
           <div className="space-y-3">
             <div>
@@ -141,7 +142,7 @@ export default function MethodSelection() {
         {options.map((opt) => (
           <div key={opt.id}>
             {editingId === opt.id ? (
-              <div className="block rounded-lg p-4 border border-blue-300 bg-blue-50">
+              <div className="block rounded-lg p-4 border border-sky-300 bg-pastel-sky">
                 <h4 className="font-medium mb-3 flex items-center gap-2">
                   <Edit3 className="h-4 w-4" />
                   Edit Method
@@ -186,7 +187,7 @@ export default function MethodSelection() {
               </div>
             ) : (
               <label
-                className={`block rounded-lg p-4 border transition-shadow cursor-pointer flex flex-col hover:shadow-md ${selected === opt.id ? 'border-emerald-500 bg-emerald-50 shadow' : 'border-gray-200 bg-white'}`}
+                className={`block rounded-lg p-4 border transition-shadow cursor-pointer flex flex-col hover:shadow-soft ${selected === opt.id ? 'border-emerald-500 bg-emerald-50 shadow' : 'border-muted bg-card'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -209,7 +210,7 @@ export default function MethodSelection() {
                         e.preventDefault();
                         handleStartEdit(opt);
                       }}
-                      className="p-1 text-gray-500 hover:text-blue-600 rounded"
+                      className="p-1 text-muted-foreground hover:text-sky-600 rounded"
                       aria-label={`Edit ${opt.label}`}
                     >
                       <Edit3 className="h-4 w-4" />
@@ -222,7 +223,7 @@ export default function MethodSelection() {
                           handleDeleteOption(opt.id);
                         }
                       }}
-                      className="p-1 text-gray-500 hover:text-red-600 rounded"
+                      className="p-1 text-muted-foreground hover:text-destructive rounded"
                       aria-label={`Delete ${opt.label}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -239,7 +240,7 @@ export default function MethodSelection() {
                       e.preventDefault();
                       navigator.clipboard?.writeText(opt.label);
                     }}
-                    className="text-xs px-2 py-1 rounded bg-gray-100 border text-gray-700"
+                    className="text-xs px-2 py-1 rounded bg-muted border text-foreground/80"
                     aria-label={`Copy ${opt.label}`}
                   >
                     Copy name
@@ -249,7 +250,7 @@ export default function MethodSelection() {
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
-                      alert(`You chose: ${opt.label}`);
+                      toast.info(`You chose: ${opt.label}`);
                     }}
                     className="text-xs px-2 py-1 rounded bg-emerald-600 text-white"
                   >
@@ -263,7 +264,7 @@ export default function MethodSelection() {
       </fieldset>
 
       {options.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-muted-foreground">
           <p>No methods available. Click "Add Method" to create one.</p>
         </div>
       )}

@@ -45,15 +45,19 @@ export default function AboutPage() {
     <div className="min-h-screen bg-background sdg-theme-17">
       {/* Hero Section */}
       <section className="relative py-20 hero-pattern">
-        <div className="absolute inset-0 bg-background/80" />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Badge variant="secondary" className="mb-6 px-4 py-2 text-sm font-medium">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">Our Story</p>
+          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
             <Calendar className="w-4 h-4 mr-2" />
             About Global Goals Jam
           </Badge>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6">
-            About
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
+            About <span className="text-primary-solid">Global Goals Jam</span>
           </h1>
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            A global movement empowering communities to design local solutions for the UN Sustainable Development Goals.
+          </p>
         </div>
       </section>
 
@@ -77,7 +81,7 @@ export default function AboutPage() {
       {/* Why GGJ */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-foreground mb-6">Why Global Goals Jam?</h2>
+          <h2 className="text-3xl font-bold font-display text-foreground mb-6">Why Global Goals Jam?</h2>
           <div className="grid gap-10 lg:grid-cols-12">
             {/* Left: narrative */}
             <div className="lg:col-span-8">
@@ -88,24 +92,24 @@ export default function AboutPage() {
 
             {/* Right: At a glance card */}
             <div className="lg:col-span-4">
-              <Card className="bg-card/80 backdrop-blur">
+              <Card className="bg-card/80 backdrop-blur shadow-soft">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-xl">At a glance</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <ul className="space-y-3 text-sm text-muted-foreground">
-                    <li className="flex items-center gap-3"><span className="inline-flex h-2.5 w-2.5 rounded-full bg-primary" />Founded in 2016</li>
-                    <li className="flex items-center gap-3"><span className="inline-flex h-2.5 w-2.5 rounded-full bg-primary" />17 → 100+ cities over 4 years</li>
-                    <li className="flex items-center gap-3"><span className="inline-flex h-2.5 w-2.5 rounded-full bg-primary" />Thousands of change makers</li>
-                    <li className="flex items-center gap-3"><span className="inline-flex h-2.5 w-2.5 rounded-full bg-primary" />2‑day sprint • 4 design sprints</li>
-                    <li className="flex items-center gap-3"><span className="inline-flex h-2.5 w-2.5 rounded-full bg-primary" />Guided by Jamkit methods</li>
+                    <li className="flex items-center gap-3"><span className="inline-flex h-2.5 w-2.5 rounded-full bg-pastel-green" />Founded in 2016</li>
+                    <li className="flex items-center gap-3"><span className="inline-flex h-2.5 w-2.5 rounded-full bg-pastel-green" />17 → 100+ cities over 4 years</li>
+                    <li className="flex items-center gap-3"><span className="inline-flex h-2.5 w-2.5 rounded-full bg-pastel-green" />Thousands of change makers</li>
+                    <li className="flex items-center gap-3"><span className="inline-flex h-2.5 w-2.5 rounded-full bg-pastel-green" />2‑day sprint • 4 design sprints</li>
+                    <li className="flex items-center gap-3"><span className="inline-flex h-2.5 w-2.5 rounded-full bg-pastel-green" />Guided by Jamkit methods</li>
                   </ul>
 
                   <div className="mt-6 flex flex-wrap gap-3">
-                    <Button asChild className="bg-primary-solid text-white hover:bg-primary/90">
+                    <Button asChild className="bg-primary-solid text-white hover:bg-primary/90 rounded-pill">
                       <Link to="/events">Join a Jam</Link>
                     </Button>
-                    <Button asChild variant="outline" className="">
+                    <Button asChild variant="outline" className="rounded-pill">
                       <a href="https://globalgoalsjam.org/organisers/" target="_blank" rel="noreferrer">Host a Jam</a>
                     </Button>
                     <DonateButton variant="outline" size="default" />
@@ -120,7 +124,7 @@ export default function AboutPage() {
       {/* History */}
       <section className="py-16 bg-card/50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-foreground mb-4">A brief history of growth and impact</h2>
+          <h2 className="text-3xl font-bold font-display text-foreground mb-4">A brief history of growth and impact</h2>
           <p className="text-muted-foreground leading-relaxed">
             {history}
           </p>
@@ -134,7 +138,7 @@ export default function AboutPage() {
                   <div className="relative mx-3 my-3 sm:my-0 flex items-center justify-center">
                     {/* Vertical connector per row for a clean segmented line */}
                     <span className="hidden sm:block absolute left-1/2 top-0 -translate-x-1/2 h-full w-px bg-border" aria-hidden />
-                    <span className="relative z-10 block w-2.5 h-2.5 rounded-full bg-primary" />
+                    <span className="relative z-10 block w-2.5 h-2.5 rounded-full bg-pastel-green" />
                   </div>
                   <div className="text-right font-medium tabular-nums text-muted-foreground sm:pl-6">{m.value}</div>
                 </div>
@@ -147,10 +151,10 @@ export default function AboutPage() {
       {/* Origins & Leadership */}
       <section className="py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-foreground mb-6">Origins & Leadership</h2>
+          <h2 className="text-3xl font-bold font-display text-foreground mb-6">Origins & Leadership</h2>
 
           {/* blue banner - placed under title and before main text */}
-          <div className="top-banner rounded-md mb-6 px-4 py-3 text-center text-white">
+          <div className="top-banner rounded-xl mb-6 px-4 py-3 text-center text-white">
             Read the 5 Years of Impact report —
             <a href={impactPdf} target="_blank" rel="noreferrer" className="underline ml-2 font-semibold">Open report (PDF)</a>
           </div>
@@ -158,7 +162,7 @@ export default function AboutPage() {
           {/* Option A: Side-by-side photo and text (image left on desktop) */}
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <div className="sm:w-1/2 lg:w-1/3">
-              <div className="rounded-xl overflow-hidden shadow-md">
+              <div className="rounded-xl overflow-hidden shadow-soft">
                 <AspectRatio ratio={1}>
                   <img
                     src="https://firebasestorage.googleapis.com/v0/b/blink-451505.firebasestorage.app/o/user-uploads%2Fz9Up8fyufsOU2ncxMU2r2iGBON23%2FSchermafbeelding2025-08-28om112100__c2e24b4c.png?alt=media&token=41e22ba9-8bf0-4aaa-a6cf-21f998f562cb"
@@ -191,8 +195,8 @@ export default function AboutPage() {
       {/* What does a Jam look like? */}
       <section className="py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-foreground mb-4">What does a Jam look like?</h2>
-          <Card>
+          <h2 className="text-3xl font-bold font-display text-foreground mb-4">What does a Jam look like?</h2>
+          <Card className="shadow-soft">
             <CardContent className="p-6">
               <ul className="space-y-3 list-disc pl-6 text-muted-foreground">
                 {whatIsJam.map((item) => (
@@ -202,7 +206,7 @@ export default function AboutPage() {
               <div className="mt-8">
                 <h3 className="text-lg font-semibold mb-3">Interested in organising a Jam?</h3>
                 <div className="flex flex-wrap gap-3">
-                  <Button asChild className="bg-primary-solid text-white hover:bg-primary/90">
+                  <Button asChild className="bg-primary-solid text-white hover:bg-primary/90 rounded-pill">
                     <a href="https://globalgoalsjam.org/organisers/" target="_blank" rel="noreferrer">For Organisers</a>
                   </Button>
                   <Link to="/events" className="inline-flex items-center text-primary hover:underline">
@@ -218,7 +222,7 @@ export default function AboutPage() {
       {/* Design Waste */}
       <section className="py-16 bg-card/50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-foreground mb-4">Design Waste</h2>
+          <h2 className="text-3xl font-bold font-display text-foreground mb-4">Design Waste</h2>
           <p className="text-muted-foreground leading-relaxed">
             {designWaste}
           </p>

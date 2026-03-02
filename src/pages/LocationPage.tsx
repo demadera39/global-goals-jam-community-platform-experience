@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Button } from '../components/ui/button'
@@ -22,7 +23,8 @@ import {
   Loader2,
   ArrowLeft
 } from 'lucide-react'
-import blink, { getFullUser } from '../lib/blink'
+import { db, auth, notifications } from '../lib/supabase'
+import { getFullUser } from '../lib/userProfile'
 
 interface User {
   id: string
@@ -76,11 +78,11 @@ interface Registration {
 }
 
 const statusColors = {
-  draft: 'bg-gray-500',
-  published: 'bg-green-500',
-  ongoing: 'bg-blue-500',
-  completed: 'bg-purple-500',
-  cancelled: 'bg-red-500'
+  draft: 'bg-pastel-amber text-amber-800',
+  published: 'bg-pastel-green text-primary/90',
+  ongoing: 'bg-pastel-sky text-sky-800',
+  completed: 'bg-pastel-violet text-violet-800',
+  cancelled: 'bg-pastel-rose text-rose-800'
 }
 
 export default function LocationPage() {
@@ -100,7 +102,7 @@ export default function LocationPage() {
       setLoading(false)
     }
 
-    const unsubscribe = blink.auth.onAuthStateChanged(() => {
+    const unsubscribe = auth.onAuthStateChanged(() => {
       update().catch(console.error)
     })
 
@@ -127,7 +129,7 @@ export default function LocationPage() {
       const decodedLocation = decodeURIComponent(location)
       
       // Load events for this location
-      const locationEvents = await blink.db.events.list({
+      const locationEvents = await db.events.list({
         where: { location: decodedLocation },
         orderBy: { eventDate: 'desc' }
       })
@@ -136,14 +138,14 @@ export default function LocationPage() {
       // Load media for these events
       if (locationEvents.length > 0) {
         const eventIds = locationEvents.map(e => e.id)
-        const allMedia = await blink.db.media.list({
+        const allMedia = await db.media.list({
           orderBy: { createdAt: 'desc' }
         })
         const locationMedia = allMedia.filter(m => eventIds.includes(m.eventId))
         setMedia(locationMedia)
 
         // Load registrations for these events
-        const allRegistrations = await blink.db.eventRegistrations.list({
+        const allRegistrations = await db.eventRegistrations.list({
           orderBy: { registrationDate: 'desc' }
         })
         const locationRegistrations = allRegistrations.filter(r => eventIds.includes(r.eventId))
@@ -151,7 +153,7 @@ export default function LocationPage() {
 
         // Load host info (assuming first event's host represents the location)
         if (locationEvents[0]) {
-          const host = await blink.db.users.list({
+          const host = await db.users.list({
             where: { id: locationEvents[0].hostId },
             limit: 1
           })
@@ -174,9 +176,9 @@ export default function LocationPage() {
     try {
       // Ensure participant profile exists
       try {
-        const profile = await blink.db.users.list({ where: { id: user.id }, limit: 1 })
+        const profile = await db.users.list({ where: { id: user.id }, limit: 1 })
         if (!profile?.[0]) {
-          await blink.db.users.create({
+          await db.users.create({
             id: user.id,
             email: (user as any).email,
             displayName: (user as any).displayName || (user as any).email,
@@ -189,16 +191,16 @@ export default function LocationPage() {
       }
 
       // Prevent duplicate registration
-      const existing = await blink.db.eventRegistrations.list({
+      const existing = await db.eventRegistrations.list({
         where: { eventId, participantId: user.id },
         limit: 1
       })
       if (existing.length > 0) {
-        alert('You are already registered for this event.')
+        toast.info('You are already registered for this event.')
         return
       }
 
-      await blink.db.eventRegistrations.create({
+      await db.eventRegistrations.create({
         eventId,
         participantId: user.id,
         status: 'registered'
@@ -206,10 +208,10 @@ export default function LocationPage() {
       
       // Refresh registrations
       loadLocationData()
-      alert('Successfully registered for the event!')
+      toast.success('Successfully registered for the event!')
     } catch (error) {
       console.error('Failed to register for event:', error)
-      alert('Failed to register for event. Please try again.')
+      toast.error('Failed to register for event. Please try again.')
     }
   }
 
@@ -254,10 +256,10 @@ export default function LocationPage() {
   if (!location) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
+        <Card className="max-w-md shadow-soft rounded-xl">
           <CardContent className="text-center py-12">
             <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Location Not Found</h2>
+            <h2 className="text-xl font-display font-semibold mb-2">Location Not Found</h2>
             <p className="text-muted-foreground mb-4">
               The requested location could not be found.
             </p>
@@ -290,7 +292,7 @@ export default function LocationPage() {
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-4">
                 <MapPin className="w-8 h-8" />
-                <h1 className="text-3xl lg:text-4xl font-bold">{decodedLocation}</h1>
+                <h1 className="text-3xl lg:text-4xl font-display font-bold">{decodedLocation}</h1>
               </div>
               
               <div className="grid md:grid-cols-3 gap-6 text-white/90">
@@ -321,7 +323,7 @@ export default function LocationPage() {
             </div>
             
             {hostInfo && (
-              <Card className="lg:w-80">
+              <Card className="lg:w-80 shadow-soft rounded-xl">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <Avatar className="w-12 h-12">
@@ -342,9 +344,9 @@ export default function LocationPage() {
                   
                   {user && (user.role === 'host' || user.role === 'admin') && (
                     <div className="mt-4 pt-4 border-t">
-                      <Button 
-                        asChild 
-                        className="w-full bg-primary-solid text-white hover:bg-primary/90"
+                      <Button
+                        asChild
+                        className="w-full bg-primary-solid text-white hover:bg-primary/90 rounded-pill"
                       >
                         <Link to="/host-dashboard">
                           <Plus className="w-4 h-4 mr-2" />
@@ -372,14 +374,14 @@ export default function LocationPage() {
 
           <TabsContent value="upcoming" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-foreground">Upcoming Events</h2>
+              <h2 className="text-2xl font-display font-bold text-foreground">Upcoming Events</h2>
               {!user && (
                 <Button onClick={() => {
                   const email = window.prompt('Enter your email to receive a sign-in link:')
                   if (email) {
                     const setupLink = window.location.href
-                    blink.notifications.email({ to: email, from: 'welcome@globalgoalsjam.org', subject: 'Sign in to Global Goals Jam', html: `<p>Open: <a href="${setupLink}">${setupLink}</a></p>`, text: `Open: ${setupLink}` }).catch(console.error)
-                    alert('If that email exists, we sent a sign-in link. Check your inbox.')
+                    notifications.email({ to: email, from: 'welcome@globalgoalsjam.org', subject: 'Sign in to Global Goals Jam', html: `<p>Open: <a href="${setupLink}">${setupLink}</a></p>`, text: `Open: ${setupLink}` }).catch(console.error)
+                    toast.info('If that email exists, we sent a sign-in link. Check your inbox.')
                   }
                 }}>
                   Sign In to Register
@@ -393,15 +395,15 @@ export default function LocationPage() {
                 const isRegistered = user && eventRegistrations.some(r => r.participantId === user.id)
                 
                 return (
-                  <Card key={event.id} className="hover:shadow-lg transition-shadow">
+                  <Card key={event.id} className="shadow-soft hover:shadow-card transition-shadow rounded-xl">
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
                           <div className="flex items-center gap-2 mt-2">
-                            <Badge 
-                              variant="secondary" 
-                              className={`text-xs text-white ${statusColors[event.status as keyof typeof statusColors]}`}
+                            <Badge
+                              variant="secondary"
+                              className={`text-xs ${statusColors[event.status as keyof typeof statusColors]}`}
                             >
                               {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                             </Badge>
@@ -454,10 +456,10 @@ export default function LocationPage() {
                           </Button>
                           
                           {user && !isRegistered && event.status === 'published' && (
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               onClick={() => registerForEvent(event.id)}
-                              className="bg-primary-solid text-white hover:bg-primary/90"
+                              className="bg-primary-solid text-white hover:bg-primary/90 rounded-pill"
                             >
                               Register
                             </Button>
@@ -477,15 +479,15 @@ export default function LocationPage() {
             </div>
 
             {upcomingEvents.length === 0 && (
-              <Card>
+              <Card className="shadow-soft rounded-xl">
                 <CardContent className="text-center py-12">
                   <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No upcoming events</h3>
+                  <h3 className="text-lg font-display font-semibold mb-2">No upcoming events</h3>
                   <p className="text-muted-foreground mb-4">
                     There are currently no upcoming events scheduled for {decodedLocation}.
                   </p>
                   {user && (user.role === 'host' || user.role === 'admin') && (
-                    <Button asChild className="bg-primary-solid text-white hover:bg-primary/90">
+                    <Button asChild className="bg-primary-solid text-white hover:bg-primary/90 rounded-pill">
                       <Link to="/host-dashboard">
                         <Plus className="w-4 h-4 mr-2" />
                         Create Event
@@ -498,14 +500,14 @@ export default function LocationPage() {
           </TabsContent>
 
           <TabsContent value="past" className="space-y-6">
-            <h2 className="text-2xl font-bold text-foreground">Past Events</h2>
+            <h2 className="text-2xl font-display font-bold text-foreground">Past Events</h2>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {pastEvents.map((event) => {
                 const eventRegistrations = registrations.filter(r => r.eventId === event.id)
                 
                 return (
-                  <Card key={event.id} className="hover:shadow-lg transition-shadow">
+                  <Card key={event.id} className="shadow-soft hover:shadow-card transition-shadow rounded-xl">
                     <CardHeader>
                       <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
                       <Badge variant="outline" className="w-fit">
@@ -542,10 +544,10 @@ export default function LocationPage() {
             </div>
 
             {pastEvents.length === 0 && (
-              <Card>
+              <Card className="shadow-soft rounded-xl">
                 <CardContent className="text-center py-12">
                   <Award className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No past events</h3>
+                  <h3 className="text-lg font-display font-semibold mb-2">No past events</h3>
                   <p className="text-muted-foreground">
                     No events have been completed in {decodedLocation} yet.
                   </p>
@@ -555,11 +557,11 @@ export default function LocationPage() {
           </TabsContent>
 
           <TabsContent value="media" className="space-y-6">
-            <h2 className="text-2xl font-bold text-foreground">Media Gallery</h2>
+            <h2 className="text-2xl font-display font-bold text-foreground">Media Gallery</h2>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {media.map((item) => (
-                <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                <Card key={item.id} className="shadow-soft hover:shadow-card transition-shadow rounded-xl">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -610,10 +612,10 @@ export default function LocationPage() {
             </div>
 
             {media.length === 0 && (
-              <Card>
+              <Card className="shadow-soft rounded-xl">
                 <CardContent className="text-center py-12">
                   <ImageIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No media yet</h3>
+                  <h3 className="text-lg font-display font-semibold mb-2">No media yet</h3>
                   <p className="text-muted-foreground">
                     Media from events in {decodedLocation} will appear here.
                   </p>
@@ -623,10 +625,10 @@ export default function LocationPage() {
           </TabsContent>
 
           <TabsContent value="about" className="space-y-6">
-            <h2 className="text-2xl font-bold text-foreground">About {decodedLocation}</h2>
+            <h2 className="text-2xl font-display font-bold text-foreground">About {decodedLocation}</h2>
 
             <div className="grid lg:grid-cols-2 gap-8">
-              <Card>
+              <Card className="shadow-soft rounded-xl">
                 <CardHeader>
                   <CardTitle>Location Overview</CardTitle>
                 </CardHeader>
@@ -650,7 +652,7 @@ export default function LocationPage() {
               </Card>
 
               {hostInfo && (
-                <Card>
+                <Card className="shadow-soft rounded-xl">
                   <CardHeader>
                     <CardTitle>Local Host</CardTitle>
                   </CardHeader>

@@ -140,7 +140,7 @@ export default function ContinentsOverview() {
                   </Card>
                 ) : grouped[c] && grouped[c].length > 0 ? (
                   grouped[c].map(({ city, events }) => (
-                    <Card key={city} className="group hover:shadow-lg transition-shadow">
+                    <Card key={city} className="group hover:shadow-card transition-shadow">
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center justify-between">
                           <span className="truncate">{city}</span>

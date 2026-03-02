@@ -7,26 +7,26 @@ const Module3Content = () => {
   return (
     <div className="space-y-8">
       {/* Module Header */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-8">
-        <Badge className="mb-4 bg-green-600">Module 3</Badge>
+      <div className="bg-gradient-to-r from-pastel-green to-emerald-50 rounded-lg p-8">
+        <Badge className="mb-4 bg-primary">Module 3</Badge>
         <h1 className="text-4xl font-bold mb-4">Open Design & Knowledge Sharing</h1>
-        <p className="text-xl text-gray-700">Learn how to design your jam for maximum knowledge sharing and community impact through open design principles.</p>
+        <p className="text-xl text-foreground/80">Learn how to design your jam for maximum knowledge sharing and community impact through open design principles.</p>
       </div>
 
       {/* Introduction */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Share2 className="h-5 w-5 text-green-600" />
+            <Share2 className="h-5 w-5 text-primary" />
             Why Open Design Matters
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>Open design isn't just about sharing your final outputs—it's about designing your entire jam process to generate knowledge that can be easily shared, adapted, and built upon by others in the Global Goals Jam community.</p>
           
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-green-900 mb-2">The Open Design Mindset</h4>
-            <p className="text-green-800 text-sm">Every decision you make as a host—from how you frame challenges to how you document outcomes—should consider: "How can this help other hosts learn and improve their own jams?"</p>
+          <div className="bg-pastel-green p-4 rounded-lg">
+            <h4 className="font-semibold text-primary mb-2">The Open Design Mindset</h4>
+            <p className="text-primary/80 text-sm">Every decision you make as a host—from how you frame challenges to how you document outcomes—should consider: "How can this help other hosts learn and improve their own jams?"</p>
           </div>
         </CardContent>
       </Card>
@@ -35,13 +35,13 @@ const Module3Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-green-600" />
+            <Target className="h-5 w-5 text-primary" />
             Five Principles of Open Design
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="border-l-4 border-green-500 pl-4">
+            <div className="border-l-4 border-primary pl-4">
               <h4 className="font-semibold mb-2">1. Design for Transparency</h4>
               <p className="text-sm text-muted-foreground mb-2">Make your process visible from start to finish. Share not just what worked, but what didn't and why.</p>
               <ul className="text-sm space-y-1 ml-4">
@@ -51,7 +51,7 @@ const Module3Content = () => {
               </ul>
             </div>
             
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-sky-500 pl-4">
               <h4 className="font-semibold mb-2">2. Design for Adaptation</h4>
               <p className="text-sm text-muted-foreground mb-2">Create resources that others can easily modify for their local context.</p>
               <ul className="text-sm space-y-1 ml-4">
@@ -61,7 +61,7 @@ const Module3Content = () => {
               </ul>
             </div>
             
-            <div className="border-l-4 border-purple-500 pl-4">
+            <div className="border-l-4 border-violet-500 pl-4">
               <h4 className="font-semibold mb-2">3. Design for Learning</h4>
               <p className="text-sm text-muted-foreground mb-2">Structure your jam to generate insights that benefit the broader community.</p>
               <ul className="text-sm space-y-1 ml-4">
@@ -71,7 +71,7 @@ const Module3Content = () => {
               </ul>
             </div>
             
-            <div className="border-l-4 border-orange-500 pl-4">
+            <div className="border-l-4 border-amber-500 pl-4">
               <h4 className="font-semibold mb-2">4. Design for Connection</h4>
               <p className="text-sm text-muted-foreground mb-2">Create opportunities for your participants to connect with the global community.</p>
               <ul className="text-sm space-y-1 ml-4">
@@ -81,7 +81,7 @@ const Module3Content = () => {
               </ul>
             </div>
             
-            <div className="border-l-4 border-red-500 pl-4">
+            <div className="border-l-4 border-destructive pl-4">
               <h4 className="font-semibold mb-2">5. Design for Impact</h4>
               <p className="text-sm text-muted-foreground mb-2">Ensure your open sharing contributes to real-world change.</p>
               <ul className="text-sm space-y-1 ml-4">
@@ -98,7 +98,7 @@ const Module3Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-blue-600" />
+            <FileText className="h-5 w-5 text-sky-600" />
             Your Documentation Strategy
           </CardTitle>
         </CardHeader>
@@ -107,7 +107,7 @@ const Module3Content = () => {
           
           <div className="grid md:grid-cols-2 gap-4">
             <div className="p-4 border rounded-lg">
-              <h4 className="font-semibold mb-2 text-blue-900">Before Your Jam</h4>
+              <h4 className="font-semibold mb-2 text-sky-900">Before Your Jam</h4>
               <ul className="text-sm space-y-1">
                 <li>• Challenge framing and context</li>
                 <li>• Method selection rationale</li>
@@ -117,7 +117,7 @@ const Module3Content = () => {
             </div>
             
             <div className="p-4 border rounded-lg">
-              <h4 className="font-semibold mb-2 text-green-900">During Your Jam</h4>
+              <h4 className="font-semibold mb-2 text-primary">During Your Jam</h4>
               <ul className="text-sm space-y-1">
                 <li>• Real-time observations and adjustments</li>
                 <li>• Participant feedback and reactions</li>
@@ -127,7 +127,7 @@ const Module3Content = () => {
             </div>
             
             <div className="p-4 border rounded-lg">
-              <h4 className="font-semibold mb-2 text-purple-900">After Your Jam</h4>
+              <h4 className="font-semibold mb-2 text-violet-900">After Your Jam</h4>
               <ul className="text-sm space-y-1">
                 <li>• Final outputs and solutions</li>
                 <li>• Participant reflections and learnings</li>
@@ -153,7 +153,7 @@ const Module3Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-purple-600" />
+            <Users className="h-5 w-5 text-violet-600" />
             Building Your Knowledge Sharing Workflow
           </CardTitle>
         </CardHeader>
@@ -161,32 +161,32 @@ const Module3Content = () => {
           <p>Create a simple, repeatable process for capturing and sharing knowledge:</p>
           
           <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+            <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
               <div>
                 <h4 className="font-semibold mb-1">Set Up Your Documentation System</h4>
                 <p className="text-sm text-muted-foreground">Choose tools that work for your team—shared documents, photo albums, video recordings, or simple note-taking apps.</p>
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+            <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
               <div>
                 <h4 className="font-semibold mb-1">Assign Documentation Roles</h4>
                 <p className="text-sm text-muted-foreground">Designate team members to capture different aspects—one for photos, one for participant quotes, one for process observations.</p>
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+            <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
               <div>
                 <h4 className="font-semibold mb-1">Create Sharing Templates</h4>
                 <p className="text-sm text-muted-foreground">Develop simple formats for sharing different types of content—method summaries, participant stories, outcome reports.</p>
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
+            <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">4</div>
               <div>
                 <h4 className="font-semibold mb-1">Schedule Regular Sharing</h4>
                 <p className="text-sm text-muted-foreground">Set up a rhythm for sharing—weekly updates during planning, daily posts during your jam, and comprehensive reports afterward.</p>
@@ -248,23 +248,23 @@ const Module3Content = () => {
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>Design with sharing in mind:</strong> Every aspect of your jam should consider how it can benefit other hosts and the broader community.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>Document the journey, not just the destination:</strong> Process insights are often more valuable than final outputs for other hosts.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>Create systems, not just content:</strong> Build repeatable workflows for capturing and sharing knowledge from every jam.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>License for impact:</strong> Use open licenses to ensure your work can be freely adapted and improved by others.</p>
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <p className="text-sm"><strong>Connect locally and globally:</strong> Help participants see how their local work contributes to global change.</p>
             </div>
           </div>

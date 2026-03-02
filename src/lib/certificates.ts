@@ -1,5 +1,5 @@
-import blink from './blink'
-import { safeDbCall } from './blink'
+import { toast } from 'sonner'
+import { db, auth, safeDbCall } from './supabase'
 
 export interface BuildCertData {
   participantName: string
@@ -200,11 +200,11 @@ export function buildCertificateHtml(data: BuildCertData) {
 
     <div class="logo-top">
       <img 
-        src="https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png" 
+        src="https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png" 
         crossorigin="anonymous"
         alt="Global Goals Jam" 
         style="width:100%;height:100%;object-fit:contain;" 
-        onerror="if (this.src !== 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png') this.src='https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png'" 
+        onerror="if (this.src !== 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png') this.src='https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png'" 
       />
     </div>
 
@@ -226,10 +226,10 @@ export function buildCertificateHtml(data: BuildCertData) {
 
       <div class="brand" style="text-align:center;">
         <img 
-          src="https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png" 
+          src="https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png" 
           crossorigin="anonymous"
           alt="Global Goals Jam" 
-          onerror="if (this.src !== 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png') this.src='https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png'" 
+          onerror="if (this.src !== 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png') this.src='https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png'" 
         />
         <div class="label">Global Goals Jam</div>
       </div>
@@ -237,10 +237,10 @@ export function buildCertificateHtml(data: BuildCertData) {
       <div class="sig" style="text-align:right;">
         <div style="width:240px;height:80px;display:flex;align-items:center;justify-content:center;">
           <img 
-            src="${siteOrigin}/marco-signature.svg" 
+            src="https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/signature.png" 
             crossorigin="anonymous"
             alt="Marco van Hout signature" 
-            onerror="if (this.src !== '${siteOrigin}/marco-signature.svg') this.src='${siteOrigin}/marco-signature.svg'" 
+            onerror="if (this.src !== 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/signature.png') this.src='https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/signature.png'" 
           />
         </div>
         <div class="line" style="margin-top:8px"></div>
@@ -358,7 +358,7 @@ export async function createCertificateRecord(params: {
 }) {
   const certType = params.certificateType || 'participation'
   // Ensure recipient exists (FK constraint)
-  const recipient = await safeDbCall(() => (blink.db as any).users.list({ where: { id: params.recipientId }, limit: 1 }))
+  const recipient = await safeDbCall(() => db.users.list({ where: { id: params.recipientId }, limit: 1 }))
   if (!recipient?.[0]) {
     throw new Error('Recipient user does not exist')
   }
@@ -367,7 +367,7 @@ export async function createCertificateRecord(params: {
   let issuerId = params.issuedByUserId
   try {
     if (!issuerId) {
-      const me = await blink.auth.me()
+      const me = await auth.me()
       issuerId = me?.id || undefined
     }
   } catch {
@@ -375,7 +375,7 @@ export async function createCertificateRecord(params: {
   }
   if (!issuerId) {
     try {
-      const ev = await safeDbCall(() => (blink.db as any).events.list({ where: { id: params.eventId }, limit: 1 }))
+      const ev = await safeDbCall(() => db.events.list({ where: { id: params.eventId }, limit: 1 }))
       issuerId = ev?.[0]?.hostId || undefined
     } catch {
       // ignore
@@ -384,7 +384,7 @@ export async function createCertificateRecord(params: {
   if (!issuerId) issuerId = params.recipientId
 
   // If a certificate already exists for this event+recipient+type, update it instead of creating a duplicate
-  const existing = await safeDbCall(() => (blink.db as any).certificates.list({
+  const existing = await safeDbCall(() => db.certificates.list({
     where: {
       eventId: params.eventId,
       recipientId: params.recipientId,
@@ -394,7 +394,7 @@ export async function createCertificateRecord(params: {
   }))
 
   if (existing?.[0]) {
-    const updated = await safeDbCall(() => (blink.db as any).certificates.update(existing[0].id, {
+    const updated = await safeDbCall(() => db.certificates.update(existing[0].id, {
       recipientName: params.participantName,
       eventTitle: params.eventTitle,
       eventLocation: params.eventLocation,
@@ -406,7 +406,7 @@ export async function createCertificateRecord(params: {
     return updated
   }
 
-  const res = await safeDbCall(() => (blink.db as any).certificates.create({
+  const res = await safeDbCall(() => db.certificates.create({
     certificateType: certType,
     eventId: params.eventId,
     recipientId: params.recipientId,
@@ -460,7 +460,7 @@ export async function showCertificateInNewTab(data: BuildCertData, opts?: { save
       }
     }
 
-    const logoUrl = 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png'
+    const logoUrl = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png'
     const signatureUrl = `${origin}/marco-signature.svg`
 
     const [logoDataUrl, signatureDataUrl] = await Promise.all([
@@ -488,7 +488,7 @@ export async function showCertificateInNewTab(data: BuildCertData, opts?: { save
   const newWindow = window.open(url, '_blank')
   
   if (!newWindow) {
-    alert('Please allow popups to view the certificate')
+    toast.error('Please allow popups to view the certificate')
     return
   }
   

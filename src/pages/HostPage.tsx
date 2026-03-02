@@ -1,6 +1,7 @@
+import { toast } from 'sonner'
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import blink, { safeDbCall } from '../lib/blink'
+import { db, safeDbCall } from '../lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
@@ -50,13 +51,13 @@ export default function HostPage() {
       if (!id) return
       setLoading(true)
       try {
-        const users = await safeDbCall(() => blink.db.users.list<UserRow>({ where: { id }, limit: 1 }))
+        const users = await safeDbCall(() => db.users.list<UserRow>({ where: { id }, limit: 1 }))
         setHost(users[0] || null)
 
-        const evs = await safeDbCall(() => blink.db.events.list<EventRow>({ where: { hostId: id }, orderBy: { eventDate: 'desc' }, limit: 200 }))
+        const evs = await safeDbCall(() => db.events.list<EventRow>({ where: { hostId: id }, orderBy: { eventDate: 'desc' }, limit: 200 }))
         setEvents(evs)
 
-        const recent = await safeDbCall(() => blink.db.media.list<MediaItem>({ where: { uploadedBy: id }, orderBy: { createdAt: 'desc' }, limit: 12 }))
+        const recent = await safeDbCall(() => db.media.list<MediaItem>({ where: { uploadedBy: id }, orderBy: { createdAt: 'desc' }, limit: 12 }))
         setMedia(recent)
       } catch (e) {
         console.error('Failed to load host page:', e)
@@ -88,7 +89,7 @@ export default function HostPage() {
     try {
       if (navigator.share) await navigator.share({ title: host?.displayName || host?.email || 'Host', url })
       else { await navigator.clipboard.writeText(url); }
-      alert('Host page link copied')
+      toast.success('Host page link copied')
     } catch {}
   }
 
@@ -124,7 +125,7 @@ export default function HostPage() {
             <AvatarFallback>{(host.displayName || host.email).charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <h1 className="text-3xl font-bold truncate">{host.displayName || host.email}</h1>
+            <h1 className="text-3xl font-bold font-display truncate">{host.displayName || host.email}</h1>
             {host.location && <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="w-4 h-4" /> {host.location}</div>}
             {host.bio && <p className="mt-3 text-muted-foreground whitespace-pre-wrap">{host.bio}</p>}
           </div>
@@ -138,7 +139,7 @@ export default function HostPage() {
         {/* Upcoming events */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Upcoming Events</h2>
+            <h2 className="text-2xl font-semibold font-display">Upcoming Events</h2>
             <Badge variant="secondary">{upcoming.length}</Badge>
           </div>
           {upcoming.length === 0 ? (
@@ -148,7 +149,7 @@ export default function HostPage() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {upcoming.map(ev => (
-                <Card key={ev.id} className="hover:shadow-lg transition-shadow">
+                <Card key={ev.id} className="shadow-soft hover:shadow-card-hover transition-shadow">
                   <CardHeader>
                     <CardTitle className="text-lg line-clamp-2">{ev.title}</CardTitle>
                   </CardHeader>
@@ -170,7 +171,7 @@ export default function HostPage() {
         {/* Archived events */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Archived Events</h2>
+            <h2 className="text-2xl font-semibold font-display">Archived Events</h2>
             <Badge variant="secondary">{archived.length}</Badge>
           </div>
           {archived.length === 0 ? (
@@ -180,7 +181,7 @@ export default function HostPage() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {archived.map(ev => (
-                <Card key={ev.id} className="hover:shadow-lg transition-shadow">
+                <Card key={ev.id} className="shadow-soft hover:shadow-card-hover transition-shadow">
                   <CardHeader>
                     <CardTitle className="text-lg line-clamp-2">{ev.title}</CardTitle>
                   </CardHeader>
@@ -202,7 +203,7 @@ export default function HostPage() {
         {/* Recent Results */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Recent Results</h2>
+            <h2 className="text-2xl font-semibold font-display">Recent Results</h2>
             <Badge variant="secondary">{media.length}</Badge>
           </div>
           {media.length === 0 ? (

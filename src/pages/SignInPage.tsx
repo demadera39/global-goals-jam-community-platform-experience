@@ -7,7 +7,7 @@ export default function SignInPage() {
   const redirectTo = searchParams.get('redirect') || '/course/enroll'
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-section-alt hero-pattern p-4">
       <SimpleEmailSignIn redirectUrl={redirectTo} />
     </div>
   )

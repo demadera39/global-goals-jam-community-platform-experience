@@ -10,7 +10,7 @@ export const emailTemplates = {
     content: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <img src="https://global-goals-jam-community-platform-7uamgc2j.sites.blink.new/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
+          <img src="https://globalgoalsjam.org/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
           <h1 style="color: #00A651; margin: 20px 0;">Welcome to Global Goals Jam!</h1>
         </div>
         
@@ -45,7 +45,7 @@ export const emailTemplates = {
     content: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <img src="https://global-goals-jam-community-platform-7uamgc2j.sites.blink.new/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
+          <img src="https://globalgoalsjam.org/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
           <h1 style="color: #00A651; margin: 20px 0;">Complete Your Registration</h1>
         </div>
         
@@ -60,7 +60,7 @@ export const emailTemplates = {
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://global-goals-jam-community-platform-7uamgc2j.sites.blink.new/course/enroll" style="background: #F59E0B; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Complete Registration</a>
+          <a href="https://globalgoalsjam.org/course/enroll" style="background: #F59E0B; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Complete Registration</a>
         </div>
         
         <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
@@ -79,7 +79,7 @@ export const emailTemplates = {
     content: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <img src="https://global-goals-jam-community-platform-7uamgc2j.sites.blink.new/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
+          <img src="https://globalgoalsjam.org/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
           <h1 style="color: #00A651; margin: 20px 0;">Account Deletion Notice</h1>
         </div>
         
@@ -115,7 +115,7 @@ export const emailTemplates = {
     content: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <img src="https://global-goals-jam-community-platform-7uamgc2j.sites.blink.new/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
+          <img src="https://globalgoalsjam.org/ggj-logo.svg" alt="Global Goals Jam" style="max-width: 200px; height: auto;" />
           <h1 style="color: #00A651; margin: 20px 0;">{{subject}}</h1>
         </div>
         

@@ -4,12 +4,12 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Alert, AlertDescription } from './ui/alert'
-import { Mail, Lock, UserPlus, LogIn, CheckCircle, Loader2 } from 'lucide-react'
+import { Mail, Lock, UserPlus, LogIn, CheckCircle, Loader2, CreditCard, ArrowRight } from 'lucide-react'
 import { appAuth, emailAuth } from '../lib/simpleAuth'
 import { signup as authSignup } from '../lib/auth'
 
 import { login as authLogin } from '../lib/auth'
-import { config } from '../lib/config'
+import { supabase } from '../lib/supabase'
 
 interface SimpleEmailSignInProps {
   redirectUrl?: string
@@ -17,7 +17,8 @@ interface SimpleEmailSignInProps {
 }
 
 export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmailSignInProps) {
-  const [mode, setMode] = useState<'signup' | 'signin'>('signin')
+  const isCourseEnrollment = redirectUrl.includes('/course/enroll') && redirectUrl.includes('checkout=1')
+  const [mode, setMode] = useState<'signup' | 'signin'>(isCourseEnrollment ? 'signup' : 'signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -59,9 +60,14 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
       // Persist minimal user locally for UI
       appAuth.set({ id: result.user.id, email: result.user.email, displayName: result.user.displayName, role: result.user.role })
 
-      // After signup, always send the user to profile with a welcome flag
       try { emailAuth.setLastEmail(norm) } catch (_) {}
-      window.location.href = '/course/enroll?welcome=1'
+      // If coming from enrollment checkout, go straight to enrollment with checkout flag
+      // so Stripe opens automatically. Otherwise go to a sensible default.
+      if (isCourseEnrollment) {
+        window.location.href = '/course/enroll?checkout=1'
+      } else {
+        window.location.href = redirectUrl
+      }
     } catch (err: any) {
       const msg = err?.message || ''
       const code = (err as any)?.code
@@ -75,6 +81,10 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
         if (import.meta.env.MODE !== 'production') {
           console.debug('Handled existing-account case during signup; switched to sign-in.')
         }
+      } else if (/database error saving new user/i.test(msg) || (status === 422 && /weak|pwned|breach/i.test(msg))) {
+        // Supabase returns "Database error saving new user" when the password is
+        // found in a data breach database (pwned) — surface a helpful message.
+        setError('This password is too common or has appeared in a data breach. Please choose a different, stronger password.')
       } else {
         console.error('Signup error:', err)
         setError(msg || 'Failed to create account')
@@ -131,30 +141,15 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
     setError('')
     
     try {
-      // Use the auth edge function for password reset
-      const response = await fetch(config.api.baseUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'forgot-password', 
-          email: norm 
-        })
-      })
-      
-      // Check if response is ok before trying to parse JSON
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      // Use Supabase built-in password reset (sends magic link email)
+      const redirectTo = `${window.location.origin}/reset-password`
+      const { error } = await supabase.auth.resetPasswordForEmail(norm, { redirectTo })
+
+      if (error) {
+        console.error('Password reset error:', error)
       }
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        setSent(true)
-      } else {
-        console.error('Password reset failed:', result)
-        // Always show success for security (prevent email enumeration)
-        setSent(true)
-      }
+      // Always show success to prevent email enumeration attacks
+      setSent(true)
     } catch (err: any) {
       console.error('Password reset error:', err)
       // Still show success to prevent email enumeration attacks
@@ -166,13 +161,13 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
 
   if (sent) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card variant="elevated" className="w-full max-w-md mx-auto">
         <CardContent className="text-center p-8">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 bg-pastel-green rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-primary" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Check Your Email</h3>
-          <p className="text-gray-600 mb-6">We sent a password reset link to <strong>{email}</strong>.</p>
+          <h3 className="text-xl font-semibold font-display text-foreground mb-2">Check Your Email</h3>
+          <p className="text-muted-foreground mb-6">We sent a password reset link to <strong>{email}</strong>.</p>
           <div className="space-y-3">
             <Button variant="outline" className="w-full" onClick={() => setSent(false)}>Back to Sign In</Button>
             {onClose && <Button variant="ghost" className="w-full" onClick={onClose}>Close</Button>}
@@ -183,28 +178,47 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card variant="elevated" className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
-        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Mail className="w-6 h-6 text-green-600" />
+        <div className="w-12 h-12 bg-pastel-green rounded-full flex items-center justify-center mx-auto mb-4">
+          {isCourseEnrollment ? <CreditCard className="w-6 h-6 text-primary" /> : <Mail className="w-6 h-6 text-primary" />}
         </div>
-        <CardTitle className="text-2xl font-bold text-gray-900">
+        <CardTitle className="text-2xl font-bold font-display text-foreground">
           {mode === 'signup' ? 'Create your account' : 'Sign in'}
         </CardTitle>
-        <p className="text-gray-600">Access the Global Goals Jam platform</p>
+        <p className="text-muted-foreground">
+          {isCourseEnrollment
+            ? 'Create an account to enroll in the certification course'
+            : 'Access the Global Goals Jam platform'}
+        </p>
+        {isCourseEnrollment && (
+          <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-full bg-pastel-green px-2.5 py-1 font-medium text-primary">
+              1. {mode === 'signup' ? 'Create account' : 'Sign in'}
+            </span>
+            <ArrowRight className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
+              2. Secure payment
+            </span>
+            <ArrowRight className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
+              3. Start learning
+            </span>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="flex gap-2 mb-4">
-          <Button 
-            variant={mode === 'signup' ? 'default' : 'outline'} 
-            className="flex-1" 
+          <Button
+            variant={mode === 'signup' ? 'pill' : 'pill-outline'}
+            className="flex-1"
             onClick={() => setMode('signup')}
           >
             <UserPlus className="w-4 h-4 mr-2" /> Sign up
           </Button>
-          <Button 
-            variant={mode === 'signin' ? 'default' : 'outline'} 
-            className="flex-1" 
+          <Button
+            variant={mode === 'signin' ? 'pill' : 'pill-outline'}
+            className="flex-1"
             onClick={() => setMode('signin')}
           >
             <LogIn className="w-4 h-4 mr-2" /> Sign in
@@ -250,9 +264,9 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
               </Alert>
             )}
 
-            <Button 
-              type="submit" 
-              className="w-full" 
+            <Button
+              type="submit"
+              className="w-full rounded-xl"
               disabled={loading || !isValidEmail(email)}
             >
               {loading ? (
@@ -287,9 +301,9 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
 
             <div className="flex items-center justify-between text-xs">
               <span />
-              <button 
-                type="button" 
-                className="underline text-green-600" 
+              <button
+                type="button"
+                className="underline text-primary hover:text-primary/80"
                 onClick={handleForgotPassword}
               >
                 Forgot password?
@@ -302,9 +316,9 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
               </Alert>
             )}
 
-            <Button 
-              type="submit" 
-              className="w-full" 
+            <Button
+              type="submit"
+              className="w-full rounded-xl"
               disabled={loading || !isValidEmail(email)}
             >
               {loading ? (
@@ -314,7 +328,7 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
               )}
             </Button>
             
-            <div className="text-xs text-gray-500 text-center">
+            <div className="text-xs text-muted-foreground text-center">
               No account? <button 
                 type="button" 
                 className="underline" 

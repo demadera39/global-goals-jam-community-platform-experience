@@ -1,4 +1,5 @@
-import { blink, safeDbCall } from './blink'
+import { db, safeDbCall } from './supabase'
+import { config } from './config'
 
 export interface JamHighlight {
   id: string
@@ -17,15 +18,10 @@ export interface JamHighlight {
  */
 export async function getRandomHighlights(limit: number = 20): Promise<JamHighlight[]> {
   try {
-    if (!blink?.database?.list) {
-      console.warn('Blink database not initialized')
-      return []
-    }
-
     const result = await safeDbCall(() =>
-      blink.database.list('jam_highlights', {
-        filter: { is_verified: '1' },
-        limit: 100, // Get more to shuffle from
+      db.jamHighlights.list({
+        where: { isVerified: true },
+        limit: 100,
       })
     )
 
@@ -47,15 +43,8 @@ export async function getRandomHighlights(limit: number = 20): Promise<JamHighli
  */
 export async function getAllHighlights(): Promise<JamHighlight[]> {
   try {
-    if (!blink?.database?.list) {
-      console.warn('Blink database not initialized')
-      return []
-    }
-
     const result = await safeDbCall(() =>
-      blink.database.list('jam_highlights', {
-        limit: 1000,
-      })
+      db.jamHighlights.list({ limit: 1000 })
     )
 
     if (!result || !Array.isArray(result)) {
@@ -74,15 +63,8 @@ export async function getAllHighlights(): Promise<JamHighlight[]> {
  */
 export async function verifyHighlight(id: string): Promise<boolean> {
   try {
-    if (!blink?.database?.update) {
-      console.warn('Blink database not initialized')
-      return false
-    }
-
     await safeDbCall(() =>
-      blink.database.update('jam_highlights', id, {
-        isVerified: 1,
-      })
+      db.jamHighlights.update(id, { isVerified: true })
     )
     return true
   } catch (error) {
@@ -96,13 +78,8 @@ export async function verifyHighlight(id: string): Promise<boolean> {
  */
 export async function deleteHighlight(id: string): Promise<boolean> {
   try {
-    if (!blink?.database?.delete) {
-      console.warn('Blink database not initialized')
-      return false
-    }
-
     await safeDbCall(() =>
-      blink.database.delete('jam_highlights', id)
+      db.jamHighlights.delete(id)
     )
     return true
   } catch (error) {
@@ -124,15 +101,10 @@ export async function addHighlight(data: {
   isVerified?: boolean
 }): Promise<string | null> {
   try {
-    if (!blink?.database?.create) {
-      console.warn('Blink database not initialized')
-      return null
-    }
-
     const id = `jam_img_${Date.now()}_${Math.random().toString(36).substring(7)}`
-    
+
     await safeDbCall(() =>
-      blink.database.create('jam_highlights', {
+      db.jamHighlights.create({
         id,
         imageUrl: data.imageUrl,
         city: data.city,
@@ -140,10 +112,10 @@ export async function addHighlight(data: {
         year: data.year ? String(data.year) : undefined,
         description: data.description,
         sourceUrl: data.sourceUrl,
-        isVerified: data.isVerified ? 1 : 0,
+        isVerified: data.isVerified ?? false,
       })
     )
-    
+
     return id
   } catch (error) {
     console.error('Error adding highlight:', error)
@@ -159,29 +131,24 @@ export async function scrapeNewHighlights(
   maxResults: number = 15
 ): Promise<{ success: boolean; savedCount?: number; error?: string }> {
   try {
-    const response = await fetch(
-      'https://7uamgc2j--scrape-jam-images.functions.blink.new',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          searchQuery: searchQuery || 'community workshop collaboration',
-          maxResults,
-        }),
-      }
-    )
+    const response = await fetch(config.functions.scrapeJamImagesUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        searchQuery: searchQuery || 'community workshop collaboration',
+        maxResults,
+      }),
+    })
 
     const data = await response.json()
-    
+
     if (!response.ok) {
       return {
         success: false,
         error: data.error || `Request failed with status ${response.status}`,
       }
     }
-    
+
     return data
   } catch (error) {
     console.error('Scraping error:', error)
@@ -202,7 +169,7 @@ function formatHighlight(record: any): JamHighlight {
     year: record.year ? Number(record.year) : undefined,
     description: record.description,
     sourceUrl: record.sourceUrl || record.source_url,
-    isVerified: record.isVerified === 1 || record.is_verified === '1',
+    isVerified: record.isVerified === true || record.isVerified === 1 || record.is_verified === '1',
     createdAt: record.createdAt || record.created_at,
   }
 }

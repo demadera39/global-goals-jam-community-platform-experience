@@ -453,8 +453,8 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
   return (
     <div className="space-y-6">
       <div className="mb-6">
-        <h3 className="text-xl font-semibold text-gray-900">Module {moduleNumber} Exercises</h3>
-        <p className="text-gray-600 mt-2">
+        <h3 className="text-xl font-semibold text-foreground">Module {moduleNumber} Exercises</h3>
+        <p className="text-muted-foreground mt-2">
           Complete these exercises to apply what you've learned and prepare for hosting your Global Goals Jam.
         </p>
       </div>
@@ -468,24 +468,24 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
         return (
           <Card key={exercise.id} className={`p-6 border-2 transition-all ${
             isCompleted 
-              ? 'bg-green-50 border-green-300' 
-              : 'bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200'
+              ? 'bg-pastel-green border-primary/30' 
+              : 'bg-gradient-to-r from-pastel-amber/70 to-amber-50 border-amber-200'
           }`}>
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="flex-shrink-0 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold">
+                    <span className="flex-shrink-0 w-8 h-8 bg-amber-500 text-primary-foreground rounded-full flex items-center justify-center font-bold">
                       {index + 1}
                     </span>
-                    <h4 className="text-lg font-semibold text-gray-900">
+                    <h4 className="text-lg font-semibold text-foreground">
                       {exercise.title}
                     </h4>
                     {isCompleted && (
-                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      <CheckCircle2 className="w-5 h-5 text-primary" />
                     )}
                   </div>
-                  <p className="text-gray-700 ml-11">{exercise.description}</p>
+                  <p className="text-foreground/80 ml-11">{exercise.description}</p>
                 </div>
                 {exercise.template && (
                   <Button
@@ -501,18 +501,18 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
               </div>
 
               {details.steps && details.steps.length > 0 && (
-                <div className="bg-white rounded-lg p-4 ml-11">
-                  <h5 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <div className="bg-card rounded-lg p-4 ml-11">
+                  <h5 className="font-semibold text-foreground mb-3 flex items-center">
                     <ChevronRight className="w-4 h-4 mr-1" />
                     Step-by-Step Instructions:
                   </h5>
                   <ol className="space-y-2">
                     {details.steps.map((step, stepIndex) => (
                       <li key={stepIndex} className="flex items-start">
-                        <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold mr-3">
                           {stepIndex + 1}
                         </span>
-                        <span className="text-gray-700">{step}</span>
+                        <span className="text-foreground/80">{step}</span>
                       </li>
                     ))}
                   </ol>
@@ -520,11 +520,11 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
               )}
 
               {details.tips && details.tips.length > 0 && (
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 ml-11">
-                  <h5 className="font-semibold text-gray-900 mb-2">💡 Pro Tips:</h5>
+                <div className="bg-pastel-amber border-l-4 border-amber-400 p-4 ml-11">
+                  <h5 className="font-semibold text-foreground mb-2">💡 Pro Tips:</h5>
                   <ul className="space-y-1">
                     {details.tips.map((tip, tipIndex) => (
-                      <li key={tipIndex} className="text-gray-700 flex items-start">
+                      <li key={tipIndex} className="text-foreground/80 flex items-start">
                         <span className="mr-2">•</span>
                         <span>{tip}</span>
                       </li>
@@ -534,27 +534,27 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
               )}
 
               {details.resources && details.resources.length > 0 && (
-                <div className="bg-blue-50 rounded-lg p-4 ml-11">
-                  <h5 className="font-semibold text-gray-900 mb-3">📚 Helpful Resources:</h5>
+                <div className="bg-pastel-sky rounded-lg p-4 ml-11">
+                  <h5 className="font-semibold text-foreground mb-3">📚 Helpful Resources:</h5>
                   <div className="space-y-2">
                     {details.resources.map((resource, resourceIndex) => (
                       <div key={resourceIndex} className="flex items-start">
-                        <ExternalLink className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                        <ExternalLink className="w-4 h-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
                         <div>
                           {resource.url ? (
                             <a 
                               href={resource.url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="font-medium text-blue-900 hover:text-blue-700 underline"
+                              className="font-medium text-sky-900 hover:text-sky-700 underline"
                             >
                               {resource.title}
                             </a>
                           ) : (
-                            <span className="font-medium text-blue-900">{resource.title}</span>
+                            <span className="font-medium text-sky-900">{resource.title}</span>
                           )}
                           {resource.description && (
-                            <p className="text-sm text-gray-600 mt-1">{resource.description}</p>
+                            <p className="text-sm text-muted-foreground mt-1">{resource.description}</p>
                           )}
                         </div>
                       </div>
@@ -564,9 +564,9 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
               )}
 
               {/* Exercise Submission Section */}
-              <div className="bg-gray-50 rounded-lg p-4 ml-11 mt-4">
-                <h5 className="font-semibold text-gray-900 mb-3">✍️ Your Response:</h5>
-                <p className="text-sm text-gray-600 mb-3">
+              <div className="bg-muted/50 rounded-lg p-4 ml-11 mt-4">
+                <h5 className="font-semibold text-foreground mb-3">✍️ Your Response:</h5>
+                <p className="text-sm text-muted-foreground mb-3">
                   {details.checkQuestion || 'Complete this exercise and share your findings:'}
                 </p>
                 <Textarea
@@ -576,14 +576,14 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
                     [exercise.id]: e.target.value 
                   })}
                   placeholder="Type your answer here..."
-                  className="min-h-[120px] bg-white"
+                  className="min-h-[120px] bg-card"
                   disabled={isCompleted}
                 />
                 {!isCompleted && (
                   <Button
                     onClick={() => handleExerciseSubmit(exercise.id)}
                     disabled={isSubmitting || !answer.trim()}
-                    className="mt-3 bg-green-600 hover:bg-green-700"
+                    className="mt-3 bg-primary hover:bg-primary/80"
                   >
                     {isSubmitting ? (
                       <>Submitting...</>
@@ -596,7 +596,7 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
                   </Button>
                 )}
                 {isCompleted && (
-                  <div className="mt-3 text-green-700 font-medium flex items-center">
+                  <div className="mt-3 text-primary/80 font-medium flex items-center">
                     <CheckCircle2 className="w-5 h-5 mr-2" />
                     Exercise completed successfully!
                   </div>
@@ -604,14 +604,14 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
               </div>
 
               {exercise.template && (
-                <div className="flex items-center justify-between pt-4 border-t border-orange-200 ml-11">
-                  <p className="text-sm text-gray-600">
+                <div className="flex items-center justify-between pt-4 border-t border-amber-200 ml-11">
+                  <p className="text-sm text-muted-foreground">
                     Use the template to guide your work and document your findings
                   </p>
                   <Button
                     onClick={() => handleTemplateDownload(exercise.template, exercise.title)}
                     size="sm"
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-primary hover:bg-primary/80"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Work on Template
@@ -625,7 +625,7 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
 
       {exercises.length === 0 && (
         <Card className="p-8 text-center">
-          <p className="text-gray-500">No exercises available for this module yet.</p>
+          <p className="text-muted-foreground">No exercises available for this module yet.</p>
         </Card>
       )}
     </div>

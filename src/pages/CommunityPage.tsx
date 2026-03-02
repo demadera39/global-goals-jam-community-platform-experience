@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import { useState, useEffect } from 'react'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
@@ -23,7 +24,7 @@ import {
   Loader2,
   Send
 } from 'lucide-react'
-import blink from '../lib/blink'
+import { db, auth } from '../lib/supabase'
 
 interface User {
   id: string
@@ -80,7 +81,7 @@ export default function CommunityPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    const unsubscribe = blink.auth.onAuthStateChanged((state) => {
+    const unsubscribe = auth.onAuthStateChanged((state) => {
       setUser(state.user)
       setLoading(state.isLoading)
     })
@@ -112,7 +113,7 @@ export default function CommunityPage() {
 
   const loadCategories = async () => {
     try {
-      const allCategories = await blink.db.forumCategories.list({
+      const allCategories = await db.forumCategories.list({
         orderBy: { sortOrder: 'asc' }
       })
       setCategories(allCategories)
@@ -126,7 +127,7 @@ export default function CommunityPage() {
 
   const loadThreads = async (categoryId: string) => {
     try {
-      const categoryThreads = await blink.db.forumThreads.list({
+      const categoryThreads = await db.forumThreads.list({
         where: { categoryId },
         orderBy: { isPinned: 'desc', lastReplyAt: 'desc' },
         limit: 50
@@ -140,7 +141,7 @@ export default function CommunityPage() {
 
   const loadPosts = async (threadId: string) => {
     try {
-      const threadPosts = await blink.db.forumPosts.list({
+      const threadPosts = await db.forumPosts.list({
         where: { threadId },
         orderBy: { createdAt: 'asc' }
       })
@@ -162,7 +163,7 @@ export default function CommunityPage() {
       }
 
       // Create thread
-      const thread = await blink.db.forumThreads.create({
+      const thread = await db.forumThreads.create({
         categoryId: categoryToUse,
         title: newThreadTitle.trim(),
         authorId: user.id,
@@ -172,7 +173,7 @@ export default function CommunityPage() {
       })
 
       // Create first post
-      await blink.db.forumPosts.create({
+      await db.forumPosts.create({
         threadId: thread.id,
         authorId: user.id,
         content: newThreadContent.trim(),
@@ -190,7 +191,7 @@ export default function CommunityPage() {
     } catch (error) {
       console.error('Failed to create thread:', error)
       const message = (error as any)?.message || 'Failed to create thread. Please try again.'
-      alert(message)
+      toast.error(message)
     } finally {
       setSubmitting(false)
     }
@@ -202,7 +203,7 @@ export default function CommunityPage() {
     setSubmitting(true)
     try {
       // Create reply
-      await blink.db.forumPosts.create({
+      await db.forumPosts.create({
         threadId: selectedThread.id,
         authorId: user.id,
         content: newReplyContent.trim(),
@@ -210,7 +211,7 @@ export default function CommunityPage() {
       })
 
       // Update thread reply count and last reply time
-      await blink.db.forumThreads.update(selectedThread.id, {
+      await db.forumThreads.update(selectedThread.id, {
         replyCount: selectedThread.replyCount + 1,
         lastReplyAt: new Date().toISOString()
       })
@@ -223,7 +224,7 @@ export default function CommunityPage() {
       setNewReplyContent('')
     } catch (error) {
       console.error('Failed to create reply:', error)
-      alert('Failed to create reply. Please try again.')
+      toast.error('Failed to create reply. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -250,9 +251,9 @@ export default function CommunityPage() {
       case 'admin':
         return <Crown className="w-4 h-4 text-yellow-500" />
       case 'host':
-        return <Shield className="w-4 h-4 text-blue-500" />
+        return <Shield className="w-4 h-4 text-sky-500" />
       default:
-        return <User className="w-4 h-4 text-gray-500" />
+        return <User className="w-4 h-4 text-muted-foreground" />
     }
   }
 
@@ -283,20 +284,20 @@ export default function CommunityPage() {
     <div className="min-h-screen bg-background sdg-theme-16">
       {/* Hero Section */}
       <section className="relative py-20 hero-pattern">
-        <div className="absolute inset-0 bg-background/80 -z-10" />
-        {/* Hero kept clean per original style (no decorative overlays) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Badge variant="secondary" className="mb-6 px-4 py-2 text-sm font-medium">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">Connect & Share</p>
+          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
             <Users className="w-4 h-4 mr-2" />
             Global Community
           </Badge>
-          
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6">
+
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
             Community <span className="text-primary-solid">Forum</span>
           </h1>
-          
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Connect with hosts and participants worldwide. Share experiences, ask questions, 
+
+          <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
+            Connect with hosts and participants worldwide. Share experiences, ask questions,
             and collaborate on solutions for the Global Goals.
           </p>
         </div>
@@ -336,7 +337,7 @@ export default function CommunityPage() {
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
                   <div>
-                    <h2 className="text-2xl font-bold text-foreground">
+                    <h2 className="text-2xl font-bold font-display text-foreground">
                       {categories.find(c => c.id === selectedCategory)?.name}
                     </h2>
                     <p className="text-muted-foreground">
@@ -428,9 +429,9 @@ export default function CommunityPage() {
 
                 <div className="space-y-4">
                   {filteredThreads.map((thread) => (
-                    <Card 
-                      key={thread.id} 
-                      className="hover:shadow-md transition-shadow cursor-pointer"
+                    <Card
+                      key={thread.id}
+                      className="shadow-soft hover:shadow-card-hover transition-shadow cursor-pointer"
                       onClick={() => setSelectedThread(thread)}
                     >
                       <CardContent className="p-4">
@@ -495,7 +496,7 @@ export default function CommunityPage() {
                     ← Back to Threads
                   </Button>
                   <div>
-                    <h2 className="text-2xl font-bold text-foreground">{selectedThread.title}</h2>
+                    <h2 className="text-2xl font-bold font-display text-foreground">{selectedThread.title}</h2>
                     <p className="text-muted-foreground">
                       {selectedThread.replyCount} replies • Created {formatDate(selectedThread.createdAt)}
                     </p>

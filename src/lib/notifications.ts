@@ -1,4 +1,4 @@
-import blink from './blink'
+import { notifications } from './supabase'
 
 function getBaseUrl() {
   // Prefer current origin at runtime (works for trial subdomain and custom domains)
@@ -47,7 +47,7 @@ export async function sendHostApplicationReceived(to: string, location: string, 
   )
 
   try {
-    const result = await blink.notifications.email({
+    const result = await notifications.email({
       to,
       from: 'marco@globalgoalsjam.org',
       replyTo: 'marco@globalgoalsjam.org',
@@ -74,7 +74,7 @@ export async function sendHostApproved(to: string, displayName?: string) {
   )
 
   try {
-    const result = await blink.notifications.email({
+    const result = await notifications.email({
       to,
       from: 'marco@globalgoalsjam.org',
       replyTo: 'marco@globalgoalsjam.org',
@@ -101,7 +101,7 @@ export async function sendHostRejected(to: string) {
   )
 
   try {
-    const result = await blink.notifications.email({
+    const result = await notifications.email({
       to,
       from: 'marco@globalgoalsjam.org',
       replyTo: 'marco@globalgoalsjam.org',
@@ -134,7 +134,7 @@ export async function sendHostInvite(
   )
 
   try {
-    const result = await blink.notifications.email({
+    const result = await notifications.email({
       to,
       from: 'marco@globalgoalsjam.org',
       replyTo: 'marco@globalgoalsjam.org',
@@ -281,7 +281,7 @@ Questions? Contact support@globalgoalsjam.org
   `
 
   try {
-    const result = await blink.notifications.email({
+    const result = await notifications.email({
       to: email,
       from: 'marco@globalgoalsjam.org',
       replyTo: 'marco@globalgoalsjam.org',

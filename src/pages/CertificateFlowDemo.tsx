@@ -120,7 +120,7 @@ export default function CertificateFlowDemo() {
                 <div className="space-y-3">
                   {steps[currentStep].details.map((detail, index) => (
                     <div key={index} className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <CheckCircle className="h-4 w-4 text-primary mt-0.5" />
                       <span className="text-sm">{detail}</span>
                     </div>
                   ))}
@@ -173,12 +173,12 @@ export default function CertificateFlowDemo() {
                           index === currentStep
                             ? 'bg-primary/10 border-2 border-primary'
                             : index < currentStep
-                            ? 'bg-green-50 border border-green-200'
-                            : 'bg-gray-50 border border-gray-200'
+                            ? 'bg-pastel-green border border-primary/20'
+                            : 'bg-muted/50 border border-border'
                         }`}
                       >
                         <div className={`p-2 rounded-full ${
-                          index <= currentStep ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'
+                          index <= currentStep ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                         }`}>
                           <StepIcon className="h-4 w-4" />
                         </div>
@@ -190,7 +190,7 @@ export default function CertificateFlowDemo() {
                           </p>
                         </div>
                         {index < currentStep && (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          <CheckCircle className="h-5 w-5 text-primary" />
                         )}
                       </div>
                     );
@@ -210,7 +210,7 @@ export default function CertificateFlowDemo() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="bg-gray-50 rounded-lg p-8 overflow-auto">
+                <div className="bg-muted/50 rounded-lg p-8 overflow-auto">
                   <div className="transform scale-50 origin-top">
                     <CertificateTemplate
                       participantName="Jane Smith"
@@ -247,7 +247,7 @@ export default function CertificateFlowDemo() {
                   <p className="text-sm text-muted-foreground mb-3">
                     The system checks completion status after each module submission:
                   </p>
-                  <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
+                  <pre className="bg-muted p-3 rounded text-xs overflow-x-auto">
 {`// In CourseDashboard.tsx
 if (completedModules.length === 8) {
   toast.success('Course completed!');
@@ -290,7 +290,7 @@ if (completedModules.length === 8) {
                   <p className="text-sm text-muted-foreground mb-3">
                     The certificate is generated as HTML with print styles:
                   </p>
-                  <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
+                  <pre className="bg-muted p-3 rounded text-xs overflow-x-auto">
 {`// Opens in new tab for printing
 generateCertificate({
   participantName: user.displayName,
@@ -308,7 +308,7 @@ generateCertificate({
                   <p className="text-sm text-muted-foreground mb-3">
                     Certificate page validates completion before showing:
                   </p>
-                  <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
+                  <pre className="bg-muted p-3 rounded text-xs overflow-x-auto">
 {`// Validation in CourseCertificate.tsx
 if (completed.length < 8) {
   toast.error('Complete all modules');

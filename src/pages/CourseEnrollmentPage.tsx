@@ -4,12 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, Clock, Users, Award, BookOpen, Mail, CreditCard, ArrowRight } from 'lucide-react'
-import blink, { safeDbCall } from '@/lib/blink'
+import { db, safeDbCall } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { courseModules } from '@/data/courseContent'
 import { appAuth } from '@/lib/simpleAuth'
 import { getStoredUser } from '@/lib/auth'
 import { config } from '@/lib/config'
+import { callSupabaseFunction } from '@/lib/supabase-functions'
 
 export default function CourseEnrollmentPage() {
   const navigate = useNavigate()
@@ -60,7 +61,7 @@ export default function CourseEnrollmentPage() {
 
     const tick = async () => {
       try {
-        const rows = await safeDbCall(() => blink.db.courseEnrollments.list({ where: { id: enrollmentId }, limit: 1 }))
+        const rows = await safeDbCall(() => db.courseEnrollments.list({ where: { id: enrollmentId }, limit: 1 }))
         const row = rows?.[0]
         if (!row) {
           // Enrollment disappeared — stop
@@ -131,7 +132,7 @@ export default function CourseEnrollmentPage() {
           }
         } catch (_) {}
 
-        const enrollments = await safeDbCall(() => blink.db.courseEnrollments.list({ where: { userId }, orderBy: { createdAt: 'desc' }, limit: 1 }))
+        const enrollments = await safeDbCall(() => db.courseEnrollments.list({ where: { userId }, orderBy: { createdAt: 'desc' }, limit: 1 }))
         try {
           const cacheKey = `enroll_status_${userId}`
           sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: enrollments[0] || null }))
@@ -203,9 +204,10 @@ export default function CourseEnrollmentPage() {
 
       // If we have a Stripe session_id from success redirect → call confirm endpoint
       if (sessionId) {
+        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
         const resp = await fetch(config.functions.confirmCourseEnrollmentUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
           body: JSON.stringify({ sessionId, userId: user?.id, enrollmentId: searchParams.get('enr_id') || enrollment?.id })
         })
         const data = await resp.json().catch(() => null)
@@ -234,7 +236,7 @@ export default function CourseEnrollmentPage() {
       }
 
       // Load the most recent enrollment for this user
-      const latest = await safeDbCall(() => blink.db.courseEnrollments.list({ where: { userId: user.id }, orderBy: { createdAt: 'desc' }, limit: 1 }))
+      const latest = await safeDbCall(() => db.courseEnrollments.list({ where: { userId: user.id }, orderBy: { createdAt: 'desc' }, limit: 1 }))
       const rec = latest?.[0]
       if (!rec) {
         toast.error('No enrollment found yet. Please start checkout first.')
@@ -264,10 +266,12 @@ export default function CourseEnrollmentPage() {
     if (!user) return
     try {
       // Ensure a pending enrollment exists
-      let existing = await safeDbCall(() => blink.db.courseEnrollments.list({ where: { userId: user.id }, orderBy: { enrolledAt: 'desc' }, limit: 1 }))
+      let existing = await safeDbCall(() => db.courseEnrollments.list({ where: { userId: user.id }, orderBy: { enrolledAt: 'desc' }, limit: 1 }))
       let record = existing?.[0]
       if (!record) {
-        record = await safeDbCall(() => blink.db.courseEnrollments.create({
+        const enrollId = `enr_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+        record = await safeDbCall(() => db.courseEnrollments.create({
+          id: enrollId,
           userId: user.id,
           status: 'pending',
           enrolledAt: new Date().toISOString()
@@ -286,23 +290,15 @@ export default function CourseEnrollmentPage() {
       const cancelUrl = `${baseUrl}/course/enroll?canceled=1`
 
       // Request Stripe Checkout Session via Edge Function
-      const resp = await fetch(config.functions.createCourseCheckoutUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          enrollmentId: record.id,
-          userId: user.id,
-          email: user.email || '',
-          successUrl,
-          cancelUrl,
-          amount: 3999
-        })
+      const checkoutData = await callSupabaseFunction<{ url?: string; error?: string }>('create-course-checkout', {
+        enrollmentId: record.id,
+        userId: user.id,
+        email: user.email || '',
+        successUrl,
+        cancelUrl,
+        amount: 3999
       })
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => '')
-        throw new Error(`Failed to create checkout: ${resp.status} ${errText}`)
-      }
-      const { url: checkoutUrl } = await resp.json() as any
+      const checkoutUrl = checkoutData.url
       if (checkoutUrl) {
         // Open Stripe in a new tab as required (must be via user gesture)
         const win = window.open(checkoutUrl, '_blank')
@@ -317,7 +313,14 @@ export default function CourseEnrollmentPage() {
       }
     } catch (err: any) {
       console.error('Checkout error', err)
-      toast.error('Could not start checkout')
+      const msg = err?.message || ''
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        toast.error('Could not reach the checkout service. The Stripe integration may not be deployed yet.')
+      } else if (msg.includes('Stripe not configured')) {
+        toast.error('Stripe is not configured on the server. Please contact the administrator.')
+      } else {
+        toast.error(`Could not start checkout: ${msg || 'unknown error'}`)
+      }
     }
   }
 
@@ -335,7 +338,7 @@ export default function CourseEnrollmentPage() {
       const scheduledDate = new Date(startDate)
       scheduledDate.setDate(scheduledDate.getDate() + (day - 1))
       scheduledDate.setHours(9, 0, 0, 0) // 9 AM
-      await safeDbCall(() => blink.db.emailSchedule.create({
+      await safeDbCall(() => db.emailSchedule.create({
         id: `email_${enrollmentId}_${day}`,
         enrollmentId,
         userId,
@@ -346,8 +349,20 @@ export default function CourseEnrollmentPage() {
     }
   }
 
-  // Note: Do not auto-open Stripe on load to avoid popup blockers.
-  // Users must click the "Start Your Journey" button to open checkout in a new tab.
+  // If user just signed up and landed here with checkout=1, auto-start Stripe.
+  // We use a ref to ensure we only trigger once.
+  const autoCheckoutTriggered = useRef(false)
+  useEffect(() => {
+    if (!loading && !checkingEnrollment && user && !autoCheckoutTriggered.current) {
+      const wantsCheckout = searchParams.get('checkout') === '1'
+      const isStripeReturn = searchParams.get('success') === '1' || searchParams.get('canceled') === '1'
+      // Only auto-trigger if checkout=1 is set and this isn't a Stripe return
+      if (wantsCheckout && !isStripeReturn && !enrollment) {
+        autoCheckoutTriggered.current = true
+        startCheckout()
+      }
+    }
+  }, [loading, checkingEnrollment, user, searchParams, enrollment])
 
   // If returning from Stripe success, try to confirm immediately
   useEffect(() => {
@@ -433,31 +448,39 @@ export default function CourseEnrollmentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto text-center mb-12">
-          <Badge className="mb-4" variant="secondary">CERTIFICATION REQUIRED — supports the community</Badge>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Become a Certified Global Goals Jam Facilitator (or Host)
+      <section className="relative py-20 hero-pattern">
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">Certification Course</p>
+          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
+            <Award className="w-4 h-4 mr-2" />
+            8-Day Program
+          </Badge>
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
+            Become a Certified <span className="text-primary-solid">Facilitator</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Not planning to host (yet)? You can still take the course to become a skilled Jam facilitator — and unlock the full toolkit, templates, and community access.
           </p>
         </div>
+      </section>
+
+      <div className="container mx-auto px-4 py-12">
 
         {/* Peer-review policy note */}
-        <Card className="max-w-4xl mx-auto mb-6 border-amber-300 bg-amber-50">
-          <CardContent className="p-4 text-sm text-amber-800">
+        <Card className="max-w-4xl mx-auto mb-6 border-0 bg-pastel-amber">
+          <CardContent className="p-4 text-sm text-amber-800 dark:text-amber-200">
             Note: The capstone project is peer-reviewed by a fellow host or mentor you choose. The GGJ organization does not actively review or grade capstones. Arrange your peer reviewer before starting Module 8.
           </CardContent>
         </Card>
 
         {/* Course Overview */}
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 mb-12">
-          <Card>
+          <Card variant="elevated">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 font-display">
                 <BookOpen className="h-5 w-5 text-primary" />
                 Course Structure
               </CardTitle>
@@ -465,28 +488,28 @@ export default function CourseEnrollmentPage() {
             <CardContent>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <strong>8 comprehensive modules</strong>
                     <p className="text-sm text-muted-foreground">From foundations to advanced facilitation</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <strong>Daily email lessons</strong>
                     <p className="text-sm text-muted-foreground">Bite-sized learning delivered to your inbox</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <strong>Interactive learning dashboard</strong>
                     <p className="text-sm text-muted-foreground">Videos, templates, and exercises</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <strong>Official certification</strong>
                     <p className="text-sm text-muted-foreground">Recognized globally by the GGJ network</p>
@@ -496,9 +519,9 @@ export default function CourseEnrollmentPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card variant="elevated">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 font-display">
                 <Award className="h-5 w-5 text-primary" />
                 What You'll Master
               </CardTitle>
@@ -506,28 +529,28 @@ export default function CourseEnrollmentPage() {
             <CardContent>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <strong>Complex challenge framing</strong>
                     <p className="text-sm text-muted-foreground">Transform global goals into local action</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <strong>6-Sprint methodology</strong>
                     <p className="text-sm text-muted-foreground">Guide teams from ideation to documentation</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <strong>Facilitation excellence</strong>
                     <p className="text-sm text-muted-foreground">Manage dynamics and unlock creativity</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <strong>Open design practices</strong>
                     <p className="text-sm text-muted-foreground">Amplify impact through sharing</p>
@@ -539,17 +562,17 @@ export default function CourseEnrollmentPage() {
         </div>
 
         {/* Module Preview */}
-        <Card className="max-w-4xl mx-auto mb-12">
+        <Card variant="elevated" className="max-w-4xl mx-auto mb-12">
           <CardHeader>
-            <CardTitle>Course Modules</CardTitle>
+            <CardTitle className="font-display">Course Modules</CardTitle>
             <CardDescription>Your 8-day journey to becoming a certified facilitator — host-ready when you are</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
               {courseModules.map((m) => (
-                <div key={m.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={m.id} className="flex items-center justify-between p-4 border rounded-xl">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl bg-pastel-green flex items-center justify-center">
                       <span className="font-semibold text-primary">{m.moduleNumber}</span>
                     </div>
                     <div>
@@ -568,9 +591,9 @@ export default function CourseEnrollmentPage() {
         </Card>
 
         {/* Fast track to hosting */}
-        <Card className="max-w-5xl mx-auto mb-12">
+        <Card variant="elevated" className="max-w-5xl mx-auto mb-12">
           <CardHeader>
-            <CardTitle>Fast track to hosting (when you’re ready)</CardTitle>
+            <CardTitle className="font-display">Fast track to hosting (when you’re ready)</CardTitle>
             <CardDescription>Hosting is optional — take the course to become a skilled facilitator now; when you’re ready, we’ll help you pick a challenge, plan your jam, and get certified.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -584,9 +607,9 @@ export default function CourseEnrollmentPage() {
         </Card>
 
         {/* What it means to host */}
-        <Card className="max-w-6xl mx-auto mb-12">
+        <Card variant="elevated" className="max-w-6xl mx-auto mb-12">
           <CardHeader>
-            <CardTitle>What it means to host a Global Goals Jam</CardTitle>
+            <CardTitle className="font-display">What it means to host a Global Goals Jam</CardTitle>
             <CardDescription>And how this course gives you a head start</CardDescription>
           </CardHeader>
           <CardContent className="grid md:grid-cols-2 gap-6 text-sm">
@@ -612,9 +635,9 @@ export default function CourseEnrollmentPage() {
         </Card>
 
         {/* Pricing Card */}
-        <Card className="max-w-lg mx-auto border-primary">
+        <Card variant="elevated" className="max-w-lg mx-auto border-primary">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl">Investment in Your Impact</CardTitle>
+            <CardTitle className="text-3xl font-display">Investment in Your Impact</CardTitle>
             <CardDescription>Your one-time fee supports the GGJ community and this platform — and unlocks all facilitator and host tools</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
@@ -642,7 +665,7 @@ export default function CourseEnrollmentPage() {
               </div>
             </div>
 
-            <Button size="lg" className="w-full" onClick={handleStartCheckout}>
+            <Button size="xl" variant="pill" className="w-full" onClick={handleStartCheckout}>
               <CreditCard className="mr-2 h-5 w-5" />
               Start Your Journey
               <ArrowRight className="ml-2 h-5 w-5" />

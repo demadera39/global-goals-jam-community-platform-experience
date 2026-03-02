@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { CheckCircle, ArrowLeft } from 'lucide-react'
 import DonationForm from '../components/DonationForm'
-import { blink } from '../lib/blink'
+import { db } from '../lib/supabase'
 
 const DonationSuccessPage = () => {
   const [searchParams] = useSearchParams()
@@ -22,13 +22,13 @@ const DonationSuccessPage = () => {
 
     const checkDonation = async () => {
       try {
-        const donations = await blink.db.donations.list({
+        const donations = await db.donations.list({
           where: { stripeSessionId: sessionId }
         })
 
         if (donations.length === 0) {
           // Create placeholder donation record if it doesn't exist
-          const newDonation = await blink.db.donations.create({
+          const newDonation = await db.donations.create({
             id: `donation_${Date.now()}`,
             stripeSessionId: sessionId,
             amount: 10000, // Default $100
@@ -98,15 +98,15 @@ const DonationSuccessPage = () => {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <Card className="text-center">
           <CardHeader>
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="mx-auto w-16 h-16 bg-pastel-green rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-8 h-8 text-primary" />
             </div>
             <CardTitle className="text-2xl">
               Thank you for your donation!
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="bg-muted/50 rounded-lg p-4">
+            <div className="bg-muted/50 rounded-xl p-4">
               <p className="text-lg font-semibold">
                 {donation.amountDisplay} {donation.tierName} Donation
               </p>
@@ -116,11 +116,11 @@ const DonationSuccessPage = () => {
             </div>
 
             {donation.formCompletedAt && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-green-800 font-medium">
+              <div className="bg-pastel-green border border-primary/20 rounded-xl p-4">
+                <p className="text-primary/90 font-medium">
                   ✓ Your sponsorship information has been saved
                 </p>
-                <p className="text-green-700 text-sm mt-1">
+                <p className="text-primary/80 text-sm mt-1">
                   You'll be recognized on our website within 24 hours
                 </p>
               </div>

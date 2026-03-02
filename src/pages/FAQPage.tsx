@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
-import { Loader2 } from 'lucide-react'
+import { HelpCircle, Loader2 } from 'lucide-react'
 
 export default function FAQPage() {
   const [loading, setLoading] = useState(false)
@@ -48,12 +48,18 @@ export default function FAQPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <section className="relative py-16 hero-pattern">
-        <div className="absolute inset-0 bg-background/80 -z-10" />
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Badge variant="secondary" className="mb-4">FAQ</Badge>
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4">Frequently Asked Questions</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+      <section className="relative py-20 hero-pattern">
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">Help Center</p>
+          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
+            <HelpCircle className="w-4 h-4 mr-2" />
+            FAQ
+          </Badge>
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
+            Frequently Asked <span className="text-primary-solid">Questions</span>
+          </h1>
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             The essentials for hosts and participants. Updated for the 2025 season.
           </p>
         </div>
@@ -62,7 +68,7 @@ export default function FAQPage() {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {sections.map((sec, idx) => (
-          <Card key={idx} className="mb-8">
+          <Card key={idx} className="mb-8 shadow-soft rounded-xl">
             <CardHeader>
               <CardTitle>{sec.title}</CardTitle>
             </CardHeader>

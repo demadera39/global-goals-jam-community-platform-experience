@@ -22,38 +22,38 @@ interface MethodCardProps {
 const phaseConfig = {
   understand: { 
     icon: Target, 
-    color: 'bg-blue-500', 
+    color: 'bg-sky-500',
     label: 'Understand & Empathize',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-600'
+    bgColor: 'bg-pastel-sky',
+    textColor: 'text-sky-600'
   },
   define: { 
     icon: Lightbulb, 
-    color: 'bg-yellow-500', 
+    color: 'bg-amber-500',
     label: 'Define & Ideate',
-    bgColor: 'bg-yellow-50',
-    textColor: 'text-yellow-600'
+    bgColor: 'bg-pastel-amber',
+    textColor: 'text-amber-600'
   },
   prototype: { 
     icon: Zap, 
-    color: 'bg-purple-500', 
+    color: 'bg-violet-500',
     label: 'Prototype & Test',
-    bgColor: 'bg-purple-50',
-    textColor: 'text-purple-600'
+    bgColor: 'bg-pastel-violet',
+    textColor: 'text-violet-600'
   },
   implement: { 
     icon: TrendingUp, 
-    color: 'bg-green-500', 
+    color: 'bg-primary',
     label: 'Implement & Scale',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-600'
+    bgColor: 'bg-pastel-green',
+    textColor: 'text-primary'
   }
 }
 
 const difficultyConfig = {
-  easy: { color: 'bg-green-100 text-green-800', label: 'Easy' },
-  medium: { color: 'bg-yellow-100 text-yellow-800', label: 'Medium' },
-  hard: { color: 'bg-red-100 text-red-800', label: 'Hard' }
+  easy: { color: 'bg-pastel-green text-primary/90', label: 'Easy' },
+  medium: { color: 'bg-pastel-amber text-amber-800', label: 'Medium' },
+  hard: { color: 'bg-pastel-rose text-red-800', label: 'Hard' }
 }
 
 export default function MethodCard({
@@ -76,8 +76,8 @@ export default function MethodCard({
 
   return (
     <Card 
-      className={`relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-        isSelected ? 'ring-2 ring-primary shadow-lg' : ''
+      className={`relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-card hover:scale-105 ${
+        isSelected ? 'ring-2 ring-primary shadow-card' : ''
       }`}
       onClick={onClick}
     >

@@ -34,7 +34,8 @@ import {
   FileText,
   Clock
 } from 'lucide-react'
-import blink, { getFullUser, safeDbCall } from '../lib/blink'
+import { db, auth, storage, safeDbCall, supabase } from '../lib/supabase'
+import { getFullUser } from '../lib/userProfile'
 import { getUserProfile, canAccessFeature } from '../lib/userStatus'
 import type { UserProfile } from '../lib/userStatus'
 import { getStoredUser } from '../lib/auth'
@@ -87,11 +88,11 @@ interface Registration {
 }
 
 const statusColors: Record<string, string> = {
-  draft: 'bg-gray-500',
-  published: 'bg-green-600',
-  ongoing: 'bg-blue-600',
-  completed: 'bg-purple-600',
-  cancelled: 'bg-red-600'
+  draft: 'bg-pastel-amber text-amber-800',
+  published: 'bg-pastel-green text-primary/80',
+  ongoing: 'bg-pastel-sky text-sky-800',
+  completed: 'bg-pastel-violet text-violet-800',
+  cancelled: 'bg-pastel-rose text-rose-800'
 }
 
 export default function HostDashboard() {
@@ -144,7 +145,7 @@ export default function HostDashboard() {
   const loadHostEvents = useCallback(async () => {
     if (!user) return
     try {
-      const hostEvents = await safeDbCall(() => blink.db.events.list({
+      const hostEvents = await safeDbCall(() => db.events.list({
         where: { hostId: user.id },
         orderBy: { createdAt: 'desc' }
       }))
@@ -158,7 +159,7 @@ export default function HostDashboard() {
     if (!user) return
     try {
       // Get all registrations then filter by host events
-      const allRegistrations = await safeDbCall(() => blink.db.eventRegistrations.list({
+      const allRegistrations = await safeDbCall(() => db.eventRegistrations.list({
         orderBy: { registrationDate: 'desc' },
         limit: 1000
       }))
@@ -172,7 +173,7 @@ export default function HostDashboard() {
   const loadCourseEnrollment = useCallback(async () => {
     if (!user) return
     try {
-      const enrollments = await safeDbCall(() => blink.db.courseEnrollments.list({
+      const enrollments = await safeDbCall(() => db.courseEnrollments.list({
         where: { userId: user.id },
         orderBy: { enrolledAt: 'desc' },
         limit: 1
@@ -188,7 +189,7 @@ export default function HostDashboard() {
   const loadMedia = useCallback(async () => {
     if (!user) return
     try {
-      const items = await safeDbCall(() => blink.db.media.list({
+      const items = await safeDbCall(() => db.media.list({
         where: { uploadedBy: user.id },
         orderBy: { createdAt: 'desc' },
         limit: 200
@@ -240,7 +241,7 @@ export default function HostDashboard() {
       }
     }
 
-    const unsubscribe = blink.auth.onAuthStateChanged(() => {
+    const unsubscribe = auth.onAuthStateChanged(() => {
       update().catch(console.error)
     })
 
@@ -322,12 +323,12 @@ export default function HostDashboard() {
 
   const saveEvent = async () => {
     if (!user || !eventForm.title.trim() || !eventForm.description.trim() || !eventForm.location.trim() || !eventForm.startDate) {
-      alert('Please fill in all required fields')
+      toast.error('Please fill in all required fields')
       return
     }
 
     // Enforce role-based creation/editing
-    if (!canCreateEvents) { alert('Only approved hosts can create or edit events.'); return }
+    if (!canCreateEvents) { toast.error('Only approved hosts can create or edit events.'); return }
     setSubmitting(true)
     try {
       const eventData = {
@@ -351,7 +352,7 @@ export default function HostDashboard() {
       }
 
       if (selectedEvent) {
-        const updated = await safeDbCall(() => blink.db.events.update(selectedEvent.id, { ...eventData, hostId: selectedEvent.hostId || user.id }))
+        const updated = await safeDbCall(() => db.events.update(selectedEvent.id, { ...eventData, hostId: selectedEvent.hostId || user.id }))
         if (updated && Array.isArray(updated) && updated.length > 0) {
           const rec = updated[0]
           setEvents(prev => prev.map(e => e.id === rec.id ? { ...e, ...rec } as Event : e))
@@ -359,7 +360,7 @@ export default function HostDashboard() {
           setEvents(prev => prev.map(e => e.id === (updated as any).id ? { ...e, ...(updated as any) } as Event : e))
         }
       } else {
-        const created = await safeDbCall(() => blink.db.events.create({
+        const created = await safeDbCall(() => db.events.create({
           ...eventData,
           hostId: user.id
         }))
@@ -380,7 +381,7 @@ export default function HostDashboard() {
       setShowNewEventDialog(false)
     } catch (error) {
       console.error('Failed to save event:', error)
-      alert('Failed to save event. Please try again.')
+      toast.error('Failed to save event. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -388,25 +389,25 @@ export default function HostDashboard() {
 
   const publishEvent = async (eventId: string) => {
     try {
-      await safeDbCall(() => blink.db.events.update(eventId, { status: 'published' }))
+      await safeDbCall(() => db.events.update(eventId, { status: 'published' }))
       await loadHostEvents()
       invalidateEventsCache()
       toast.success('Event published')
     } catch (error) {
       console.error('Failed to publish event:', error)
-      alert('Failed to publish event. Please try again.')
+      toast.error('Failed to publish event. Please try again.')
     }
   }
 
   const completeEvent = async (eventId: string) => {
     try {
-      await safeDbCall(() => blink.db.events.update(eventId, { status: 'completed' }))
+      await safeDbCall(() => db.events.update(eventId, { status: 'completed' }))
       await loadHostEvents()
       invalidateEventsCache()
       toast.success('Event marked as completed')
     } catch (error) {
       console.error('Failed to complete event:', error)
-      alert('Failed to complete event. Please try again.')
+      toast.error('Failed to complete event. Please try again.')
     }
   }
 
@@ -418,26 +419,26 @@ export default function HostDashboard() {
 
     try {
       try {
-        const regs = await safeDbCall(() => blink.db.eventRegistrations.list({ where: { eventId }, limit: 1000 }))
-        await Promise.all((regs || []).map((r: any) => safeDbCall(() => blink.db.eventRegistrations.delete(r.id))))
+        const regs = await safeDbCall(() => db.eventRegistrations.list({ where: { eventId }, limit: 1000 }))
+        await Promise.all((regs || []).map((r: any) => safeDbCall(() => db.eventRegistrations.delete(r.id))))
       } catch {}
       try {
-        const items = await safeDbCall(() => blink.db.media.list({ where: { eventId }, limit: 1000 }))
-        await Promise.all((items || []).map((m: any) => safeDbCall(() => blink.db.media.delete(m.id))))
+        const items = await safeDbCall(() => db.media.list({ where: { eventId }, limit: 1000 }))
+        await Promise.all((items || []).map((m: any) => safeDbCall(() => db.media.delete(m.id))))
       } catch {}
       try {
-        const certs = await safeDbCall(() => blink.db.certificates.list({ where: { eventId }, limit: 1000 }))
-        await Promise.all((certs || []).map((c: any) => safeDbCall(() => blink.db.certificates.delete(c.id))))
+        const certs = await safeDbCall(() => db.certificates.list({ where: { eventId }, limit: 1000 }))
+        await Promise.all((certs || []).map((c: any) => safeDbCall(() => db.certificates.delete(c.id))))
       } catch {}
 
-      await safeDbCall(() => blink.db.events.delete(eventId))
+      await safeDbCall(() => db.events.delete(eventId))
       await loadHostEvents()
       invalidateEventsCache()
       toast.success('Event deleted')
     } catch (error) {
       console.error('Failed to delete event:', error)
       setEvents(prev)
-      alert('Failed to delete event. Please try again.')
+      toast.error('Failed to delete event. Please try again.')
     }
   }
 
@@ -468,7 +469,7 @@ export default function HostDashboard() {
       await navigator.clipboard.writeText(text)
       toast.success('Copied to clipboard')
     } catch {
-      alert('Copy failed. Please copy manually.')
+      toast.error('Copy failed. Please copy manually.')
     }
   }
 
@@ -476,12 +477,12 @@ export default function HostDashboard() {
     if (!user) return
     setMediaUploading(true)
     try {
-      const { publicUrl } = await blink.storage.upload(
+      const { publicUrl } = await storage.upload(
         file,
         `media/${user.id}/${Date.now()}.${file.name.split('.').pop()}`,
         { upsert: true }
       )
-      const created = await safeDbCall(() => blink.db.media.create({
+      const created = await safeDbCall(() => db.media.create({
         uploadedBy: user.id,
         title: file.name,
         description: '',
@@ -496,7 +497,7 @@ export default function HostDashboard() {
       toast.success('Media uploaded')
     } catch (e) {
       console.error('Upload failed:', e)
-      alert('Upload failed')
+      toast.error('Upload failed')
     } finally {
       setMediaUploading(false)
     }
@@ -505,7 +506,7 @@ export default function HostDashboard() {
   const handleAddLink = async () => {
     if (!user || !newLink.url.trim() || !newLink.title.trim()) return
     try {
-      const created = await safeDbCall(() => blink.db.media.create({
+      const created = await safeDbCall(() => db.media.create({
         uploadedBy: user.id,
         title: newLink.title.trim(),
         description: '',
@@ -521,7 +522,7 @@ export default function HostDashboard() {
       toast.success('Link added')
     } catch (e) {
       console.error('Add link failed:', e)
-      alert('Add link failed')
+      toast.error('Add link failed')
     }
   }
 
@@ -531,7 +532,7 @@ export default function HostDashboard() {
     const map: Record<string, { email?: string; displayName?: string }> = {}
     await Promise.all(unique.map(async (id) => {
       try {
-        const rows = await safeDbCall(() => blink.db.users.list({ where: { id }, limit: 1 }))
+        const rows = await safeDbCall(() => db.users.list({ where: { id }, limit: 1 }))
         const u = rows?.[0]
         if (u) map[id] = { email: u.email, displayName: u.displayName }
       } catch {}
@@ -542,7 +543,7 @@ export default function HostDashboard() {
   async function exportParticipantsCSV(eventId?: string) {
     const rows = eventId ? registrations.filter(r => r.eventId === eventId) : registrations
     if (rows.length === 0) {
-      alert('No participants to export yet.')
+      toast.info('No participants to export yet.')
       return
     }
     const userMap = await fetchUsersByIds(rows.map(r => r.participantId))
@@ -621,7 +622,7 @@ export default function HostDashboard() {
 
       {certGenerating && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-white rounded-xl p-6 shadow-xl w-[320px] text-center">
+          <div className="bg-card rounded-xl p-6 shadow-xl w-[320px] text-center">
             <div className="mx-auto mb-4 w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
             <h3 className="text-lg font-semibold">Working…</h3>
             <p className="text-sm text-muted-foreground mt-1">{certStatus || 'Please wait a moment'}</p>
@@ -634,54 +635,54 @@ export default function HostDashboard() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Host Dashboard {!hostEligible && <Badge variant="secondary" className="ml-2">Preview</Badge>}</h1>
+              <h1 className="text-3xl font-display font-bold text-foreground mb-2">Host Dashboard {!hostEligible && <Badge variant="secondary" className="ml-2">Preview</Badge>}</h1>
               <p className="text-muted-foreground">Manage your Global Goals Jam events and engage with your community.</p>
             </div>
-            <DonateButton variant="outline" size="default" className="self-start sm:self-auto" />
+            <DonateButton variant="pill-outline" size="default" className="self-start sm:self-auto" />
           </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card variant="stat" className="bg-pastel-green">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Events</p>
-                  <p className="text-2xl font-bold text-primary">{events.length}</p>
+                  <p className="text-2xl font-display font-bold text-foreground">{events.length}</p>
                 </div>
                 <Calendar className="w-8 h-8 text-primary" />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="stat" className="bg-pastel-amber">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Participants</p>
-                  <p className="text-2xl font-bold text-primary">{registrations.length}</p>
+                  <p className="text-2xl font-display font-bold text-foreground">{registrations.length}</p>
                 </div>
                 <Users className="w-8 h-8 text-primary" />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="stat" className="bg-pastel-violet">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Published Events</p>
-                  <p className="text-2xl font-bold text-primary">{events.filter(e => e.status === 'published').length}</p>
+                  <p className="text-2xl font-display font-bold text-foreground">{events.filter(e => e.status === 'published').length}</p>
                 </div>
                 <Check className="w-8 h-8 text-primary" />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card variant="stat" className="bg-pastel-sky">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Completed Events</p>
-                  <p className="text-2xl font-bold text-primary">{events.filter(e => e.status === 'completed').length}</p>
+                  <p className="text-2xl font-display font-bold text-foreground">{events.filter(e => e.status === 'completed').length}</p>
                 </div>
                 <Award className="w-8 h-8 text-primary" />
               </div>
@@ -693,7 +694,7 @@ export default function HostDashboard() {
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
           <div className="grid md:grid-cols-3 gap-4">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { const a = document.createElement('a'); a.href = '/assets/ggj_assets.zip'; a.download = ''; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}>
+            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => { const a = document.createElement('a'); a.href = '/assets/ggj_assets.zip'; a.download = ''; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -707,7 +708,7 @@ export default function HostDashboard() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.open('/assets/ggj_info_booklet.pdf', '_blank')}>
+            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => window.open('/assets/ggj_info_booklet.pdf', '_blank')}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -722,7 +723,7 @@ export default function HostDashboard() {
               </CardContent>
             </Card>
             <Link to="/organizer-booklet" className="block">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+              <Card className="hover:shadow-soft transition-shadow cursor-pointer h-full">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -778,10 +779,40 @@ export default function HostDashboard() {
                     </div>
 
                     <div>
-                      <Label htmlFor="description">Description * (with formatting)</Label>
-                      <RichTextEditor 
-                        value={eventForm.description} 
-                        onChange={(value) => handleInputChange('description', value)} 
+                      <div className="flex items-center justify-between mb-1">
+                        <Label htmlFor="description">Description * (with formatting)</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          disabled={!eventForm.title.trim()}
+                          onClick={async () => {
+                            if (!eventForm.title.trim()) return
+                            toast.info('Generating description...')
+                            try {
+                              const { data, error } = await supabase.functions.invoke('gemini-ai', {
+                                body: {
+                                  prompt: `Write a compelling event description for a Global Goals Jam event titled "${eventForm.title}" in ${eventForm.location || 'a local community'}. Keep it 2-3 paragraphs, inspiring, and focused on SDG impact.`,
+                                  action: 'event_description',
+                                },
+                              })
+                              if (error) throw error
+                              if (data?.text) {
+                                handleInputChange('description', data.text)
+                                toast.success('Description generated!')
+                              }
+                            } catch (err: any) {
+                              toast.error(err?.message || 'Failed to generate description')
+                            }
+                          }}
+                        >
+                          <span className="mr-1">&#10024;</span> AI Assist
+                        </Button>
+                      </div>
+                      <RichTextEditor
+                        value={eventForm.description}
+                        onChange={(value) => handleInputChange('description', value)}
                         placeholder="Describe your event... Use formatting tools above for headers, bold, italic, lists, etc."
                         minHeight="150px"
                       />
@@ -877,7 +908,7 @@ export default function HostDashboard() {
 
                     <div>
                       <Label>Header Photo (optional)</Label>
-                      <div className="mt-2 rounded-lg border overflow-hidden">
+                      <div className="mt-2 rounded-xl border overflow-hidden">
                         {eventForm.coverImage ? (
                           <img src={eventForm.coverImage} alt="Header" className="w-full h-40 object-cover" />
                         ) : (
@@ -895,7 +926,7 @@ export default function HostDashboard() {
                             if (!file) return
                             setHeaderUploading(true)
                             try {
-                              const { publicUrl } = await blink.storage.upload(
+                              const { publicUrl } = await storage.upload(
                                 file,
                                 `events/headers/${user?.id || 'unknown'}/${Date.now()}.${file.name.split('.').pop()}`,
                                 { upsert: true }
@@ -903,7 +934,7 @@ export default function HostDashboard() {
                               setEventForm(prev => ({ ...prev, coverImage: publicUrl }))
                             } catch (err) {
                               console.error('Header upload failed:', err)
-                              alert('Failed to upload image. Please try again.')
+                              toast.error('Failed to upload image. Please try again.')
                             } finally {
                               setHeaderUploading(false)
                               e.currentTarget.value = ''
@@ -939,13 +970,13 @@ export default function HostDashboard() {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => (
-                <Card key={event.id} className="hover:shadow-lg transition-shadow">
+                <Card key={event.id} className="hover:shadow-card transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
                         <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary" className={`text-xs text-white ${statusColors[event.status] || 'bg-gray-500'}`}>
+                          <Badge variant="secondary" className={`text-xs ${statusColors[event.status] || 'bg-pastel-amber text-amber-800'}`}>
                             {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                           </Badge>
                         </div>
@@ -988,12 +1019,12 @@ export default function HostDashboard() {
                             <Share2 className="w-4 h-4 mr-1" /> Share
                           </Button>
                           {event.status === 'draft' && canCreateEvents && (
-                            <Button size="sm" onClick={() => publishEvent(event.id)} className="bg-green-600 text-white hover:bg-green-700">
+                            <Button size="sm" onClick={() => publishEvent(event.id)} className="bg-primary text-primary-foreground hover:bg-primary/80">
                               Publish
                             </Button>
                           )}
                           {(event.status === 'published' || event.status === 'ongoing') && canCreateEvents && (
-                            <Button size="sm" onClick={() => completeEvent(event.id)} className="bg-purple-600 text-white hover:bg-purple-700">
+                            <Button size="sm" onClick={() => completeEvent(event.id)} className="bg-violet-600 text-primary-foreground hover:bg-violet-700">
                               Complete
                             </Button>
                           )}
@@ -1058,7 +1089,7 @@ export default function HostDashboard() {
                     <CardContent>
                       <div className="space-y-2">
                         {eventRegistrations.map((registration) => (
-                          <div key={registration.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div key={registration.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                             <div>
                               <p className="font-medium">Participant</p>
                               <p className="text-sm text-muted-foreground">Registered {formatDate(registration.registrationDate)}</p>
@@ -1091,12 +1122,12 @@ export default function HostDashboard() {
           <TabsContent value="certificates" className="space-y-6">
             <Card>
               <CardContent className="grid md:grid-cols-2 gap-6 py-8">
-                <div className="text-center p-6 border rounded-lg">
+                <div className="text-center p-6 border rounded-xl">
                   <Award className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                   <h3 className="text-base font-semibold mb-1">Participant Certificates</h3>
                   <p className="text-sm text-muted-foreground mb-4">Generate participation certificates for your event attendees from the Participants tab.</p>
                 </div>
-                <div className="text-center p-6 border rounded-lg">
+                <div className="text-center p-6 border rounded-xl">
                   <Award className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                   <h3 className="text-base font-semibold mb-1">Host Certificate</h3>
                   <p className="text-sm text-muted-foreground mb-4">Generate your own certificate as proof of hosting from your course dashboard.</p>
@@ -1131,7 +1162,7 @@ export default function HostDashboard() {
                     const url = `${window.location.origin}/events/${ev.id}`
                     const embed = `<iframe src="${url}" style="width:100%;height:420px;border:0;border-radius:12px;overflow:hidden" title="Global Goals Jam Event"></iframe>`
                     return (
-                      <div key={ev.id} className="p-4 border rounded-lg">
+                      <div key={ev.id} className="p-4 border rounded-xl">
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <div className="font-medium line-clamp-1">{ev.title}</div>
@@ -1199,7 +1230,7 @@ export default function HostDashboard() {
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-4">
-                  <div className="md:col-span-1 p-4 border rounded-lg space-y-2">
+                  <div className="md:col-span-1 p-4 border rounded-xl space-y-2">
                     <div className="font-medium">Add External Link</div>
                     <Input placeholder="Title" value={newLink.title} onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))} />
                     <Input placeholder="https://..." value={newLink.url} onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))} />
@@ -1221,11 +1252,11 @@ export default function HostDashboard() {
 
                   <div className="md:col-span-2">
                     {mediaItems.length === 0 ? (
-                      <div className="text-sm text-muted-foreground p-6 border rounded-lg text-center">No media yet.</div>
+                      <div className="text-sm text-muted-foreground p-6 border rounded-xl text-center">No media yet.</div>
                     ) : (
                       <div className="grid sm:grid-cols-2 gap-4">
                         {mediaItems.map((m: any) => (
-                          <a key={m.id} href={m.fileUrl} target="_blank" rel="noreferrer" className="group border rounded-lg overflow-hidden bg-card">
+                          <a key={m.id} href={m.fileUrl} target="_blank" rel="noreferrer" className="group border rounded-xl overflow-hidden bg-card">
                             {String(m.fileType || '').startsWith('image/') ? (
                               <img src={m.fileUrl} alt={m.title} className="w-full h-40 object-cover" />
                             ) : String(m.fileType) === 'link' ? (

@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Button } from '../components/ui/button'
@@ -16,10 +17,10 @@ import {
   CheckCircle,
   Loader2
 } from 'lucide-react'
-import blink, { safeDbCall, getFullUser } from '../lib/blink'
+import { db, auth, safeDbCall } from '../lib/supabase'
+import { getFullUser, isCertifiedHost } from '../lib/userProfile'
 import EventMediaSection from '../components/EventMediaSection'
-import { cn, sdgNumberFromFocus, sdgBg, sdgText, sdgTheme } from '../lib/utils'
-import { isCertifiedHost } from '../lib/blink'
+import { cn, sdgNumberFromFocus, sdgBg, sdgText, sdgBorder, sdgTheme, sdgName } from '../lib/utils'
 
 interface User {
   id: string
@@ -63,11 +64,11 @@ interface Registration {
 }
 
 const statusColors = {
-  draft: 'bg-gray-500',
-  published: 'bg-green-500',
-  ongoing: 'bg-blue-500',
-  completed: 'bg-purple-500',
-  cancelled: 'bg-red-500'
+  draft: 'bg-pastel-amber text-amber-800',
+  published: 'bg-pastel-green text-primary/90',
+  ongoing: 'bg-pastel-sky text-sky-800',
+  completed: 'bg-pastel-violet text-violet-800',
+  cancelled: 'bg-pastel-rose text-rose-800'
 }
 
 const statusLabels = {
@@ -91,7 +92,7 @@ export default function EventDetailsPage() {
   const [headerImage, setHeaderImage] = useState<string | null>(null)
 
   useEffect(() => {
-    const unsubscribe = blink.auth.onAuthStateChanged(async (state) => {
+    const unsubscribe = auth.onAuthStateChanged(async (state) => {
       setLoading(state.isLoading)
       if (state.user) {
         try {
@@ -111,7 +112,7 @@ export default function EventDetailsPage() {
     if (!user || !event) return
 
     try {
-      const registrations = await safeDbCall(() => blink.db.eventRegistrations.list<Registration>({
+      const registrations = await safeDbCall(() => db.eventRegistrations.list<Registration>({
         where: {
           eventId: event.id,
           participantId: user.id
@@ -147,7 +148,7 @@ export default function EventDetailsPage() {
     }
     ;(async () => {
       try {
-        const media = await safeDbCall(() => blink.db.media.list<{ fileUrl: string; fileType: string }>({
+        const media = await safeDbCall(() => db.media.list<{ fileUrl: string; fileType: string }>({
           where: { eventId: event.id },
           orderBy: { createdAt: 'asc' },
           limit: 20
@@ -175,7 +176,7 @@ export default function EventDetailsPage() {
         setHostDisplayName(event.hostName.trim())
       } else {
         try {
-          const u = await safeDbCall(() => blink.db.users.list({ where: { id: event.hostId }, limit: 1 }))
+          const u = await safeDbCall(() => db.users.list({ where: { id: event.hostId }, limit: 1 }))
           if (u?.[0]) {
             setHostDisplayName(u[0].displayName || u[0].email || 'Local Host')
           } else {
@@ -191,7 +192,7 @@ export default function EventDetailsPage() {
 
   const loadEvent = async (eventId: string) => {
     try {
-      const events = await safeDbCall(() => blink.db.events.list<Event>({
+      const events = await safeDbCall(() => db.events.list<Event>({
         where: { id: eventId },
         limit: 1
       }))
@@ -216,9 +217,9 @@ export default function EventDetailsPage() {
     try {
       // 1) Ensure a participant profile exists
       try {
-        const existingProfile = await safeDbCall(() => (blink.db as any).users.list({ where: { id: user.id }, limit: 1 }))
+        const existingProfile = await safeDbCall(() => (db as any).users.list({ where: { id: user.id }, limit: 1 }))
         if (!existingProfile?.[0]) {
-          await safeDbCall(() => (blink.db as any).users.create({
+          await safeDbCall(() => (db as any).users.create({
             id: user.id,
             email: (user as any).email,
             displayName: (user as any).displayName || (user as any).email,
@@ -231,7 +232,7 @@ export default function EventDetailsPage() {
       }
 
       // 2) Deduplicate registration for this user+event
-      const existing = await safeDbCall(() => blink.db.eventRegistrations.list<Registration>({
+      const existing = await safeDbCall(() => db.eventRegistrations.list<Registration>({
         where: { eventId: event.id, participantId: user.id },
         limit: 1
       }))
@@ -241,7 +242,7 @@ export default function EventDetailsPage() {
       }
 
       // 3) Create registration
-      const newRegistration = await safeDbCall(() => blink.db.eventRegistrations.create<Registration>({
+      const newRegistration = await safeDbCall(() => db.eventRegistrations.create<Registration>({
         eventId: event.id,
         participantId: user.id,
         status: 'registered'
@@ -249,7 +250,7 @@ export default function EventDetailsPage() {
       setRegistration(newRegistration)
     } catch (error) {
       console.error('Failed to register for event:', error)
-      alert('Failed to register for event. Please try again.')
+      toast.error('Failed to register for event. Please try again.')
     } finally {
       setRegistering(false)
     }
@@ -324,7 +325,7 @@ export default function EventDetailsPage() {
       // Fallback to copying URL
       try {
         await navigator.clipboard.writeText(window.location.href)
-        alert('Event URL copied to clipboard!')
+        toast.success('Event URL copied to clipboard!')
       } catch {
         // ignore
       }
@@ -342,10 +343,10 @@ export default function EventDetailsPage() {
   if (!event) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
+        <Card className="max-w-md shadow-soft rounded-xl">
           <CardContent className="text-center py-12">
             <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Event Not Found</h2>
+            <h2 className="text-xl font-display font-semibold mb-2">Event Not Found</h2>
             <p className="text-muted-foreground mb-4">
               The event you're looking for doesn't exist or has been removed.
             </p>
@@ -378,7 +379,7 @@ export default function EventDetailsPage() {
               <MapPin className="w-4 h-4 mr-1" /> {event.location}
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-md">{event.title}</h1>
+          <h1 className="text-3xl sm:text-4xl font-display font-bold text-white drop-shadow-md">{event.title}</h1>
         </div>
       </section>
 
@@ -394,32 +395,32 @@ export default function EventDetailsPage() {
         </div>
 
         {/* Event Header */}
-        <Card className="mb-8 overflow-hidden">
+        <Card className="mb-8 overflow-hidden shadow-soft rounded-xl">
           {/* SDG top bar */}
-          <div className={cn('h-1 w-full', sdgNumberFromFocus(event.sdgFocus) ? sdgBg(sdgNumberFromFocus(event.sdgFocus)) : 'bg-primary-solid')} />
+          <div className={cn('h-1.5 w-full', sdgNumberFromFocus(event.sdgFocus) ? sdgBg(sdgNumberFromFocus(event.sdgFocus)) : 'bg-primary-solid')} />
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
                   <Badge
                     variant="secondary"
-                    className={`text-white ${statusColors[event.status as keyof typeof statusColors]}`}
+                    className={statusColors[event.status as keyof typeof statusColors]}
                   >
                     {statusLabels[event.status as keyof typeof statusLabels]}
                   </Badge>
                   {sdgNumberFromFocus(event.sdgFocus) && (
-                    <Badge variant="outline" className={cn('text-xs', sdgText(sdgNumberFromFocus(event.sdgFocus)))}>
-                      SDG {sdgNumberFromFocus(event.sdgFocus)}
+                    <Badge variant="outline" className={cn('text-xs font-medium', sdgBorder(sdgNumberFromFocus(event.sdgFocus)), sdgText(sdgNumberFromFocus(event.sdgFocus)))}>
+                      SDG {sdgNumberFromFocus(event.sdgFocus)}: {sdgName(sdgNumberFromFocus(event.sdgFocus))}
                     </Badge>
                   )}
                   {registration && (
-                    <Badge variant="outline" className="text-green-600 border-green-600">
+                    <Badge variant="outline" className="text-primary border-primary">
                       <CheckCircle className="w-3 h-3 mr-1" />
                       Registered
                     </Badge>
                   )}
                 </div>
-                <CardTitle className="text-3xl mb-4">{event.title}</CardTitle>
+                <CardTitle className="text-3xl font-display mb-4">{event.title}</CardTitle>
                 <div className="text-lg text-muted-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: event.description }} />
               </div>
               <div className="flex gap-2">
@@ -455,7 +456,7 @@ export default function EventDetailsPage() {
           {/* Main Content */}
           <div className="md:col-span-2 space-y-6">
             {/* Event Details */}
-            <Card>
+            <Card className="shadow-soft rounded-xl">
               <CardHeader>
                 <CardTitle>Event Details</CardTitle>
               </CardHeader>
@@ -509,7 +510,7 @@ export default function EventDetailsPage() {
 
             {/* Agenda */}
             {event.agenda && (
-              <Card>
+              <Card className="shadow-soft rounded-xl">
                 <CardHeader>
                   <CardTitle>Agenda</CardTitle>
                 </CardHeader>
@@ -521,7 +522,7 @@ export default function EventDetailsPage() {
 
             {/* Requirements */}
             {event.requirements && (
-              <Card>
+              <Card className="shadow-soft rounded-xl">
                 <CardHeader>
                   <CardTitle>Requirements</CardTitle>
                 </CardHeader>
@@ -533,7 +534,7 @@ export default function EventDetailsPage() {
 
             {/* Results Summary */}
             {event.resultsSummary && event.resultsSummary.trim().length > 0 && (
-              <Card>
+              <Card className="shadow-soft rounded-xl">
                 <CardHeader>
                   <CardTitle>Summary</CardTitle>
                 </CardHeader>
@@ -550,15 +551,15 @@ export default function EventDetailsPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Registration Status */}
-            <Card>
+            <Card className="shadow-soft rounded-xl">
               <CardHeader>
                 <CardTitle>Registration</CardTitle>
               </CardHeader>
               <CardContent>
                 {registration ? (
                   <div className="text-center">
-                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                    <h3 className="font-semibold text-green-600 mb-2">You're Registered!</h3>
+                    <CheckCircle className="w-12 h-12 text-primary mx-auto mb-4" />
+                    <h3 className="font-semibold text-primary mb-2">You're Registered!</h3>
                     <p className="text-sm text-muted-foreground mb-4">
                       {(() => {
                         const d = new Date(registration.registrationDate)
@@ -580,7 +581,7 @@ export default function EventDetailsPage() {
                     {(event as any).customRegistrationLink ? (
                       <Button
                         onClick={() => window.open((event as any).customRegistrationLink, '_blank')}
-                        className="w-full bg-primary-solid text-white hover:bg-primary/90"
+                        className="w-full bg-primary-solid text-white hover:bg-primary/90 rounded-pill"
                       >
                         <UserPlus className="w-4 h-4 mr-2" />
                         Register on External Form
@@ -589,7 +590,7 @@ export default function EventDetailsPage() {
                       <Button
                         onClick={registerForEvent}
                         disabled={registering}
-                        className="w-full bg-primary-solid text-white hover:bg-primary/90"
+                        className="w-full bg-primary-solid text-white hover:bg-primary/90 rounded-pill"
                       >
                         {registering ? (
                           <>
@@ -622,7 +623,7 @@ export default function EventDetailsPage() {
             </Card>
 
             {/* Host Information */}
-            <Card>
+            <Card className="shadow-soft rounded-xl">
               <CardHeader>
                 <CardTitle>Event Host</CardTitle>
               </CardHeader>
@@ -649,7 +650,7 @@ export default function EventDetailsPage() {
             </Card>
 
             {/* Quick Actions */}
-            <Card>
+            <Card className="shadow-soft rounded-xl">
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>

@@ -31,6 +31,30 @@ export function sdgTheme(n?: number | null): string {
   return n ? `sdg-theme-${n}` : ''
 }
 
+const SDG_NAMES: Record<number, string> = {
+  1: 'No Poverty',
+  2: 'Zero Hunger',
+  3: 'Good Health',
+  4: 'Quality Education',
+  5: 'Gender Equality',
+  6: 'Clean Water',
+  7: 'Clean Energy',
+  8: 'Decent Work',
+  9: 'Innovation',
+  10: 'Reduced Inequalities',
+  11: 'Sustainable Cities',
+  12: 'Responsible Consumption',
+  13: 'Climate Action',
+  14: 'Life Below Water',
+  15: 'Life on Land',
+  16: 'Peace & Justice',
+  17: 'Partnerships',
+}
+
+export function sdgName(n?: number | null): string {
+  return n ? SDG_NAMES[n] || `SDG ${n}` : ''
+}
+
 // Cross-browser helpers for triggering downloads from data URLs
 export function dataUrlToBlob(dataUrl: string): Blob {
   const parts = dataUrl.split(',')

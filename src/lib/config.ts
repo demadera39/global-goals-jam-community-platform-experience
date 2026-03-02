@@ -1,64 +1,59 @@
 /**
- * Configuration helper to manage environment variables
- * Centralizes access to environment configuration
+ * Configuration helper — centralizes environment variables and app settings.
+ * All Blink references removed; endpoints point to Supabase Edge Functions.
  */
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
+
 export const config = {
-  // API endpoints
+  // API endpoints — Supabase Edge Functions
   api: {
-    baseUrl: 'https://7uamgc2j--auth.functions.blink.new',
+    baseUrl: `${supabaseUrl}/functions/v1/auth`,
   },
 
   // Edge Functions
   functions: {
-    // Confirm enrollment (Stripe success handler)
-    // Use the stable Blink Functions domain for reliability across deployments
-    confirmCourseEnrollmentUrl: 'https://7uamgc2j--confirm-course-enrollment.functions.blink.new',
-    // Create Stripe Checkout session
-    createCourseCheckoutUrl: 'https://7uamgc2j--create-course-checkout.functions.blink.new',
-    // Admin-only impersonation endpoint
-    impersonateUserUrl: 'https://7uamgc2j--impersonate-user.functions.blink.new',
+    confirmCourseEnrollmentUrl: `${supabaseUrl}/functions/v1/confirm-course-enrollment`,
+    createCourseCheckoutUrl: `${supabaseUrl}/functions/v1/create-course-checkout`,
+    impersonateUserUrl: `${supabaseUrl}/functions/v1/impersonate-user`,
+    createDonationSessionUrl: `${supabaseUrl}/functions/v1/create-donation-session`,
+    deleteUserUrl: `${supabaseUrl}/functions/v1/delete-user`,
+    sendMessageUrl: `${supabaseUrl}/functions/v1/send-message`,
+    stripeWebhookUrl: `${supabaseUrl}/functions/v1/stripe-webhook`,
+    geminiAiUrl: `${supabaseUrl}/functions/v1/gemini-ai`,
+    scrapeJamImagesUrl: `${supabaseUrl}/functions/v1/scrape-jam-images`,
+    listBucketImagesUrl: `${supabaseUrl}/functions/v1/list-bucket-images`,
   },
-  
+
   // App configuration
   app: {
-    projectId: import.meta.env.VITE_BLINK_PROJECT_ID || 'global-goals-jam-community-platform-7uamgc2j',
     environment: import.meta.env.MODE || 'development',
   },
 
   // Admin configuration
   admins: {
-    // Allowlist of emails that should always have admin access
     emails: [
-      'demadera@marcovanhout.com'
-    ]
+      'demadera@marcovanhout.com',
+    ],
   },
-  
+
   // Feature flags
   features: {
-    enableEmailAuth: true, // Email authentication is always enabled
-  }
+    enableEmailAuth: true,
+  },
 }
 
 // Validation function to check required config
 export function validateConfig(): { valid: boolean; errors: string[] } {
   const errors: string[] = []
-  
-  // Basic validation on function URLs
-  if (!config.functions.confirmCourseEnrollmentUrl?.startsWith('https://')) {
-    errors.push('confirmCourseEnrollmentUrl is not configured')
-  }
-  if (!config.functions.createCourseCheckoutUrl?.startsWith('https://')) {
-    errors.push('createCourseCheckoutUrl is not configured')
+
+  if (!supabaseUrl) {
+    errors.push('VITE_SUPABASE_URL is not configured')
   }
 
-  // Admin allowlist sanity check
-  if (!Array.isArray(config.admins?.emails) || config.admins.emails.length === 0) {
-    // Not fatal, but warn in console at runtime
+  if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    errors.push('VITE_SUPABASE_ANON_KEY is not configured')
   }
-  
-  return {
-    valid: errors.length === 0,
-    errors
-  }
+
+  return { valid: errors.length === 0, errors }
 }

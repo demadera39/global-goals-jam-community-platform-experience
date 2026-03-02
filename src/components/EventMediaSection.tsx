@@ -1,5 +1,6 @@
+import { toast } from 'sonner'
 import { useEffect, useRef, useState } from 'react'
-import blink, { safeDbCall } from '../lib/blink'
+import { db, storage, safeDbCall } from '../lib/supabase'
 import { getUserProfile, canAccessFeature, USER_ROLES } from '../lib/userStatus'
 import type { UserProfile } from '../lib/userStatus'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
@@ -86,7 +87,7 @@ export default function EventMediaSection({ event, user }: { event: EventLike; u
   const loadMedia = async () => {
     setLoading(true)
     try {
-      const rows = await safeDbCall(() => blink.db.media.list<MediaItem>({
+      const rows = await safeDbCall(() => db.media.list<MediaItem>({
         where: { eventId: event.id },
         orderBy: { createdAt: 'desc' },
         limit: 100
@@ -119,7 +120,7 @@ export default function EventMediaSection({ event, user }: { event: EventLike; u
 
   const handleChooseFile = () => {
     if (!canEdit) {
-      alert('Only the event host or an admin can upload media.')
+      toast.error('Only the event host or an admin can upload media.')
       return
     }
     fileInputRef.current?.click()
@@ -127,7 +128,7 @@ export default function EventMediaSection({ event, user }: { event: EventLike; u
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!canEdit) {
-      alert('You do not have permission to upload media for this event.')
+      toast.error('You do not have permission to upload media for this event.')
       ;(e.target as HTMLInputElement).value = ''
       return
     }
@@ -136,12 +137,12 @@ export default function EventMediaSection({ event, user }: { event: EventLike; u
     setUploading(true)
     try {
       // Upload to storage
-      const { publicUrl } = await blink.storage.upload(
+      const { publicUrl } = await storage.upload(
         file,
         `events/${event.id}/media/${Date.now()}.${file.name.split('.').pop()}`,
         { upsert: true }
       )
-      const rec = await safeDbCall(() => blink.db.media.create<MediaItem>({
+      const rec = await safeDbCall(() => db.media.create<MediaItem>({
         eventId: event.id,
         uploadedBy: user?.id || 'unknown',
         title: file.name,
@@ -154,7 +155,7 @@ export default function EventMediaSection({ event, user }: { event: EventLike; u
       ;(e.target as HTMLInputElement).value = ''
     } catch (err) {
       console.error('Upload failed:', err)
-      alert('Failed to upload file. Please try again.')
+      toast.error('Failed to upload file. Please try again.')
     } finally {
       setUploading(false)
     }
@@ -162,13 +163,13 @@ export default function EventMediaSection({ event, user }: { event: EventLike; u
 
   const addExternalLink = async () => {
     if (!canEdit) {
-      alert('You do not have permission to add links to this event.')
+      toast.error('You do not have permission to add links to this event.')
       return
     }
     if (!linkUrl.trim()) return
     setUploading(true)
     try {
-      const rec = await safeDbCall(() => blink.db.media.create<MediaItem>({
+      const rec = await safeDbCall(() => db.media.create<MediaItem>({
         eventId: event.id,
         uploadedBy: user?.id || 'unknown',
         title: linkTitle.trim() || linkUrl.trim(),
@@ -180,7 +181,7 @@ export default function EventMediaSection({ event, user }: { event: EventLike; u
       setLinkTitle(''); setLinkUrl(''); setLinkDescription(''); setAddingLink(false)
     } catch (err) {
       console.error('Add link failed:', err)
-      alert('Failed to add link. Please try again.')
+      toast.error('Failed to add link. Please try again.')
     } finally {
       setUploading(false)
     }
@@ -189,11 +190,11 @@ export default function EventMediaSection({ event, user }: { event: EventLike; u
   const deleteItem = async (id: string) => {
     if (!confirm('Remove this item?')) return
     try {
-      await safeDbCall(() => blink.db.media.delete(id))
+      await safeDbCall(() => db.media.delete(id))
       setItems(prev => prev.filter(i => i.id !== id))
     } catch (err) {
       console.error('Delete failed:', err)
-      alert('Failed to delete item.')
+      toast.error('Failed to delete item.')
     }
   }
 
@@ -285,7 +286,7 @@ export default function EventMediaSection({ event, user }: { event: EventLike; u
                 </div>
                 {canEdit && (user?.id === item.uploadedBy || profile?.role === USER_ROLES.ADMIN) && (
                   <button
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center justify-center w-8 h-8 rounded-md bg-black/60 text-white"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center justify-center w-8 h-8 rounded-xl bg-black/60 text-primary-foreground"
                     onClick={(e) => { e.preventDefault(); deleteItem(item.id) }}
                     title="Delete"
                   >

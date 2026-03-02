@@ -20,16 +20,34 @@ export default function HomePage() {
       <FloatingAnnouncement />
       <HeroSection />
 
+      {/* What is a Global Goals Jam? */}
+      <section className="py-20 bg-section-warm">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight mb-4">
+            What is a Global Goals Jam?
+          </h2>
+          <p className="text-muted-foreground text-lg leading-relaxed mb-2">
+            A Global Goals Jam is a 2-day design sprint where local teams tackle the UN Sustainable Development Goals through creative problem-solving. Communities worldwide come together to prototype solutions for their most pressing social and environmental challenges.
+          </p>
+          <Link
+            to="/about"
+            className="inline-flex items-center text-primary hover:underline text-sm font-medium mt-4"
+          >
+            Learn more about Global Goals Jam <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
+        </div>
+      </section>
+
       {/* Supporters strip (logos) */}
       <SponsorBanner />
 
-      {/* UN SDG 2025 Report Intro */}
-      <section className="py-12 bg-card/50 border-y">
+      {/* UN SDG Report Intro */}
+      <section className="py-20 bg-background">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border bg-background p-6 sm:p-8 shadow-sm">
+          <div className="rounded-2xl border-0 bg-card p-6 sm:p-8 shadow-card">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                State of SDGs 2025: An alarmingly high need for our community to step up
+              <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
+                State of SDGs: An alarmingly high need for our community to step up
               </h2>
               <a
                 href="https://unstats.un.org/sdgs/report/2025/"
@@ -42,21 +60,21 @@ export default function HomePage() {
             </div>
 
             <p className="text-muted-foreground mb-6">
-              Days ago, the United Nations released its 2025 progress update on the Sustainable Development Goals. The results are stark:
+              The latest United Nations progress update on the Sustainable Development Goals paints a stark picture:
             </p>
 
             <div className="grid sm:grid-cols-3 gap-4 mb-6">
-              <div className="p-4 rounded-lg border bg-card">
-                <div className="text-3xl font-extrabold text-amber-600">11</div>
-                <p className="text-sm text-muted-foreground">goals face significant challenges</p>
+              <div className="p-4 rounded-2xl border" style={{ backgroundColor: 'hsl(32 98% 57% / 0.12)', borderColor: 'hsl(32 98% 57% / 0.2)' }}>
+                <div className="font-display text-3xl font-extrabold text-sdg-11">11</div>
+                <p className="text-sm" style={{ color: 'hsl(32 98% 47%)' }}>goals face significant challenges</p>
               </div>
-              <div className="p-4 rounded-lg border bg-card">
-                <div className="text-3xl font-extrabold text-red-600">6</div>
-                <p className="text-sm text-muted-foreground">goals face major challenges (most severe)</p>
+              <div className="p-4 rounded-2xl border" style={{ backgroundColor: 'hsl(351 77% 52% / 0.12)', borderColor: 'hsl(351 77% 52% / 0.2)' }}>
+                <div className="font-display text-3xl font-extrabold text-sdg-1">6</div>
+                <p className="text-sm" style={{ color: 'hsl(351 77% 42%)' }}>goals face major challenges (most severe)</p>
               </div>
-              <div className="p-4 rounded-lg border bg-card">
-                <div className="text-3xl font-extrabold text-foreground">0</div>
-                <p className="text-sm text-muted-foreground">goals are on track</p>
+              <div className="p-4 rounded-2xl border" style={{ backgroundColor: 'hsl(199 93% 45% / 0.12)', borderColor: 'hsl(199 93% 45% / 0.2)' }}>
+                <div className="font-display text-3xl font-extrabold text-sdg-14">0</div>
+                <p className="text-sm" style={{ color: 'hsl(199 93% 35%)' }}>goals are on track</p>
               </div>
             </div>
 
@@ -64,14 +82,45 @@ export default function HomePage() {
               That's why the Global Goals Jam exists. Each year, we mobilise designers, students, researchers and local partners to turn urgency into action — city by city, weekend by weekend.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link to="/course/enroll" className="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-primary-solid text-white hover:bg-primary/90">
-                Become a certified jam host
+              <Link to="/course/enroll" className="inline-flex items-center justify-center px-5 py-3 rounded-pill bg-primary-solid text-white hover:bg-primary/90 transition-colors">
+                Enroll in the certification course
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
-              <Link to="/events" className="inline-flex items-center justify-center px-5 py-3 rounded-lg border hover:bg-muted">
+              <Link to="/events" className="inline-flex items-center justify-center px-5 py-3 rounded-pill border hover:bg-muted transition-colors">
                 Find a Jam near you <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Sustainable Development Goals Grid */}
+      <section className="py-20 bg-background">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-2">United Nations</p>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight mb-3">
+              The 17 Sustainable Development Goals
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Every Global Goals Jam is centred around one or more of these goals. Together, they form the blueprint for a better, more sustainable future for all.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3">
+            {[
+              'No Poverty', 'Zero Hunger', 'Good Health', 'Quality Education',
+              'Gender Equality', 'Clean Water', 'Clean Energy', 'Decent Work',
+              'Innovation', 'Reduced Inequalities', 'Sustainable Cities', 'Responsible Consumption',
+              'Climate Action', 'Life Below Water', 'Life on Land', 'Peace & Justice', 'Partnerships',
+            ].map((name, i) => (
+              <div
+                key={i}
+                className={`bg-sdg-${i + 1} rounded-xl p-3 sm:p-4 flex flex-col items-start justify-between aspect-square text-white relative overflow-hidden group hover:scale-[1.04] transition-transform cursor-default`}
+              >
+                <span className="text-[2rem] sm:text-[2.5rem] font-display font-extrabold leading-none opacity-30">{i + 1}</span>
+                <span className="text-[0.65rem] sm:text-xs font-semibold leading-tight">{name}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -94,77 +143,80 @@ export default function HomePage() {
       />
 
       {/* Metodic Sponsor Banner */}
-      <section className="py-6">
+      <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SponsorSection />
         </div>
       </section>
 
       {/* Global Theme Section */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-20 bg-section-alt">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-stretch">
-            <Card className="overflow-hidden">
+            <Card variant="elevated" className="overflow-hidden">
               <CardHeader className="border-b">
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary">2025 Theme</Badge>
+                  <Badge variant="amber">2026 Theme</Badge>
                 </div>
                 <CardTitle className="text-2xl mt-2">
-                  Co-Intelligence for a Shared Planet
+                  <h2 className="font-display text-2xl font-bold">Resilient by Design</h2>
                 </CardTitle>
                 <p className="text-muted-foreground">
-                  New opportunities for co-intelligence. Join a global movement using AI and collective creativity to tackle the world’s biggest challenges. Let’s co-create futures that are inclusive, regenerative, and just.
+                  Local solutions for a world under pressure. From water stress to extreme heat, from food insecurity to displacement — every community faces unique climate realities. This year, we design resilience from the ground up.
                 </p>
               </CardHeader>
               <CardContent className="p-6">
                 <ul className="grid sm:grid-cols-2 gap-4 text-sm">
                   <li className="flex items-start gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-                    Co-create with communities using AI as an augmenting partner
+                    <div className="w-2 h-2 rounded-full bg-sdg-13 mt-2 flex-shrink-0" />
+                    Climate adaptation and resilience at the local level
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-                    Ethics-first: inclusive, regenerative, and just outcomes
+                    <div className="w-2 h-2 rounded-full bg-sdg-11 mt-2 flex-shrink-0" />
+                    Designing cities and spaces that withstand disruption
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-                    Toolkits and method cards tailored to SDG-aligned challenges
+                    <div className="w-2 h-2 rounded-full bg-sdg-6 mt-2 flex-shrink-0" />
+                    Water, food, and energy resilience for every community
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-                    Share learnings to amplify impact across the global network
+                    <div className="w-2 h-2 rounded-full bg-sdg-10 mt-2 flex-shrink-0" />
+                    Centre the most vulnerable in every solution you design
                   </li>
                 </ul>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Link to="/events" className="inline-flex items-center text-primary hover:underline">
+                  <Link to="/theme" className="inline-flex items-center text-primary hover:underline font-medium">
+                    Explore the 2026 theme <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                  <Link to="/events" className="inline-flex items-center text-muted-foreground hover:text-primary hover:underline">
                     View upcoming Jams <ArrowRight className="w-4 h-4 ml-1" />
                   </Link>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col justify-between">
+            <Card variant="elevated" className="flex flex-col justify-between">
               <CardHeader>
-                <CardTitle className="text-xl">Get ready to host</CardTitle>
+                <CardTitle className="text-xl"><h2 className="font-display text-xl font-bold">Get ready to host</h2></CardTitle>
                 <p className="text-muted-foreground text-sm">
                   Learn best practices, facilitation tips and the full GGJ process.
                 </p>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button asChild size="lg" className="w-full bg-primary-solid text-white hover:bg-primary/90">
+                <Button asChild variant="pill" size="lg" className="w-full">
                   <Link to="/course/train-the-trainer">
                     <GraduationCap className="w-5 h-5 mr-2" /> Train‑the‑Trainer Course
                   </Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="w-full">
+                <Button asChild variant="pill-outline" size="lg" className="w-full">
                   <Link to="/faq">
                     Read FAQ <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
 
                 {/* Mini host callout */}
-                <div className="mt-4 rounded-lg border bg-muted/40 p-4 text-sm text-left">
-                  <h4 className="font-medium mb-2">What you’ll do as a host</h4>
+                <div className="mt-4 rounded-xl bg-pastel-green p-4 text-sm text-left">
+                  <h3 className="font-display font-semibold mb-2">What you'll do as a host</h3>
                   <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
                     <li>Pick a local SDG challenge with partners</li>
                     <li>Plan your 2‑day jam using our Jamkit</li>
@@ -187,40 +239,40 @@ export default function HomePage() {
       </section>
 
       {/* Partnership + Jamkit CTA */}
-      <section className="py-16">
+      <section className="py-20 bg-section-warm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-8 items-stretch">
-          <Card className="overflow-hidden">
+          <Card variant="elevated" className="overflow-hidden">
             <CardHeader className="border-b">
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4" />
                 <span className="text-sm text-muted-foreground">Together with UNDP</span>
               </div>
-              <CardTitle>Design community × Sustainable Development Goals</CardTitle>
+              <CardTitle><h2 className="font-display font-bold leading-none tracking-tight">Design community x Sustainable Development Goals</h2></CardTitle>
               <p className="text-muted-foreground">
                 In 2016, UNDP approached Digital Society School to connect the global design community with the SDGs. Since then, GGJ has enabled people everywhere to take real action on local challenges with global impact.
               </p>
             </CardHeader>
             <CardContent className="p-6">
-              <blockquote className="text-sm text-muted-foreground border-l-2 pl-4">
-                “Our partnership with Digital Society School in the Global Goals Jam facilitates a way to take real action. People all over the world can see and learn from each other’s work, as well as create impact.” — UNDP & Digital Society School
+              <blockquote className="text-sm text-muted-foreground border-l-2 border-primary/30 pl-4">
+                "Our partnership with Digital Society School in the Global Goals Jam facilitates a way to take real action. People all over the world can see and learn from each other's work, as well as create impact." — UNDP & Digital Society School
               </blockquote>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card variant="elevated">
             <CardHeader>
-              <CardTitle>Jamkit + FAQ</CardTitle>
+              <CardTitle><h2 className="font-display font-bold leading-none tracking-tight">Jamkit + FAQ</h2></CardTitle>
               <p className="text-muted-foreground">Get the updated toolkit and answers to common questions.</p>
             </CardHeader>
             <CardContent className="p-6 flex gap-3 flex-wrap">
-              <Button asChild className="bg-primary-solid text-white hover:bg-primary/90">
+              <Button asChild variant="pill">
                 <Link to="/toolkit">Open Jamkit</Link>
               </Button>
-              <Button asChild variant="outline">
-                <Link to="/faq">Read FAQ</Link>
+              <Button asChild variant="pill-outline">
+                <Link to="/faq">See frequently asked questions</Link>
               </Button>
-              <div className="pt-4 border-t">
-                <DonateButton variant="outline" size="default" className="w-full" />
+              <div className="pt-4 border-t w-full">
+                <DonateButton variant="pill-outline" size="default" className="w-full" />
               </div>
             </CardContent>
           </Card>

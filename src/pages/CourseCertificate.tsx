@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Award, Download, Share2, CheckCircle, BookOpen, Wand2 } from 'lucide-react';
-import { blink } from '@/lib/blink';
+import { Award, Download, Share2, CheckCircle, BookOpen, Wand2, Linkedin } from 'lucide-react';
+import { db, auth } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { CertificateTemplate } from '@/components/CertificateTemplate';
 import { generateCertificate } from '@/lib/certificates';
@@ -33,7 +33,7 @@ export default function CourseCertificate() {
     const loadCertificateData = async (userId: string) => {
       try {
         // 1) Load modules and compute total (unique 1–8)
-        const allModules = await blink.db.courseModules.list({ orderBy: { moduleNumber: 'asc' } });
+        const allModules = await db.courseModules.list({ orderBy: { moduleNumber: 'asc' } });
         const uniqueModules = Array.from(
           new Map(allModules.map((m: any) => [String(m.moduleNumber), m])).values()
         ).filter((m: any) => {
@@ -46,7 +46,7 @@ export default function CourseCertificate() {
         setTotalModules(total);
 
         // 2) Fetch multiple enrollments and pick the best (active/completed, newest)
-        const enrollments = await blink.db.courseEnrollments.list({
+        const enrollments = await db.courseEnrollments.list({
           where: { userId },
           orderBy: { updatedAt: 'desc' },
           limit: 10
@@ -83,7 +83,7 @@ export default function CourseCertificate() {
 
         // 4) Always reconcile from courseProgress as source of truth (more reliable than enrollment's completedModules field)
         try {
-          const progress = await blink.db.courseProgress.list({ where: { userId, enrollmentId: preferred.id } });
+          const progress = await db.courseProgress.list({ where: { userId, enrollmentId: preferred.id } });
           const fromProgress = new Set<string>();
           for (const p of progress) {
             // Check both completedAt and completed_at (handle both camelCase and snake_case)
@@ -106,7 +106,7 @@ export default function CourseCertificate() {
             cleaned = Array.from(fromProgress).sort((a, b) => parseInt(a) - parseInt(b));
             // persist the reconciliation for future consistency (best-effort)
             try {
-              await blink.db.courseEnrollments.update(preferred.id, {
+              await db.courseEnrollments.update(preferred.id, {
                 completedModules: JSON.stringify(cleaned),
                 updatedAt: new Date().toISOString()
               });
@@ -139,13 +139,13 @@ export default function CourseCertificate() {
 
         // Ensure we use the user's display name from DB for certificate rendering
         try {
-          const dbUsers = await blink.db.users.list({ where: { id: userId }, limit: 1 });
+          const dbUsers = await db.users.list({ where: { id: userId }, limit: 1 });
           const dbUser = dbUsers?.[0];
 
           // Also look up latest course registration as name fallback
           let regFullName = '';
           try {
-            const regs = await blink.db.courseRegistrations.list({ where: { userId }, orderBy: { createdAt: 'desc' }, limit: 1 });
+            const regs = await db.courseRegistrations.list({ where: { userId }, orderBy: { createdAt: 'desc' }, limit: 1 });
             regFullName = regs?.[0]?.fullName || '';
           } catch {}
 
@@ -201,8 +201,8 @@ export default function CourseCertificate() {
       };
       try {
         const [logo, sig] = await Promise.all([
-          toDataUrl('https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png'),
-          toDataUrl('https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/signature.png')
+          toDataUrl('https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png'),
+          toDataUrl('https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/signature.png')
         ]);
         setLogoDataUrl(logo);
         setSignatureDataUrl(sig);
@@ -210,7 +210,7 @@ export default function CourseCertificate() {
         // non-fatal; fall back to public paths
         console.warn('Failed to preload certificate assets', e);
         // Use the Supabase-hosted signature as fallback
-        setSignatureDataUrl('https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/signature.png');
+        setSignatureDataUrl('https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/signature.png');
       }
 
       // Keep previous signin working: bootstrap legacy token and user
@@ -227,7 +227,7 @@ export default function CourseCertificate() {
       }
 
       // Also listen to Blink managed auth (original flow)
-      unsubscribe = blink.auth.onAuthStateChanged((state) => {
+      unsubscribe = auth.onAuthStateChanged((state) => {
         setUser(state.user);
         setLoading(state.isLoading);
         if (state.user) {
@@ -249,7 +249,7 @@ export default function CourseCertificate() {
     setGenerating(true);
     try {
       // Update enrollment with certificate details BEFORE opening the certificate
-      await blink.db.courseEnrollments.update(enrollment.id, {
+      await db.courseEnrollments.update(enrollment.id, {
         certificateIssuedAt: new Date().toISOString(),
         status: 'completed',
         updatedAt: new Date().toISOString()
@@ -262,13 +262,13 @@ export default function CourseCertificate() {
       
       // Create achievement record (check if it already exists first)
       try {
-        const existingAchievements = await blink.db.userAchievements.list({
+        const existingAchievements = await db.userAchievements.list({
           where: { userId: user.id, achievementType: 'certification' },
           limit: 1
         });
         
         if (!existingAchievements || existingAchievements.length === 0) {
-          await blink.db.userAchievements.create({
+          await db.userAchievements.create({
             id: `ach_cert_${Date.now()}`,
             userId: user.id,
             achievementType: 'certification',
@@ -594,14 +594,14 @@ export default function CourseCertificate() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5">
+    <div className="min-h-screen bg-section-alt hero-pattern">
       {/* Header */}
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto text-center mb-8">
           <div className="flex justify-center mb-4">
             <Award className="h-16 w-16 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">
+          <h1 className="text-4xl font-bold font-display mb-4">
             Congratulations, {user?.displayName || user?.email}!
           </h1>
           <p className="text-xl text-muted-foreground">
@@ -611,51 +611,51 @@ export default function CourseCertificate() {
 
         {/* Achievement Summary */}
         <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-6 mb-12">
-          <Card>
+          <Card variant="stat" className="bg-pastel-green">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Modules Completed</p>
-                  <p className="text-2xl font-bold">{completedModules.length} / {totalModules}</p>
+                  <p className="text-2xl font-bold font-display">{completedModules.length} / {totalModules}</p>
                 </div>
-                <CheckCircle className="h-8 w-8 text-green-500" />
+                <CheckCircle className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
-          
-          <Card>
+
+          <Card variant="stat" className="bg-pastel-amber">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Certification Status</p>
-                  <p className="text-2xl font-bold text-green-600">Certified</p>
+                  <p className="text-2xl font-bold font-display text-primary">Certified</p>
                 </div>
                 <Award className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
-          
-          <Card>
+
+          <Card variant="stat" className="bg-pastel-violet">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Achievement Points</p>
-                  <p className="text-2xl font-bold">100</p>
+                  <p className="text-2xl font-bold font-display">100</p>
                 </div>
-                <Share2 className="h-8 w-8 text-blue-500" />
+                <Share2 className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Certificate Preview */}
-        <Card className="max-w-6xl mx-auto">
+        <Card variant="elevated" className="max-w-6xl mx-auto">
           <CardHeader>
-            <CardTitle>Your Host Certificate</CardTitle>
+            <CardTitle className="font-display">Your Host Certificate</CardTitle>
             <CardDescription>This certifies your completion of the GGJ Host Certification Course</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="bg-gray-50 rounded-lg p-8 mb-6 overflow-auto">
+            <div className="bg-muted/50 rounded-xl p-8 mb-6 overflow-auto">
               <div className="transform scale-75 origin-top">
                 <CertificateTemplate
                   ref={certificateRef}
@@ -672,8 +672,9 @@ export default function CourseCertificate() {
             </div>
             
             <div className="flex gap-4 justify-center">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
+                className="rounded-xl"
                 onClick={handleDownloadCertificate}
                 disabled={generating}
               >
@@ -690,9 +691,10 @@ export default function CourseCertificate() {
                 )}
               </Button>
 
-              <Button 
+              <Button
                 size="lg"
                 variant="secondary"
+                className="rounded-xl"
                 onClick={handleDownloadPdf}
                 disabled={generating}
               >
@@ -700,9 +702,10 @@ export default function CourseCertificate() {
                 Download as PDF
               </Button>
 
-              <Button 
+              <Button
                 size="lg"
                 variant="secondary"
+                className="rounded-xl"
                 onClick={handleDownloadJpeg}
                 disabled={generating}
               >
@@ -710,9 +713,43 @@ export default function CourseCertificate() {
                 Download as Image (JPG)
               </Button>
               
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant="outline"
+                className="rounded-xl"
+                onClick={() => {
+                  const certId = enrollment?.id || 'GGJ-CERT'
+                  const issueDate = enrollment?.certificateIssuedAt
+                    ? new Date(enrollment.certificateIssuedAt)
+                    : new Date()
+                  const issueYear = issueDate.getFullYear()
+                  const issueMonth = issueDate.getMonth() + 1
+                  const certUrl = `${window.location.origin}/course/certificate`
+
+                  const params = new URLSearchParams({
+                    startTask: 'CERTIFICATION_NAME',
+                    name: 'Global Goals Jam — Host Certification',
+                    organizationName: 'Global Goals Jam',
+                    issueYear: String(issueYear),
+                    issueMonth: String(issueMonth),
+                    certId: certId,
+                    certUrl: certUrl,
+                  })
+
+                  window.open(
+                    `https://www.linkedin.com/profile/add?${params.toString()}`,
+                    '_blank'
+                  )
+                }}
+              >
+                <Linkedin className="mr-2 h-5 w-5" />
+                Add to LinkedIn
+              </Button>
+
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-xl"
                 onClick={() => navigate('/host-dashboard')}
               >
                 Go to Host Dashboard
@@ -722,15 +759,15 @@ export default function CourseCertificate() {
         </Card>
 
         {/* Next Steps */}
-        <Card className="max-w-4xl mx-auto mt-8">
+        <Card variant="elevated" className="max-w-4xl mx-auto mt-8">
           <CardHeader>
-            <CardTitle>🎉 What's Next?</CardTitle>
+            <CardTitle className="font-display">What's Next?</CardTitle>
             <CardDescription>You're now ready to host your first Global Goals Jam!</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-pastel-green flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-semibold text-primary">1</span>
                 </div>
                 <div>
@@ -740,7 +777,7 @@ export default function CourseCertificate() {
               </div>
               
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-pastel-green flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-semibold text-primary">2</span>
                 </div>
                 <div>
@@ -750,7 +787,7 @@ export default function CourseCertificate() {
               </div>
               
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-pastel-green flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-semibold text-primary">3</span>
                 </div>
                 <div>
@@ -760,7 +797,7 @@ export default function CourseCertificate() {
               </div>
               
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-pastel-green flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-semibold text-primary">4</span>
                 </div>
                 <div>
@@ -785,9 +822,9 @@ export default function CourseCertificate() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="bg-white/50 rounded-lg p-4">
+              <div className="bg-white/50 rounded-xl p-4">
                 <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <CheckCircle className="w-4 h-4 text-primary" />
                   What You Can Do
                 </h4>
                 <ul className="space-y-2 text-sm text-muted-foreground ml-6">
@@ -799,7 +836,7 @@ export default function CourseCertificate() {
                 </ul>
               </div>
 
-              <div className="bg-white/50 rounded-lg p-4">
+              <div className="bg-white/50 rounded-xl p-4">
                 <h4 className="font-semibold mb-2">License Terms</h4>
                 <p className="text-sm text-muted-foreground mb-3">
                   Your certification includes lifetime access to the Global Goals Jam toolkit ecosystem. 
@@ -816,14 +853,6 @@ export default function CourseCertificate() {
                 </Button>
               </div>
 
-              <div className="text-center pt-2">
-                <p className="text-xs text-muted-foreground">
-                  Questions about toolkit usage? Contact us at{' '}
-                  <a href="mailto:support@globalgoalsjam.org" className="text-primary hover:underline">
-                    support@globalgoalsjam.org
-                  </a>
-                </p>
-              </div>
             </div>
           </CardContent>
         </Card>

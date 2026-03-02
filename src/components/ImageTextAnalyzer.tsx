@@ -48,7 +48,7 @@ export default function ImageTextAnalyzer({ imageUrl, onExtract, className }: Im
       {loading && <div className="text-xs text-muted-foreground">Extracting text…</div>}
       {error && <div className="text-xs text-destructive">{error}</div>}
       {!loading && !error && (
-        <pre className="whitespace-pre-wrap text-sm text-foreground bg-muted/10 rounded-md p-2 min-h-[56px]">{text || 'No text found'}</pre>
+        <pre className="whitespace-pre-wrap text-sm text-foreground bg-muted/10 rounded-xl p-2 min-h-[56px]">{text || 'No text found'}</pre>
       )}
     </div>
   )

@@ -39,19 +39,19 @@ export default function ForgotPasswordPage() {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-section-alt hero-pattern p-4">
+        <Card variant="elevated" className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-pastel-green rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Check your email</CardTitle>
+            <CardTitle className="text-2xl font-display">Check your email</CardTitle>
             <CardDescription className="mt-2">
               We've sent password reset instructions to <strong>{email}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600 text-center">
+            <p className="text-sm text-muted-foreground text-center">
               If you don't receive an email within a few minutes, please check your spam folder.
             </p>
             <div className="space-y-2">
@@ -79,10 +79,10 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-section-alt hero-pattern p-4">
+      <Card variant="elevated" className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Reset your password</CardTitle>
+          <CardTitle className="text-2xl font-display">Reset your password</CardTitle>
           <CardDescription>
             Enter your email address and we'll send you instructions to reset your password
           </CardDescription>
@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-green-600 hover:bg-green-700"
+              className="w-full rounded-xl"
               disabled={isLoading || !email}
             >
               {isLoading ? (
@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
             <div className="text-center">
               <Link
                 to="/sign-in"
-                className="text-sm text-green-600 hover:underline inline-flex items-center"
+                className="text-sm text-primary hover:text-primary/80 hover:underline inline-flex items-center"
               >
                 <ArrowLeft className="mr-1 h-3 w-3" />
                 Back to sign in

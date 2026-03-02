@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { Loader2, Mail, Key, CheckCircle2, ShieldAlert } from 'lucide-react'
-import blink, { getFullUser } from '@/lib/blink'
+import { db, auth } from '@/lib/supabase'
+import { getFullUser } from '@/lib/userProfile'
 import { config } from '@/lib/config'
 
 interface UserRow {
@@ -29,7 +30,7 @@ export default function PasswordManagementPage() {
   const [isAdmin, setIsAdmin] = useState<boolean>(false)
 
   useEffect(() => {
-    const unsub = blink.auth.onAuthStateChanged((state: any) => {
+    const unsub = auth.onAuthStateChanged((state: any) => {
       const t = state?.tokens?.accessToken || state?.tokens?.token || state?.tokens?.jwt || null
       setAuthToken(t)
     })
@@ -44,7 +45,7 @@ export default function PasswordManagementPage() {
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      const data = await (blink.db as any).users.list({ orderBy: { createdAt: 'desc' }, limit: 500 })
+      const data = await (db as any).users.list({ orderBy: { createdAt: 'desc' }, limit: 500 })
       const rows: UserRow[] = (data || []).map((u: any) => ({
         id: u.id,
         email: u.email,
@@ -189,7 +190,7 @@ The Global Goals Jam Team
       <div className="min-h-screen flex items-center justify-center p-6">
         <Card className="max-w-md w-full">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-red-500" /> Access restricted</CardTitle>
+            <CardTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-destructive" /> Access restricted</CardTitle>
             <CardDescription>Only admins can manage user passwords.</CardDescription>
           </CardHeader>
         </Card>
@@ -218,9 +219,9 @@ The Global Goals Jam Team
           </div>
 
           {Object.keys(generatedPasswords).length > 0 && (
-            <Card className="mb-6 border-green-200 bg-green-50">
+            <Card className="mb-6 border-primary/20 bg-pastel-green">
               <CardHeader>
-                <CardTitle className="text-green-800">Generated Passwords</CardTitle>
+                <CardTitle className="text-primary/90">Generated Passwords</CardTitle>
                 <CardDescription>
                   Copy these to send to users via email
                 </CardDescription>
@@ -228,10 +229,10 @@ The Global Goals Jam Team
               <CardContent>
                 <div className="space-y-2">
                   {Object.entries(generatedPasswords).map(([email, password]) => (
-                    <div key={email} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                    <div key={email} className="flex items-center justify-between p-3 bg-card rounded-xl border">
                       <div>
                         <p className="font-medium">{email}</p>
-                        <p className="text-sm text-gray-600 font-mono">{password}</p>
+                        <p className="text-sm text-muted-foreground font-mono">{password}</p>
                       </div>
                       <Button
                         size="sm"
@@ -286,12 +287,12 @@ The Global Goals Jam Team
                     </TableCell>
                     <TableCell>
                       {user.hasPassword ? (
-                        <Badge variant="outline" className="bg-green-50">
+                        <Badge variant="outline" className="bg-pastel-green">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                           Set
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-yellow-50">
+                        <Badge variant="outline" className="bg-pastel-amber">
                           Not Set
                         </Badge>
                       )}

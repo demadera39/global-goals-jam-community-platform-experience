@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { PlayCircle, CheckCircle, Lock, Clock, BookOpen, ChevronRight } from 'lucide-react';
-import { blink, safeDbCall } from '@/lib/blink';
+import { db, safeDbCall } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { TemplateCard } from '@/components/TemplateDownload';
 import { generateTemplate } from '@/lib/templateGenerator';
@@ -78,20 +78,30 @@ export default function CourseDashboard() {
   const [exerciseAnswers, setExerciseAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const loadCourseData = async (userId: string) => {
+    const loadCourseData = async (userId: string, userRole?: string) => {
       try {
-        // Check enrollment
-        const enrollments = await safeDbCall(() => blink.db.courseEnrollments.list({
-          where: { userId: userId },
-          limit: 1
-        }));
-        
+        // Check enrollment (non-fatal — admins/hosts can view without enrollment)
+        let enrollments: any[] = [];
+        try {
+          enrollments = await safeDbCall(() => db.courseEnrollments.list({
+            where: { userId: userId },
+            limit: 1
+          }));
+        } catch (enrollError) {
+          console.warn('Could not load enrollment, continuing:', enrollError);
+        }
+
         const urlHasEnrolledFlag = new URLSearchParams(window.location.search).get('enrolled') === '1'
         if (enrollments.length === 0 || (enrollments[0].status !== 'active' && enrollments[0].status !== 'completed')) {
-          // Allow admins to preview the course even without active/completed enrollment
-          const profile = await getUserProfile(userId).catch(() => null);
-          const isAdmin = !!profile && profile.role === 'admin'
-          if (!isAdmin) {
+          // Allow admins and hosts to view the course even without active/completed enrollment.
+          // Use locally stored role first (no network needed), fall back to DB profile.
+          const localRole = userRole || ''
+          let canBypass = localRole === 'admin' || localRole === 'host'
+          if (!canBypass) {
+            const profile = await getUserProfile(userId).catch(() => null);
+            canBypass = !!profile && (profile.role === 'admin' || profile.role === 'host')
+          }
+          if (!canBypass) {
             // If user just returned here after enrollment (?enrolled=1), avoid redirect loop; show fallback card instead
             if (!urlHasEnrolledFlag) {
               navigate('/course/enroll');
@@ -99,12 +109,32 @@ export default function CourseDashboard() {
             }
           }
         }
-        
-        // If enrollment exists, set it; if not and admin previewing, keep enrollment null but continue to load modules
-        if (enrollments.length > 0) setEnrollment(enrollments[0]);
-        
+
+        // If enrollment exists, set it; if not and admin/host bypassed, auto-create one so they can track progress
+        if (enrollments.length > 0) {
+          setEnrollment(enrollments[0]);
+        } else {
+          // Auto-create enrollment for admin/host users so module completion works
+          try {
+            const enrollId = crypto.randomUUID()
+            const newEnrollment = await safeDbCall(() => db.courseEnrollments.create({
+              id: enrollId,
+              userId: userId,
+              status: 'active',
+              currentModule: '1',
+              completedModules: '[]',
+              enrolledAt: new Date().toISOString(),
+              amountPaid: '0',
+            }));
+            enrollments = [newEnrollment];
+            setEnrollment(newEnrollment);
+          } catch (createErr: any) {
+            console.warn('Could not auto-create enrollment:', createErr?.message || createErr?.code || JSON.stringify(createErr));
+          }
+        }
+
         // Load modules
-        const moduleList = await safeDbCall(() => blink.db.courseModules.list({
+        const moduleList = await safeDbCall(() => db.courseModules.list({
           orderBy: { moduleNumber: 'asc' }
         }));
 
@@ -119,14 +149,14 @@ export default function CourseDashboard() {
           .sort((a: any, b: any) => parseInt(String(a.moduleNumber)) - parseInt(String(b.moduleNumber)));
 
         setModules(uniqueSorted);
-        
-        // Load progress
+
+        // Load progress (only if enrolled)
         const progressList = (enrollments.length > 0)
-          ? await safeDbCall(() => blink.db.courseProgress.list({
+          ? await safeDbCall(() => db.courseProgress.list({
               where: { userId: userId, enrollmentId: enrollments[0].id }
-            }))
+            })).catch(() => [])
           : [];
-        
+
         const progressMap: Record<string, ModuleProgress> = {};
         progressList.forEach((p: any) => {
           progressMap[p.moduleId] = {
@@ -141,7 +171,7 @@ export default function CourseDashboard() {
           };
         });
         setProgress(progressMap);
-        
+
         // Set current module
         const currentModuleNum = parseInt(enrollments[0]?.currentModule || '1');
         const current = uniqueSorted.find((m: any) => parseInt(String(m.moduleNumber)) === currentModuleNum);
@@ -163,7 +193,7 @@ export default function CourseDashboard() {
     const loadForUser = async (u: any) => {
       if (u?.id) {
         setUser(u);
-        await loadCourseData(u.id);
+        await loadCourseData(u.id, u.role);
       } else {
         setUser(null);
       }
@@ -193,11 +223,11 @@ export default function CourseDashboard() {
 
   // Helper to safely create/update a courseProgress row by id to avoid UNIQUE conflicts
   const upsertProgress = async (id: string, data: any) => {
-    const existing = await safeDbCall(() => blink.db.courseProgress.list({ where: { id }, limit: 1 }));
+    const existing = await safeDbCall(() => db.courseProgress.list({ where: { id }, limit: 1 }));
     if (existing.length > 0) {
-      await safeDbCall(() => blink.db.courseProgress.update(id, data));
+      await safeDbCall(() => db.courseProgress.update(id, data));
     } else {
-      await safeDbCall(() => blink.db.courseProgress.create({ id, ...data }));
+      await safeDbCall(() => db.courseProgress.create({ id, ...data }));
     }
   };
 
@@ -235,7 +265,7 @@ export default function CourseDashboard() {
     
     // Update current module in enrollment
     if (moduleNum > currentNum) {
-      await safeDbCall(() => blink.db.courseEnrollments.update(enrollment.id, {
+      await safeDbCall(() => db.courseEnrollments.update(enrollment.id, {
         currentModule: module.moduleNumber
       }));
       setEnrollment({ ...enrollment, currentModule: module.moduleNumber });
@@ -275,7 +305,7 @@ export default function CourseDashboard() {
         if (completedModules.length >= modules.length) {
           updateData.status = 'completed';
         }
-        await safeDbCall(() => blink.db.courseEnrollments.update(enrollment.id, updateData));
+        await safeDbCall(() => db.courseEnrollments.update(enrollment.id, updateData));
         setEnrollment({ ...enrollment, completedModules: JSON.stringify(completedModules), status: updateData.status || enrollment.status });
       }
       
@@ -339,22 +369,30 @@ export default function CourseDashboard() {
     );
   }
 
-  if (!enrollment || !currentModule) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>No Active Enrollment</CardTitle>
-            <CardDescription>Please enroll in the course to access the dashboard</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate('/course/enroll')} className="w-full">
-              Enroll Now
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  if (!user) {
+    navigate('/sign-in?redirect=' + encodeURIComponent('/course/dashboard'));
+    return null;
+  }
+
+  if (!currentModule) {
+    // No modules loaded at all — show enrollment prompt
+    if (!enrollment) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="max-w-md">
+            <CardHeader>
+              <CardTitle>No Active Enrollment</CardTitle>
+              <CardDescription>Please enroll in the course to access the dashboard</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate('/course/enroll')} className="w-full">
+                Enroll Now
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
   }
 
   // Compute media URL with fallback to static content sheet
@@ -364,7 +402,7 @@ export default function CourseDashboard() {
   const overviewMediaUrl = dbUrl || fallbackUrl;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-section-alt">
       <FloatingFeedback context="course" userEmail={user?.email || ''} userName={user?.displayName || ''} />
       {/* Enhanced Header */}
       <div className="border-b bg-card/80 backdrop-blur-sm shadow-sm">
@@ -374,7 +412,7 @@ export default function CourseDashboard() {
               <div className="flex items-center gap-3">
                 <div className="w-2 h-8 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
                 <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  <h1 className="text-3xl font-bold font-display bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                     GGJ Host Certification Course
                   </h1>
                   <p className="text-muted-foreground mt-1">
@@ -399,8 +437,8 @@ export default function CourseDashboard() {
                     />
                     {calculateOverallProgress() === 100 && (
                       <div className="absolute -top-1 -right-1">
-                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                          <CheckCircle className="w-3 h-3 text-white" />
+                        <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                          <CheckCircle className="w-3 h-3 text-primary-foreground" />
                         </div>
                       </div>
                     )}
@@ -408,7 +446,7 @@ export default function CourseDashboard() {
                   <div className="text-right">
                     <span className="text-lg font-bold text-primary">{Math.round(calculateOverallProgress())}%</span>
                     {calculateOverallProgress() === 100 && (
-                      <Badge className="ml-2 bg-green-500 hover:bg-green-600">Complete!</Badge>
+                      <Badge className="ml-2 bg-primary hover:bg-primary/90">Complete!</Badge>
                     )}
                   </div>
                 </div>
@@ -431,10 +469,10 @@ export default function CourseDashboard() {
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Enhanced Module List */}
           <div className="lg:col-span-1">
-            <Card className="shadow-lg border-0 bg-card/50 backdrop-blur">
+            <Card className="shadow-card border-0 bg-card/50 backdrop-blur">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-pastel-green rounded-xl flex items-center justify-center">
                     <BookOpen className="w-4 h-4 text-primary" />
                   </div>
                   <div>
@@ -465,9 +503,9 @@ export default function CourseDashboard() {
                           key={module.id}
                           onClick={() => !locked && startModule(module)}
                           disabled={locked}
-                          className={`w-full text-left p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
-                            current ? 'bg-primary/10 border-primary shadow-md ring-1 ring-primary/20' : 
-                            isCompleted ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:from-green-100 hover:to-emerald-100' :
+                          className={`w-full text-left p-4 rounded-xl border transition-all duration-200 hover:shadow-soft ${
+                            current ? 'bg-primary/10 border-primary shadow-soft ring-1 ring-primary/20' : 
+                            isCompleted ? 'bg-gradient-to-r from-pastel-green to-emerald-50 border-primary/20 hover:from-pastel-green/80 hover:to-emerald-100' :
                             locked ? 'opacity-50 cursor-not-allowed bg-muted/30' : 
                             'hover:bg-accent/50 border-border/60'
                           }`}
@@ -476,8 +514,8 @@ export default function CourseDashboard() {
                             <div className="mt-1 relative">
                               {isCompleted ? (
                                 <div className="relative">
-                                  <CheckCircle className="h-6 w-6 text-green-500 drop-shadow-sm" />
-                                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-100 rounded-full animate-pulse" />
+                                  <CheckCircle className="h-6 w-6 text-primary drop-shadow-sm" />
+                                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-pastel-green rounded-full animate-pulse" />
                                 </div>
                               ) : locked ? (
                                 <Lock className="h-6 w-6 text-muted-foreground" />
@@ -491,7 +529,7 @@ export default function CourseDashboard() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md">
+                                <span className="text-xs font-semibold text-primary bg-pastel-green px-2 py-1 rounded-lg">
                                   Module {module.moduleNumber}
                                 </span>
                                 {current && (
@@ -500,7 +538,7 @@ export default function CourseDashboard() {
                                   </Badge>
                                 )}
                                 {isCompleted && (
-                                  <Badge className="text-xs bg-green-100 text-green-700 hover:bg-green-200">
+                                  <Badge className="text-xs bg-pastel-green text-primary/80 hover:bg-pastel-green/80">
                                     ✓ Complete
                                   </Badge>
                                 )}
@@ -528,16 +566,16 @@ export default function CourseDashboard() {
 
           {/* Enhanced Module Content */}
           <div className="lg:col-span-2">
-            <Card className="shadow-lg border-0 bg-card/50 backdrop-blur">
+            <Card className="shadow-card border-0 bg-card/50 backdrop-blur">
               <CardHeader className="pb-6">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="space-y-3 flex-1">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center text-white font-bold">
+                      <div className="w-10 h-10 bg-pastel-green rounded-xl flex items-center justify-center text-primary font-bold font-display">
                         {currentModule.moduleNumber}
                       </div>
                       <div>
-                        <CardTitle className="text-xl leading-tight">{currentModule.title}</CardTitle>
+                        <CardTitle className="text-xl leading-tight font-display">{currentModule.title}</CardTitle>
                         <CardDescription className="text-sm mt-1 text-muted-foreground">
                           {currentModule.description}
                         </CardDescription>
@@ -550,7 +588,7 @@ export default function CourseDashboard() {
                       {currentModule.durationMinutes} min
                     </Badge>
                     {JSON.parse(enrollment?.completedModules || '[]').includes(currentModule.moduleNumber) && (
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1">
+                      <Badge className="bg-pastel-green text-primary/80 hover:bg-pastel-green/80 px-3 py-1">
                         <CheckCircle className="mr-1 h-3 w-3" />
                         Complete
                       </Badge>
@@ -630,10 +668,10 @@ export default function CourseDashboard() {
                       // Enhanced placeholder for modules where we want it
                       if (!isAudio && !isYouTube && allowPlaceholder) {
                         return (
-                          <Card className="bg-gradient-to-br from-primary/5 via-primary/8 to-accent/5 border-primary/20 shadow-sm">
+                          <Card className="bg-pastel-sky border-primary/20 shadow-soft">
                             <CardContent className="pt-6">
                               <div className="flex flex-col items-center text-center space-y-4">
-                                <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/30 rounded-2xl flex items-center justify-center">
+                                <div className="w-16 h-16 bg-pastel-violet rounded-2xl flex items-center justify-center">
                                   <PlayCircle className="h-8 w-8 text-primary" />
                                 </div>
                                 <div className="space-y-2">
@@ -658,7 +696,7 @@ export default function CourseDashboard() {
                   </TabsContent>
                   
                   <TabsContent value="content" className="space-y-4">
-                    <ScrollArea className="h-[500px] w-full rounded-md border p-4">
+                    <ScrollArea className="h-[500px] w-full rounded-xl border p-4">
                       {currentModule.moduleNumber === '1' && <Module1Content />}
                       {currentModule.moduleNumber === '2' && <Module2Content />}
                       {currentModule.moduleNumber === '3' && <Module3Content />}
@@ -678,16 +716,36 @@ export default function CourseDashboard() {
                   
                   <TabsContent value="exercises" className="space-y-4">
                     <ModuleExercisesEnhanced moduleNumber={parseInt(currentModule.moduleNumber)} />
-                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between rounded-md border bg-muted/30 p-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between rounded-xl border bg-muted/30 p-4">
                       <div className="text-sm text-muted-foreground">
                         {isModuleCompleted(currentModule.id) ? 'This module is completed.' : 'Mark this module as completed when you\'re done with the exercises.'}
                       </div>
                       <div className="flex gap-2">
-                        <Button variant={isModuleCompleted(currentModule.id) ? 'secondary' : 'default'} onClick={async () => { await (async () => { const progressId = `prog_${enrollment.id}_${currentModule.id}`; try { await upsertProgress(progressId, { userId: user.id, enrollmentId: enrollment.id, moduleId: currentModule.id, startedAt: new Date().toISOString(), completedAt: new Date().toISOString(), videoWatchedPercent: '100', exercisesCompleted: JSON.stringify(['module_marked_complete']) }); const completedModules = JSON.parse(enrollment.completedModules || '[]'); if (!completedModules.includes(currentModule.moduleNumber)) { completedModules.push(currentModule.moduleNumber); const updateData: any = { completedModules: JSON.stringify(completedModules), updatedAt: new Date().toISOString() }; if (completedModules.length >= modules.length) { updateData.status = 'completed'; } await safeDbCall(() => blink.db.courseEnrollments.update(enrollment.id, updateData)); setEnrollment({ ...enrollment, completedModules: JSON.stringify(completedModules), status: updateData.status || enrollment.status }); } setProgress({ ...progress, [currentModule.id]: { ...progress[currentModule.id], completed_at: new Date().toISOString(), exercisesCompleted: JSON.stringify(['module_marked_complete']) } }); toast.success(`Marked Module ${currentModule.moduleNumber} as completed`); } catch (e) { console.error(e); toast.error('Could not save module completion'); } })(); }} disabled={isModuleCompleted(currentModule.id)}>
-                          {isModuleCompleted(currentModule.id) ? 'Completed' : 'Mark Module Completed'}
+                        <Button variant={isModuleCompleted(currentModule.id) ? 'secondary' : 'default'} onClick={async () => {
+                          if (!enrollment || !user) { toast.error('No active enrollment found'); return; }
+                          const progressId = `prog_${enrollment.id}_${currentModule.id}`;
+                          try {
+                            await upsertProgress(progressId, {
+                              userId: user.id, enrollmentId: enrollment.id, moduleId: currentModule.id,
+                              startedAt: new Date().toISOString(), completedAt: new Date().toISOString(),
+                              videoWatchedPercent: '100', exercisesCompleted: JSON.stringify(['module_marked_complete'])
+                            });
+                            const completedModules = JSON.parse(enrollment.completedModules || '[]');
+                            if (!completedModules.includes(currentModule.moduleNumber)) {
+                              completedModules.push(currentModule.moduleNumber);
+                              const updateData: any = { completedModules: JSON.stringify(completedModules), updatedAt: new Date().toISOString() };
+                              if (completedModules.length >= modules.length) { updateData.status = 'completed'; }
+                              await safeDbCall(() => db.courseEnrollments.update(enrollment.id, updateData));
+                              setEnrollment({ ...enrollment, completedModules: JSON.stringify(completedModules), status: updateData.status || enrollment.status });
+                            }
+                            setProgress({ ...progress, [currentModule.id]: { ...progress[currentModule.id], completed_at: new Date().toISOString(), exercisesCompleted: JSON.stringify(['module_marked_complete']) } });
+                            toast.success(`Marked Module ${currentModule.moduleNumber} as completed`);
+                          } catch (e) { console.error(e); toast.error('Could not save module completion'); }
+                        }} disabled={!enrollment || isModuleCompleted(currentModule.id)}>
+                          {isModuleCompleted(currentModule.id) ? 'Completed' : !enrollment ? 'Enrollment required' : 'Mark Module Completed'}
                         </Button>
-                        {Math.round(calculateOverallProgress()) === 100 && (
-                          <Button variant="outline" onClick={async () => { try { await safeDbCall(() => blink.db.courseEnrollments.update(enrollment.id, { status: 'completed', updatedAt: new Date().toISOString() })); try { await checkAndUpgradeUser(user.id); } catch (_) {} navigate('/course/certificate'); } catch (e) { console.error(e); toast.error('Failed to finalize course'); } }}>
+                        {enrollment && Math.round(calculateOverallProgress()) === 100 && (
+                          <Button variant="outline" onClick={async () => { try { await safeDbCall(() => db.courseEnrollments.update(enrollment.id, { status: 'completed', updatedAt: new Date().toISOString() })); try { await checkAndUpgradeUser(user.id); } catch (_) {} navigate('/course/certificate'); } catch (e) { console.error(e); toast.error('Failed to finalize course'); } }}>
                             Finish Course & Get Certificate
                           </Button>
                         )}

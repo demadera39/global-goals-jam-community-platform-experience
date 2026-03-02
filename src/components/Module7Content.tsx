@@ -10,7 +10,7 @@ const Module7Content = () => {
       <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-8">
         <Badge className="mb-4 bg-emerald-600">Module 7</Badge>
         <h1 className="text-4xl font-bold mb-4">Community Growth & Scaling</h1>
-        <p className="text-xl text-gray-700">Develop strategies to grow your host community, build sustainable partnerships, and scale your impact while maintaining quality and local relevance.</p>
+        <p className="text-xl text-foreground/80">Develop strategies to grow your host community, build sustainable partnerships, and scale your impact while maintaining quality and local relevance.</p>
       </div>
 
       {/* Video Section - Removed empty video */}
@@ -49,7 +49,7 @@ const Module7Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Network className="h-5 w-5 text-blue-600" />
+            <Network className="h-5 w-5 text-sky-600" />
             Identifying Your Growth Channels
           </CardTitle>
         </CardHeader>
@@ -59,7 +59,7 @@ const Module7Content = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">🎓 Educational Institutions</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">🎓 Educational Institutions</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Universities and colleges</li>
                   <li>• Business schools and MBA programs</li>
@@ -71,7 +71,7 @@ const Module7Content = () => {
               </div>
               
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">🏢 Corporate Partnerships</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">🏢 Corporate Partnerships</h4>
                 <ul className="text-sm space-y-1">
                   <li>• CSR and sustainability departments</li>
                   <li>• Innovation labs and R&D teams</li>
@@ -83,7 +83,7 @@ const Module7Content = () => {
               </div>
               
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">🏛️ Government & Public Sector</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">🏛️ Government & Public Sector</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Local government innovation teams</li>
                   <li>• Public policy departments</li>
@@ -97,7 +97,7 @@ const Module7Content = () => {
             
             <div className="space-y-4">
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">🌱 NGOs & Civil Society</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">🌱 NGOs & Civil Society</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Environmental organizations</li>
                   <li>• Social justice groups</li>
@@ -109,7 +109,7 @@ const Module7Content = () => {
               </div>
               
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">💡 Innovation Ecosystems</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">💡 Innovation Ecosystems</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Startup incubators and accelerators</li>
                   <li>• Co-working spaces</li>
@@ -121,7 +121,7 @@ const Module7Content = () => {
               </div>
               
               <div className="p-4 border rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-900">🌐 Digital Communities</h4>
+                <h4 className="font-semibold mb-2 text-sky-900">🌐 Digital Communities</h4>
                 <ul className="text-sm space-y-1">
                   <li>• Social media groups and pages</li>
                   <li>• Professional networks (LinkedIn)</li>
@@ -140,7 +140,7 @@ const Module7Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Handshake className="h-5 w-5 text-purple-600" />
+            <Handshake className="h-5 w-5 text-violet-600" />
             Building Strategic Partnerships
           </CardTitle>
         </CardHeader>
@@ -148,15 +148,15 @@ const Module7Content = () => {
           <p>Effective partnerships are the foundation of sustainable growth. Here's how to identify, approach, and maintain valuable partnerships:</p>
           
           <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 bg-purple-50 rounded-lg">
-              <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-violet rounded-lg">
+              <div className="w-8 h-8 bg-violet-500 text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
               <div>
                 <h4 className="font-semibold mb-1">Identify Mutual Value</h4>
                 <p className="text-sm text-muted-foreground mb-2">Look for organizations whose goals align with yours and who can benefit from what you offer.</p>
                 <div className="grid md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <h5 className="font-medium mb-1">What You Can Offer</h5>
-                    <ul className="space-y-1 text-purple-800">
+                    <ul className="space-y-1 text-violet-800">
                       <li>• Innovation methodology and facilitation</li>
                       <li>• Community engagement and activation</li>
                       <li>• SDG expertise and frameworks</li>
@@ -165,7 +165,7 @@ const Module7Content = () => {
                   </div>
                   <div>
                     <h5 className="font-medium mb-1">What You Need</h5>
-                    <ul className="space-y-1 text-purple-800">
+                    <ul className="space-y-1 text-violet-800">
                       <li>• Participants and audience</li>
                       <li>• Venue and logistics support</li>
                       <li>• Funding and resources</li>
@@ -176,8 +176,8 @@ const Module7Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-              <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-sky rounded-lg">
+              <div className="w-8 h-8 bg-sky-500 text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
               <div>
                 <h4 className="font-semibold mb-1">Start Small and Build Trust</h4>
                 <p className="text-sm text-muted-foreground mb-2">Begin with low-risk collaborations that demonstrate value before proposing larger partnerships.</p>
@@ -190,8 +190,8 @@ const Module7Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-green-50 rounded-lg">
-              <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-green rounded-lg">
+              <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
               <div>
                 <h4 className="font-semibold mb-1">Formalize Successful Relationships</h4>
                 <p className="text-sm text-muted-foreground mb-2">Once you've proven value, create formal agreements that benefit both parties.</p>
@@ -204,8 +204,8 @@ const Module7Content = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 bg-orange-50 rounded-lg">
-              <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
+            <div className="flex items-start gap-4 p-4 bg-pastel-amber/70 rounded-lg">
+              <div className="w-8 h-8 bg-amber-500 text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">4</div>
               <div>
                 <h4 className="font-semibold mb-1">Maintain and Nurture Partnerships</h4>
                 <p className="text-sm text-muted-foreground mb-2">Strong partnerships require ongoing attention and mutual support.</p>
@@ -225,7 +225,7 @@ const Module7Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Rocket className="h-5 w-5 text-red-600" />
+            <Rocket className="h-5 w-5 text-destructive" />
             Models for Scaling Impact
           </CardTitle>
         </CardHeader>
@@ -233,7 +233,7 @@ const Module7Content = () => {
           <p>There are different approaches to scaling your jam impact. Choose the model that best fits your context and resources:</p>
           
           <div className="space-y-4">
-            <div className="p-4 bg-red-50 rounded-lg">
+            <div className="p-4 bg-pastel-rose rounded-lg">
               <h4 className="font-semibold text-red-900 mb-2">🎯 Intensive Model: Deeper Impact</h4>
               <p className="text-sm text-red-800 mb-2">Focus on fewer participants but create more intensive, transformative experiences.</p>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
@@ -258,13 +258,13 @@ const Module7Content = () => {
               </div>
             </div>
             
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">📈 Extensive Model: Broader Reach</h4>
-              <p className="text-sm text-blue-800 mb-2">Reach more people with shorter, focused experiences that create awareness and initial engagement.</p>
+            <div className="p-4 bg-pastel-sky rounded-lg">
+              <h4 className="font-semibold text-sky-900 mb-2">📈 Extensive Model: Broader Reach</h4>
+              <p className="text-sm text-sky-800 mb-2">Reach more people with shorter, focused experiences that create awareness and initial engagement.</p>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <h5 className="font-medium mb-1">Characteristics</h5>
-                  <ul className="space-y-1 text-blue-700">
+                  <ul className="space-y-1 text-sky-700">
                     <li>• Single-day or half-day events</li>
                     <li>• Larger groups (30-100 participants)</li>
                     <li>• Awareness and inspiration focus</li>
@@ -273,7 +273,7 @@ const Module7Content = () => {
                 </div>
                 <div>
                   <h5 className="font-medium mb-1">Best For</h5>
-                  <ul className="space-y-1 text-blue-700">
+                  <ul className="space-y-1 text-sky-700">
                     <li>• Community awareness campaigns</li>
                     <li>• Corporate team building</li>
                     <li>• Conference and event integration</li>
@@ -283,13 +283,13 @@ const Module7Content = () => {
               </div>
             </div>
             
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-semibold text-green-900 mb-2">🌐 Network Model: Distributed Impact</h4>
-              <p className="text-sm text-green-800 mb-2">Train others to host jams in their own contexts, creating a network of local hosts.</p>
+            <div className="p-4 bg-pastel-green rounded-lg">
+              <h4 className="font-semibold text-primary mb-2">🌐 Network Model: Distributed Impact</h4>
+              <p className="text-sm text-primary/80 mb-2">Train others to host jams in their own contexts, creating a network of local hosts.</p>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <h5 className="font-medium mb-1">Characteristics</h5>
-                  <ul className="space-y-1 text-green-700">
+                  <ul className="space-y-1 text-primary/80">
                     <li>• Train-the-trainer programs</li>
                     <li>• Standardized methods and materials</li>
                     <li>• Ongoing support and community</li>
@@ -298,7 +298,7 @@ const Module7Content = () => {
                 </div>
                 <div>
                   <h5 className="font-medium mb-1">Best For</h5>
-                  <ul className="space-y-1 text-green-700">
+                  <ul className="space-y-1 text-primary/80">
                     <li>• Geographic expansion</li>
                     <li>• Organizational scaling</li>
                     <li>• Sustainable growth</li>
@@ -308,13 +308,13 @@ const Module7Content = () => {
               </div>
             </div>
             
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <h4 className="font-semibold text-purple-900 mb-2">🔄 Hybrid Model: Flexible Approach</h4>
-              <p className="text-sm text-purple-800 mb-2">Combine different approaches based on context, audience, and objectives.</p>
+            <div className="p-4 bg-pastel-violet rounded-lg">
+              <h4 className="font-semibold text-violet-900 mb-2">🔄 Hybrid Model: Flexible Approach</h4>
+              <p className="text-sm text-violet-800 mb-2">Combine different approaches based on context, audience, and objectives.</p>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <h5 className="font-medium mb-1">Characteristics</h5>
-                  <ul className="space-y-1 text-purple-700">
+                  <ul className="space-y-1 text-violet-700">
                     <li>• Multiple program formats</li>
                     <li>• Pathway from awareness to expertise</li>
                     <li>• Flexible resource allocation</li>
@@ -323,7 +323,7 @@ const Module7Content = () => {
                 </div>
                 <div>
                   <h5 className="font-medium mb-1">Best For</h5>
-                  <ul className="space-y-1 text-purple-700">
+                  <ul className="space-y-1 text-violet-700">
                     <li>• Diverse community needs</li>
                     <li>• Multiple funding sources</li>
                     <li>• Experimental approaches</li>
@@ -340,7 +340,7 @@ const Module7Content = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-indigo-600" />
+            <Target className="h-5 w-5 text-violet-600" />
             Maintaining Quality While Scaling
           </CardTitle>
         </CardHeader>
@@ -348,7 +348,7 @@ const Module7Content = () => {
           <p>The biggest challenge in scaling is maintaining the quality and impact that made your jams successful in the first place. Here's how to scale without losing your essence:</p>
           
           <div className="space-y-4">
-            <div className="p-4 bg-indigo-50 rounded-lg">
+            <div className="p-4 bg-pastel-violet/70 rounded-lg">
               <h4 className="font-semibold text-indigo-900 mb-2">Core Standards and Guidelines</h4>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div>
@@ -374,7 +374,7 @@ const Module7Content = () => {
               </div>
             </div>
             
-            <div className="p-4 bg-yellow-50 rounded-lg">
+            <div className="p-4 bg-pastel-amber rounded-lg">
               <h4 className="font-semibold text-yellow-900 mb-2">Training and Support Systems</h4>
               <ul className="text-sm space-y-1 text-yellow-800">
                 <li>• Comprehensive host training programs</li>
@@ -385,9 +385,9 @@ const Module7Content = () => {
               </ul>
             </div>
             
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-semibold text-green-900 mb-2">Feedback and Improvement Loops</h4>
-              <ul className="text-sm space-y-1 text-green-800">
+            <div className="p-4 bg-pastel-green rounded-lg">
+              <h4 className="font-semibold text-primary mb-2">Feedback and Improvement Loops</h4>
+              <ul className="text-sm space-y-1 text-primary/80">
                 <li>• Standardized evaluation forms and metrics</li>
                 <li>• Regular host reflection and learning sessions</li>
                 <li>• Participant feedback collection and analysis</li>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import blink, { safeDbCall, isCertifiedHost } from '../lib/blink'
+import { db, safeDbCall } from '../lib/supabase'
+import { isCertifiedHost } from '../lib/userProfile'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
@@ -35,13 +36,13 @@ export default function HostDirectoryPage() {
     setError(null)
     try {
       // 1) Base list: fetch hosts and admins separately (avoid invalid SQL OR)
-      const hostRows = await safeDbCall(() => blink.db.users.list<HostRow>({
+      const hostRows = await safeDbCall(() => db.users.list<HostRow>({
         where: { role: 'host' },
         orderBy: { displayName: 'asc' },
         limit: 500
       }))
 
-      const adminRows = await safeDbCall(() => blink.db.users.list<HostRow>({
+      const adminRows = await safeDbCall(() => db.users.list<HostRow>({
         where: { role: 'admin' },
         orderBy: { displayName: 'asc' },
         limit: 500
@@ -51,7 +52,7 @@ export default function HostDirectoryPage() {
       for (const r of [...hostRows, ...adminRows]) byId.set(r.id, r)
 
       // 2) Include anyone who actually hosted an event (even if their role flag isn't set yet)
-      const events = await safeDbCall(() => blink.db.events.list<EventHostOnly>({
+      const events = await safeDbCall(() => db.events.list<EventHostOnly>({
         orderBy: { createdAt: 'desc' },
         limit: 1000
       }))
@@ -63,7 +64,7 @@ export default function HostDirectoryPage() {
         for (let i = 0; i < missingIds.length; i += chunkSize) {
           const ids = missingIds.slice(i, i + chunkSize)
           for (const id of ids) {
-            const rows = await safeDbCall(() => (blink.db as any).users.list<HostRow>({ where: { id }, limit: 1 }))
+            const rows = await safeDbCall(() => (db as any).users.list<HostRow>({ where: { id }, limit: 1 }))
             if (rows && rows[0]) byId.set(rows[0].id, rows[0])
           }
         }
@@ -132,7 +133,7 @@ export default function HostDirectoryPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Host Directory</h1>
+            <h1 className="text-3xl font-bold font-display">Host Directory</h1>
             <p className="text-muted-foreground">Discover Global Goals Jam organisers by city and visit their profile pages.</p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
@@ -145,7 +146,7 @@ export default function HostDirectoryPage() {
             <select
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="h-10 px-3 rounded-md border bg-background"
+              className="h-10 px-3 rounded-xl border bg-background"
             >
               {allCities.map(c => (
                 <option key={c} value={c}>{c}</option>
@@ -172,14 +173,14 @@ export default function HostDirectoryPage() {
             {grouped.map(([cityName, rows]) => (
               <section key={cityName}>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-semibold flex items-center gap-2">
+                  <h2 className="text-2xl font-semibold font-display flex items-center gap-2">
                     <MapPin className="w-5 h-5" /> {cityName}
                   </h2>
                   <Badge variant="secondary">{rows.length}</Badge>
                 </div>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {rows.map(h => (
-                    <Card key={h.id} className="hover:shadow-lg transition-shadow">
+                    <Card key={h.id} className="shadow-soft hover:shadow-card-hover transition-shadow">
                       <CardHeader>
                         <div className="flex items-start gap-3">
                           <Avatar className="h-12 w-12">

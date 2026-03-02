@@ -3,7 +3,7 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Badge } from './ui/badge'
-import blink from '../lib/blink'
+import { db } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import { Edit, Eye } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -30,7 +30,7 @@ export default function CourseManagement() {
   const loadModules = async () => {
     setLoading(true)
     try {
-      const data = await blink.db.courseModules.list({ orderBy: { moduleNumber: 'asc' } })
+      const data = await db.courseModules.list({ orderBy: { moduleNumber: 'asc' } })
       setModules(data || [])
     } catch (error) {
       console.error('Failed to load modules', error)
@@ -60,10 +60,10 @@ export default function CourseManagement() {
       }
 
       if (editing.id) {
-        await blink.db.courseModules.update(editing.id, payload)
+        await db.courseModules.update(editing.id, payload)
         toast.success('Module updated')
       } else {
-        await blink.db.courseModules.create({ ...payload, moduleNumber: editing.moduleNumber || '0' })
+        await db.courseModules.create({ ...payload, moduleNumber: editing.moduleNumber || '0' })
         toast.success('Module created')
       }
 
@@ -108,7 +108,7 @@ export default function CourseManagement() {
           )}
 
           {modules.map(m => (
-            <div key={m.id} className="p-4 border rounded-md flex items-start justify-between">
+            <div key={m.id} className="p-4 border rounded-xl flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-3">
                   <Badge variant="outline">{m.moduleNumber}</Badge>
@@ -135,7 +135,7 @@ export default function CourseManagement() {
 
       {editing && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6">
+          <div className="bg-card rounded-lg shadow-card max-w-2xl w-full p-6">
             <h3 className="text-lg font-semibold mb-4">{editing.id ? 'Edit Module' : 'Create Module'}</h3>
             <div className="grid grid-cols-1 gap-3">
               <div>
@@ -148,7 +148,7 @@ export default function CourseManagement() {
               </div>
               <div>
                 <Label>Description</Label>
-                <textarea className="w-full border rounded-md p-2" rows={4} value={editing.description} onChange={(e) => handleChange('description', e.target.value)} />
+                <textarea className="w-full border rounded-xl p-2" rows={4} value={editing.description} onChange={(e) => handleChange('description', e.target.value)} />
               </div>
               <div>
                 <Label>Duration (minutes)</Label>

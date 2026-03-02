@@ -65,7 +65,7 @@ export default function AdminCertificateCreator() {
 
   const generatePDF = async () => {
     if (!certificateData.name.trim() || !certificateData.year.trim() || !certificateData.certificateDate.trim()) {
-      alert('Please fill in the required fields (Name, Year, and Date)')
+      toast.error('Please fill in the required fields (Name, Year, and Date)')
       return
     }
 
@@ -152,7 +152,7 @@ export default function AdminCertificateCreator() {
       toast.success('Certificate downloaded successfully')
     } catch (error) {
       console.error('Failed to generate PDF:', error)
-      alert('Failed to generate certificate. Please try again.')
+      toast.error('Failed to generate certificate. Please try again.')
     } finally {
       setGenerating(false)
     }
@@ -160,18 +160,18 @@ export default function AdminCertificateCreator() {
 
   const generateMultiple = async () => {
     if (!certificateData.name.trim() || !certificateData.year.trim()) {
-      alert('Please fill in the required fields (Name and Year)')
+      toast.error('Please fill in the required fields (Name and Year)')
       return
     }
     // For batch processing, user would need to upload a CSV
     // For now, show a placeholder
-    alert('Batch certificate generation coming soon. Please generate certificates individually or upload a CSV file with names.')
+    toast.info('Batch certificate generation coming soon. Please generate certificates individually or upload a CSV file with names.')
   }
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-white">
+      <div className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6 flex items-center gap-4">
             <Button

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import blink, { safeDbCall } from '../lib/blink'
+import { db, safeDbCall } from '../lib/supabase'
 
 export interface PublishedEvent {
   id: string
@@ -30,7 +30,7 @@ async function fetchPublished(): Promise<PublishedEvent[]> {
     try {
       lastError = null
       retryAtTs = null
-      const rows = await safeDbCall(() => blink.db.events.list<PublishedEvent>({
+      const rows = await safeDbCall(() => db.events.list<PublishedEvent>({
         orderBy: { eventDate: 'asc' },
         limit: 200
       }))

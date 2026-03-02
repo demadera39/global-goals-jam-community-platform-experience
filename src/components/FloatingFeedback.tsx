@@ -5,7 +5,7 @@ import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { toast } from 'sonner';
-import { blink } from '@/lib/blink';
+import { notifications } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
 interface FloatingFeedbackProps {
@@ -39,32 +39,16 @@ export function FloatingFeedback({ context = 'general', userEmail = '', userName
       const contextLabel = context === 'course' ? '[Course Feedback]' : context === 'host' ? '[Host Dashboard]' : '[General Feedback]';
       const finalSubject = formData.subject || `${contextLabel} Feedback from ${formData.name || formData.email}`;
 
-      // Send email using platform notifications
-      const result = await blink.notifications.email({
-        to: 'demadera@marcovanhout.com',
-        from: 'feedback@globalgoalsjam.org',
-        replyTo: formData.email,
+      const result = await notifications.email({
+        to: 'marco@globalgoalsjam.org',
+        from: 'Global Goals Jam <marco@globalgoalsjam.org>',
         subject: finalSubject,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #00A651;">New Feedback Received</h2>
-            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>Context:</strong> ${context === 'course' ? 'Course Dashboard' : context === 'host' ? 'Host Dashboard' : 'General'}</p>
-              <p><strong>From:</strong> ${formData.name || 'Not provided'}</p>
-              <p><strong>Email:</strong> ${formData.email}</p>
-              <p><strong>Subject:</strong> ${formData.subject || 'No subject'}</p>
-              <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
-              <p><strong>Message:</strong></p>
-              <div style="background: white; padding: 15px; border-radius: 4px;">
-                ${formData.message.replace(/\n/g, '<br>')}
-              </div>
-            </div>
-            <p style="color: #666; font-size: 12px;">This feedback was sent from the Global Goals Jam platform.</p>
-          </div>
-        `,
-        text: `
-New Feedback Received\n\nContext: ${context}\nFrom: ${formData.name || 'Not provided'}\nEmail: ${formData.email}\nSubject: ${formData.subject || 'No subject'}\n\nMessage:\n${formData.message}\n\n---\nThis feedback was sent from the Global Goals Jam platform.
-        `
+        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>${finalSubject}</h2>
+          <p><strong>From:</strong> ${formData.name || 'Anonymous'} (${formData.email})</p>
+          <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 16px 0;" />
+          <p style="white-space: pre-wrap;">${formData.message}</p>
+        </div>`,
       });
 
       if (result.success) {
@@ -88,7 +72,7 @@ New Feedback Received\n\nContext: ${context}\nFrom: ${formData.name || 'Not prov
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "fixed bottom-6 right-6 z-40 bg-primary text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110",
+          "fixed bottom-6 right-6 z-40 bg-primary text-white rounded-full p-4 shadow-card hover:shadow-xl transition-all duration-300 hover:scale-110",
           isOpen && "scale-0 opacity-0 pointer-events-none"
         )}
         aria-label="Send feedback"
@@ -99,7 +83,7 @@ New Feedback Received\n\nContext: ${context}\nFrom: ${formData.name || 'Not prov
       {/* Feedback Modal */}
       <div
         className={cn(
-          "fixed bottom-6 right-6 z-50 bg-white rounded-lg shadow-2xl border border-gray-200 transition-all duration-300",
+          "fixed bottom-6 right-6 z-50 bg-card rounded-lg shadow-2xl border border-muted transition-all duration-300",
           isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none",
           "w-[90vw] max-w-md"
         )}
@@ -107,12 +91,12 @@ New Feedback Received\n\nContext: ${context}\nFrom: ${formData.name || 'Not prov
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-foreground">
               {context === 'course' ? 'Course Feedback' : context === 'host' ? 'Host Support' : 'Send Feedback'}
             </h3>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-muted-foreground/60 hover:text-muted-foreground transition-colors"
               aria-label="Close feedback form"
             >
               <X className="h-5 w-5" />
@@ -179,7 +163,7 @@ New Feedback Received\n\nContext: ${context}\nFrom: ${formData.name || 'Not prov
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 We'll respond within 24-48 hours
               </p>
               <Button

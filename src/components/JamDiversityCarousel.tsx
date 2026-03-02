@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card'
 import { ChevronLeft, ChevronRight, MapPin, Calendar, Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { listBucketFilesWithUrls } from '@/lib/supabase'
+import { config } from '@/lib/config'
 import { toast } from 'sonner'
 
 interface JamImage {
@@ -72,7 +73,7 @@ export default function JamDiversityCarousel() {
         console.log('[JamDiversityCarousel] Refresh key:', refreshKey)
         
         // Call edge function to list bucket files (bypasses RLS restrictions)
-        const response = await fetch('https://7uamgc2j--list-bucket-images.functions.blink.new', {
+        const response = await fetch(config.functions.listBucketImagesUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ bucketName: 'jams', folder: '' }),
@@ -130,8 +131,31 @@ export default function JamDiversityCarousel() {
           }
         }
       } catch (error) {
-        console.error('[JamDiversityCarousel] Failed to load images from storage:', error)
-        toast.error('Failed to load jam photos. Check console for details.')
+        console.warn('[JamDiversityCarousel] Edge function unavailable, falling back to storage API:', error)
+
+        // Fallback: use Supabase Storage API directly
+        try {
+          const files = await listBucketFilesWithUrls('jams', '')
+          if (mounted && files.length > 0) {
+            const images: JamImage[] = files.map(file => {
+              const parsed = parseFilename(file.name)
+              return {
+                name: file.name,
+                folder: file.folder || '',
+                url: file.url,
+                ...parsed
+              }
+            })
+            const shuffled = [...images].sort(() => Math.random() - 0.5)
+            setHighlights(shuffled)
+            console.log('[JamDiversityCarousel] Loaded', shuffled.length, 'images via storage fallback')
+          } else if (mounted) {
+            setHighlights([])
+          }
+        } catch (fallbackErr) {
+          console.error('[JamDiversityCarousel] Storage fallback also failed:', fallbackErr)
+        }
+
         if (mounted) {
           setIsLoading(false)
           setIsRefreshing(false)
@@ -263,11 +287,12 @@ export default function JamDiversityCarousel() {
   }
 
   return (
-    <section className="py-16 bg-secondary/30">
+    <section className="py-20 bg-section-alt">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-2">Around the World</p>
           <div className="flex items-center justify-center gap-4 mb-4">
-            <h2 className="text-4xl font-bold text-foreground">
+            <h2 className="font-display text-4xl font-bold text-foreground">
               Global Jam Diversity
             </h2>
             <Button
@@ -350,7 +375,7 @@ export default function JamDiversityCarousel() {
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border-none shadow-lg"
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border-none shadow-card"
               onClick={goToPrev}
             >
               <ChevronLeft className="w-6 h-6" />
@@ -358,7 +383,7 @@ export default function JamDiversityCarousel() {
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border-none shadow-lg"
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border-none shadow-card"
               onClick={goToNext}
             >
               <ChevronRight className="w-6 h-6" />

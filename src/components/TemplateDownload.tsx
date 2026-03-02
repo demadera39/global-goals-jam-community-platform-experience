@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Download, FileText, Loader2 } from 'lucide-react';
 import { generateTemplate, TemplateData } from '@/lib/templateGenerator';
 import { useToast } from '@/hooks/use-toast';
-import { blink } from '@/lib/blink';
+import { db, auth } from '@/lib/supabase';
 
 interface TemplateDownloadProps {
   templateName: string;
@@ -21,7 +21,7 @@ export function TemplateDownload({ templateName, templateType, moduleNumber, cla
     
     try {
       // Get current user
-      const user = await blink.auth.me();
+      const user = await auth.me();
       
       // Generate template data
       const templateData: TemplateData = {
@@ -53,7 +53,7 @@ export function TemplateDownload({ templateName, templateType, moduleNumber, cla
       
       // Track download in database
       try {
-        await blink.db.user_achievements.create({
+        await db.user_achievements.create({
           id: `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           user_id: user?.id || 'anonymous',
           achievement_type: 'template_download',
@@ -112,7 +112,7 @@ export function TemplateCard({
   moduleNumber: number;
 }) {
   return (
-    <div className="border rounded-lg p-4 space-y-3 bg-card hover:shadow-md transition-shadow">
+    <div className="border rounded-lg p-4 space-y-3 bg-card hover:shadow-soft transition-shadow">
       <div className="flex items-start justify-between">
         <FileText className="h-5 w-5 text-primary mt-1" />
         <TemplateDownload

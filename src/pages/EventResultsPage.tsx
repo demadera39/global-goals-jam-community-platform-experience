@@ -1,10 +1,11 @@
+import { toast } from 'sonner'
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import RichTextEditor from '../components/RichTextEditor'
 import { ArrowLeft, Save, Upload, Users, AlertCircle, Loader2 } from 'lucide-react'
-import blink, { safeDbCall } from '../lib/blink'
+import { db, auth, safeDbCall } from '../lib/supabase'
 import EventMediaSection from '../components/EventMediaSection'
 import { invalidateEventsCache } from '../hooks/usePublishedEvents'
 
@@ -34,7 +35,7 @@ export default function EventResultsPage() {
   const [summary, setSummary] = useState('')
 
   useEffect(() => {
-    const unsub = blink.auth.onAuthStateChanged((state) => {
+    const unsub = auth.onAuthStateChanged((state) => {
       setUser(state.user as any)
       setLoading(state.isLoading)
     })
@@ -44,7 +45,7 @@ export default function EventResultsPage() {
   const loadEvent = useCallback(async () => {
     if (!id) return
     try {
-      const rows = await safeDbCall(() => blink.db.events.list<EventRow>({ where: { id }, limit: 1 }))
+      const rows = await safeDbCall(() => db.events.list<EventRow>({ where: { id }, limit: 1 }))
       const ev = rows[0]
       setEvent(ev || null)
       setSummary((ev?.resultsSummary as string) || '')
@@ -63,11 +64,11 @@ export default function EventResultsPage() {
     if (!event) return
     setSaving(true)
     try {
-      await safeDbCall(() => blink.db.events.update(event.id, { resultsSummary: summary || '' }))
+      await safeDbCall(() => db.events.update(event.id, { resultsSummary: summary || '' }))
       invalidateEventsCache()
     } catch (e) {
       console.error('Failed to save summary', e)
-      alert('Failed to save summary. Please try again.')
+      toast.error('Failed to save summary. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -84,10 +85,10 @@ export default function EventResultsPage() {
   if (!event) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
+        <Card className="max-w-md shadow-soft rounded-xl">
           <CardContent className="text-center py-12">
             <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Event Not Found</h2>
+            <h2 className="text-xl font-display font-semibold mb-2">Event Not Found</h2>
             <p className="text-muted-foreground mb-4">This event does not exist.</p>
             <Link to="/events"><Button><ArrowLeft className="w-4 h-4 mr-2" /> Back to Events</Button></Link>
           </CardContent>
@@ -103,7 +104,7 @@ export default function EventResultsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link to={`/events/${event.id}`}><Button variant="outline"><ArrowLeft className="w-4 h-4 mr-2" /> Back to Event</Button></Link>
-            <h1 className="text-xl sm:text-2xl font-bold">Add Results: {event.title}</h1>
+            <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Add Results: {event.title}</h1>
           </div>
           <Link to={`/events/${event.id}`} className="hidden sm:block">
             <Button>Open Event Page</Button>
@@ -111,7 +112,7 @@ export default function EventResultsPage() {
         </div>
 
         {/* Summary Editor */}
-        <Card>
+        <Card className="shadow-soft rounded-xl">
           <CardHeader>
             <CardTitle>Summary</CardTitle>
           </CardHeader>
@@ -128,7 +129,7 @@ export default function EventResultsPage() {
               minHeight="200px"
             />
             <div className="flex justify-end">
-              <Button onClick={saveSummary} disabled={!canEdit || saving} className="bg-primary-solid text-white hover:bg-primary/90">
+              <Button onClick={saveSummary} disabled={!canEdit || saving} className="bg-primary-solid text-white hover:bg-primary/90 rounded-pill">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save Summary
               </Button>

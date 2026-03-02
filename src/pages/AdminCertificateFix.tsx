@@ -123,7 +123,7 @@ export default function AdminCertificateFix() {
                       <p><strong>Previous Status:</strong> {result.previousStatus}</p>
                       <p><strong>New Status:</strong> {result.newStatus}</p>
                       <p><strong>Completed Modules:</strong> {result.completedModules.join(', ')}</p>
-                      <p className="text-green-600 font-semibold mt-2">
+                      <p className="text-primary font-semibold mt-2">
                         ✓ User can now access their certificate at /course/certificate
                       </p>
                     </div>
@@ -173,7 +173,7 @@ export default function AdminCertificateFix() {
                     <Card key={idx}>
                       <CardContent className="pt-4">
                         <div className="flex items-start gap-2">
-                          <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                           <div className="text-sm space-y-1">
                             <p><strong>{r.displayName}</strong> ({r.email})</p>
                             <p className="text-muted-foreground">

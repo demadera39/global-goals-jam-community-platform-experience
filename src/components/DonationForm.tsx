@@ -5,7 +5,7 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { Upload, X } from 'lucide-react'
-import { blink } from '../lib/blink'
+import { db, storage } from '../lib/supabase'
 import toast from 'react-hot-toast'
 
 interface DonationFormProps {
@@ -42,7 +42,7 @@ const DonationForm = ({ sessionId, amount, tierName, onComplete }: DonationFormP
 
     // Upload to storage
     try {
-      const { publicUrl } = await blink.storage.upload(
+      const { publicUrl } = await storage.upload(
         file,
         `sponsor-logos/${sessionId}-${file.name}`,
         { upsert: true }
@@ -66,7 +66,7 @@ const DonationForm = ({ sessionId, amount, tierName, onComplete }: DonationFormP
     setLoading(true)
     try {
       // Update donation record with form data
-      const donations = await blink.db.donations.list({
+      const donations = await db.donations.list({
         where: { stripeSessionId: sessionId }
       })
 
@@ -76,7 +76,7 @@ const DonationForm = ({ sessionId, amount, tierName, onComplete }: DonationFormP
       }
 
       const donation = donations[0]
-      await blink.db.donations.update(donation.id, {
+      await db.donations.update(donation.id, {
         donorName: formData.donorName,
         donorOrganization: formData.donorOrganization || null,
         donorLogoUrl: formData.donorLogoUrl || null,

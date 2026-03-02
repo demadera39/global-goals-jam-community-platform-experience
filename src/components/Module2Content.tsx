@@ -13,8 +13,8 @@ export function Module2Content() {
     <div className="space-y-6">
       {/* Module Header */}
       <div className="border-b pb-4">
-        <h2 className="text-2xl font-bold text-gray-900">Module 2: Preparing to Host</h2>
-        <p className="text-gray-600 mt-2">
+        <h2 className="text-2xl font-bold text-foreground">Module 2: Preparing to Host</h2>
+        <p className="text-muted-foreground mt-2">
           Everything you need to know before launching your Global Goals Jam – from team building to logistics.
         </p>
       </div>
@@ -27,27 +27,27 @@ export function Module2Content() {
       )}
 
       {/* Learning Outcomes */}
-      <Card className="bg-purple-50 border-purple-200">
+      <Card className="bg-pastel-violet border-violet-200">
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Target className="h-5 w-5 text-purple-600" />
+            <Target className="h-5 w-5 text-violet-600" />
             Learning Outcomes
           </h3>
           <ul className="space-y-2">
             <li className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <span>Build your organizing team and define roles</span>
             </li>
             <li className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <span>Choose the right venue and format for your community</span>
             </li>
             <li className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <span>Create a compelling invitation and recruitment strategy</span>
             </li>
             <li className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <span>Prepare materials, tools, and resources for participants</span>
             </li>
           </ul>
@@ -59,19 +59,19 @@ export function Module2Content() {
         {/* Section 1: Building Your Team */}
         <section>
           <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
-            <Users className="h-5 w-5 text-blue-600" />
+            <Users className="h-5 w-5 text-sky-600" />
             Building Your Organizing Team
           </h3>
 
           <div className="space-y-4">
-            <p className="text-gray-700">
+            <p className="text-foreground/80">
               A successful jam needs a diverse organizing team. Here are the key roles to consider:
             </p>
 
             <div className="grid md:grid-cols-2 gap-4">
               <Card className="p-4">
-                <h4 className="font-semibold text-blue-700">Lead Host</h4>
-                <p className="text-sm text-gray-600 mt-2">
+                <h4 className="font-semibold text-sky-700">Lead Host</h4>
+                <p className="text-sm text-muted-foreground mt-2">
                   • Overall coordination and vision<br/>
                   • Main point of contact<br/>
                   • Opens and closes the jam<br/>
@@ -80,8 +80,8 @@ export function Module2Content() {
               </Card>
 
               <Card className="p-4">
-                <h4 className="font-semibold text-green-700">Facilitators (2-3)</h4>
-                <p className="text-sm text-gray-600 mt-2">
+                <h4 className="font-semibold text-primary/80">Facilitators (2-3)</h4>
+                <p className="text-sm text-muted-foreground mt-2">
                   • Guide team processes<br/>
                   • Support ideation sessions<br/>
                   • Help with prototyping<br/>
@@ -90,8 +90,8 @@ export function Module2Content() {
               </Card>
 
               <Card className="p-4">
-                <h4 className="font-semibold text-purple-700">Logistics Coordinator</h4>
-                <p className="text-sm text-gray-600 mt-2">
+                <h4 className="font-semibold text-violet-700">Logistics Coordinator</h4>
+                <p className="text-sm text-muted-foreground mt-2">
                   • Venue management<br/>
                   • Materials and supplies<br/>
                   • Food and refreshments<br/>
@@ -101,7 +101,7 @@ export function Module2Content() {
 
               <Card className="p-4">
                 <h4 className="font-semibold text-orange-700">Communications Lead</h4>
-                <p className="text-sm text-gray-600 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   • Social media promotion<br/>
                   • Documentation and photos<br/>
                   • Participant communications<br/>
@@ -110,8 +110,8 @@ export function Module2Content() {
               </Card>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-blue-800">
+            <div className="bg-pastel-sky p-4 rounded-lg">
+              <p className="text-sm text-sky-800">
                 <strong>Pro Tip:</strong> Include someone with SDG expertise and someone with local community connections. 
                 Diversity in your team leads to better outcomes!
               </p>

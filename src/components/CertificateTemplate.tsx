@@ -90,7 +90,7 @@ export const CertificateTemplate = React.forwardRef<HTMLDivElement, CertificateT
         {/* Header logo - reduced size and moved up for better spacing */}
         <div className="absolute left-1/2 -translate-x-1/2 top-[60px] flex items-center justify-center" style={{ width: '180px', height: '180px' }}>
           <img
-            src={logoSrc || 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png'}
+            src={logoSrc || 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png'}
             crossOrigin="anonymous"
             alt="Global Goals Jam"
             className="max-w-full max-h-full object-contain"
@@ -98,8 +98,8 @@ export const CertificateTemplate = React.forwardRef<HTMLDivElement, CertificateT
             onError={(e) => {
               // Fallback to Supabase hosted logo
               const target = e.currentTarget as HTMLImageElement
-              if (target.src !== 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png') {
-                target.src = 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png'
+              if (target.src !== 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png') {
+                target.src = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png'
               }
             }}
           />
@@ -138,7 +138,7 @@ export const CertificateTemplate = React.forwardRef<HTMLDivElement, CertificateT
           <div className="text-center">
             <div className="flex items-center justify-center mx-auto" style={{ width: '56px', height: '56px' }}>
               <img
-                src={logoSrc || 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png'}
+                src={logoSrc || 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png'}
                 crossOrigin="anonymous"
                 alt="Global Goals Jam"
                 className="max-w-full max-h-full object-contain"
@@ -146,8 +146,8 @@ export const CertificateTemplate = React.forwardRef<HTMLDivElement, CertificateT
                 onError={(e) => {
                   // Fallback to Supabase hosted logo
                   const target = e.currentTarget as HTMLImageElement
-                  if (target.src !== 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png') {
-                    target.src = 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/GGJ_logo_socials.png'
+                  if (target.src !== 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png') {
+                    target.src = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png'
                   }
                 }}
               />
@@ -159,15 +159,15 @@ export const CertificateTemplate = React.forwardRef<HTMLDivElement, CertificateT
           <div className="text-right">
             <div className="w-[240px] h-[80px] flex items-center justify-center">
               <img
-                src={signatureSrc || 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/signature.png'}
+                src={signatureSrc || 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/signature.png'}
                 crossOrigin="anonymous"
                 alt="Marco van Hout signature"
                 className="max-h-[80px] max-w-full object-contain"
                 onError={(e) => {
                   // Fallback to Supabase-hosted signature
                   const target = e.currentTarget as HTMLImageElement
-                  if (target.src !== 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/signature.png') {
-                    target.src = 'https://ovpxkzmevqowrgoiuxta.supabase.co/storage/v1/object/public/GGJ/signature.png'
+                  if (target.src !== 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/signature.png') {
+                    target.src = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/signature.png'
                   }
                 }}
               />

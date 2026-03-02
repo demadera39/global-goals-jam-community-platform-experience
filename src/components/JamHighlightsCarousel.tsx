@@ -4,7 +4,8 @@ import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { ChevronLeft, ChevronRight, MapPin, Calendar, RefreshCw, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import { blink, safeDbCall } from '../lib/blink'
+import { db, safeDbCall } from '../lib/supabase'
+import { config } from '../lib/config'
 
 interface JamHighlight {
   id: string
@@ -27,17 +28,9 @@ export default function JamHighlightsCarousel() {
   const loadHighlights = async () => {
     setLoading(true)
     try {
-      // Check if database is available
-      if (!blink?.database?.list) {
-        console.warn('Blink database not initialized')
-        setHighlights([])
-        setLoading(false)
-        return
-      }
-
-      const result = await safeDbCall(() => 
-        blink.database.list('jam_highlights', {
-          filter: { is_verified: '1' }, // Only show verified images
+      const result = await safeDbCall(() =>
+        db.jamHighlights.list({
+          where: { isVerified: true },
           limit: 50,
         })
       )
@@ -66,7 +59,7 @@ export default function JamHighlightsCarousel() {
     
     try {
       const response = await fetch(
-        'https://7uamgc2j--scrape-jam-images.functions.blink.new',
+        config.functions.scrapeJamImagesUrl,
         {
           method: 'POST',
           headers: {

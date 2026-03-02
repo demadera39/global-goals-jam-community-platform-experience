@@ -18,7 +18,7 @@ export default function OrganizerBookletPage() {
       <section className="relative overflow-hidden py-16 sm:py-24 bg-gradient-to-br from-primary via-primary-80 to-accent">
         <div className="absolute inset-0 opacity-10 hero-pattern" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Badge variant="secondary" className="mb-6 bg-white text-primary-solid">{Year} Edition</Badge>
+          <Badge variant="secondary" className="mb-6 bg-card text-primary-solid">{Year} Edition</Badge>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight">
             Global Goals Jam
           </h1>
@@ -47,13 +47,13 @@ export default function OrganizerBookletPage() {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-            <a href="#ch1" className="p-3 rounded-md border hover:bg-secondary transition">01. Introduction & Mission</a>
-            <a href="#ch2" className="p-3 rounded-md border hover:bg-secondary transition">02. Toolkit Generator (powered by Metodic)</a>
-            <a href="#ch3" className="p-3 rounded-md border hover:bg-secondary transition">03. Planning Your Jam</a>
-            <a href="#ch4" className="p-3 rounded-md border hover:bg-secondary transition">04. Process & Methodology</a>
-            <a href="#ch5" className="p-3 rounded-md border hover:bg-secondary transition">05. Community & Partnerships</a>
-            <a href="#ch6" className="p-3 rounded-md border hover:bg-secondary transition">06. Day-by-Day Timelines</a>
-            <a href="#ch7" className="p-3 rounded-md border hover:bg-secondary transition">07. Checklists & Templates</a>
+            <a href="#ch1" className="p-3 rounded-xl border hover:bg-secondary transition">01. Introduction & Mission</a>
+            <a href="#ch2" className="p-3 rounded-xl border hover:bg-secondary transition">02. Toolkit Generator (powered by Metodic)</a>
+            <a href="#ch3" className="p-3 rounded-xl border hover:bg-secondary transition">03. Planning Your Jam</a>
+            <a href="#ch4" className="p-3 rounded-xl border hover:bg-secondary transition">04. Process & Methodology</a>
+            <a href="#ch5" className="p-3 rounded-xl border hover:bg-secondary transition">05. Community & Partnerships</a>
+            <a href="#ch6" className="p-3 rounded-xl border hover:bg-secondary transition">06. Day-by-Day Timelines</a>
+            <a href="#ch7" className="p-3 rounded-xl border hover:bg-secondary transition">07. Checklists & Templates</a>
           </div>
         </div>
       </section>
@@ -99,7 +99,7 @@ export default function OrganizerBookletPage() {
                 { n: '17', l: 'SDGs' },
                 { n: 'Year‑round', l: 'Schedule' },
               ].map((s, i) => (
-                <div key={i} className="text-center rounded-lg border p-6 bg-card">
+                <div key={i} className="text-center rounded-xl border p-6 bg-card">
                   <div className="text-3xl font-extrabold text-primary-solid">{s.n}</div>
                   <div className="text-sm text-muted-foreground">{s.l}</div>
                 </div>
@@ -205,21 +205,21 @@ export default function OrganizerBookletPage() {
                 <div>
                   <p className="font-semibold text-sm mb-2">Generated Toolkit Highlights:</p>
                   <div className="grid sm:grid-cols-3 gap-3 mt-3">
-                    <div className="p-3 bg-secondary rounded-lg">
+                    <div className="p-3 bg-secondary rounded-xl">
                       <p className="font-medium text-sm">Day 1 Morning</p>
                       <p className="text-xs text-muted-foreground mt-1">Food waste mapping exercise using neighborhood walk</p>
                     </div>
-                    <div className="p-3 bg-secondary rounded-lg">
+                    <div className="p-3 bg-secondary rounded-xl">
                       <p className="font-medium text-sm">Day 1 Afternoon</p>
                       <p className="text-xs text-muted-foreground mt-1">Ideation: Community composting & sharing apps</p>
                     </div>
-                    <div className="p-3 bg-secondary rounded-lg">
+                    <div className="p-3 bg-secondary rounded-xl">
                       <p className="font-medium text-sm">Day 2</p>
                       <p className="text-xs text-muted-foreground mt-1">Prototype testing with local residents</p>
                     </div>
                   </div>
                 </div>
-                <div className="p-4 bg-primary/5 rounded-lg">
+                <div className="p-4 bg-primary/5 rounded-xl">
                   <p className="text-sm"><strong>Result:</strong> Teams created a neighborhood food-sharing app prototype and established 3 community composting points.</p>
                 </div>
               </CardContent>
@@ -278,18 +278,18 @@ export default function OrganizerBookletPage() {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 bg-accent/5 rounded-lg">
+                <div className="p-4 bg-accent/5 rounded-xl">
                   <p className="text-sm"><strong>Result:</strong> Developed an offline learning hub system now used in 12 schools, reaching 800+ students.</p>
                 </div>
               </CardContent>
             </Card>
 
             {/* Example 3: Climate Action */}
-            <Card className="border-l-4 border-l-green-500">
+            <Card className="border-l-4 border-l-primary">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <CardTitle className="flex items-center gap-2">
-                    <Globe2 className="w-5 h-5 text-green-500" />
+                    <Globe2 className="w-5 h-5 text-primary" />
                     Example 3: Climate Action Jam - Singapore
                   </CardTitle>
                   <Badge variant="outline">SDG 13</Badge>
@@ -314,25 +314,25 @@ export default function OrganizerBookletPage() {
                 <div>
                   <p className="font-semibold text-sm mb-2">Toolkit Methods Used:</p>
                   <div className="grid sm:grid-cols-2 gap-3 mt-3">
-                    <div className="p-3 border rounded-lg">
+                    <div className="p-3 border rounded-xl">
                       <p className="font-medium text-sm">Carbon Footprint Mapping</p>
                       <p className="text-xs text-muted-foreground mt-1">Visual tool to identify biggest impact areas</p>
                     </div>
-                    <div className="p-3 border rounded-lg">
+                    <div className="p-3 border rounded-xl">
                       <p className="font-medium text-sm">Cost-Benefit Matrix</p>
                       <p className="text-xs text-muted-foreground mt-1">Prioritize solutions by impact vs. investment</p>
                     </div>
-                    <div className="p-3 border rounded-lg">
+                    <div className="p-3 border rounded-xl">
                       <p className="font-medium text-sm">Stakeholder Journey Maps</p>
                       <p className="text-xs text-muted-foreground mt-1">Understand decision-making processes</p>
                     </div>
-                    <div className="p-3 border rounded-lg">
+                    <div className="p-3 border rounded-xl">
                       <p className="font-medium text-sm">Rapid Prototyping</p>
                       <p className="text-xs text-muted-foreground mt-1">Test solutions with real businesses</p>
                     </div>
                   </div>
                 </div>
-                <div className="p-4 bg-green-500/5 rounded-lg">
+                <div className="p-4 bg-pastel-green/50 rounded-xl">
                   <p className="text-sm"><strong>Result:</strong> Created a free carbon calculator tool and guidebook, adopted by 50+ SMEs in first month.</p>
                 </div>
               </CardContent>
@@ -569,7 +569,7 @@ export default function OrganizerBookletPage() {
               </Card>
             </div>
 
-            <div className="rounded-lg border p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border p-4 text-sm text-muted-foreground">
               Tip: Inside Toolkit → Generator, pick “Include printable pack” to auto‑bundle all relevant templates for your plan.
             </div>
           </div>

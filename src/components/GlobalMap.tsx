@@ -4,7 +4,7 @@ import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { MapPin, Calendar, Users, ExternalLink, AlertCircle } from 'lucide-react'
-import blink, { safeDbCall } from '../lib/blink'
+import { db, safeDbCall } from '../lib/supabase'
 import { cn, sdgNumberFromFocus } from '../lib/utils'
 import { geocodeLocation, distanceKm } from '../lib/geocoding'
 import { usePublishedEvents, applyEventCoordUpdates } from '../hooks/usePublishedEvents'
@@ -62,26 +62,6 @@ export default function GlobalMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading])
 
-  const loadEvents = async () => {
-    try {
-      const eventList = await safeDbCall(() => blink.db.events.list({
-        where: { OR: [ { status: 'published' }, { status: 'ongoing' }, { status: 'completed' }, { status: 'draft' } ] },
-        orderBy: { eventDate: 'asc' },
-        limit: 200
-      }))
-      setEvents(eventList)
-    } catch (error: any) {
-      // Swallow rate limit error on initial load to avoid log noise; UI will show empty state gracefully
-      if (error?.status === 429 || error?.details?.code === 'RATE_LIMIT_EXCEEDED') {
-        console.warn('Events rate-limited on map load; will retry on user action or later geocode pass')
-      } else {
-        console.error('Failed to load events:', error)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Geocode pass: for events without coords, or coords clearly off (>500km from geocoded city)
   async function geocodeAndFixEvents() {
     try {
@@ -112,8 +92,14 @@ export default function GlobalMap() {
       }
 
       if (updates.length) {
-        // Persist updates to DB (upsertMany for efficiency)
-        await safeDbCall(() => blink.db.events.upsertMany(updates))
+        // Persist coordinate updates to DB
+        for (const u of updates) {
+          try {
+            await safeDbCall(() => db.events.update(u.id, { latitude: u.latitude, longitude: u.longitude }))
+          } catch (e) {
+            console.warn(`Failed to persist coords for event ${u.id}`, e)
+          }
+        }
         // Locally apply updates and avoid triggering another DB read
         setEvents(prev => applyEventCoordUpdates(prev, updates))
       }
@@ -289,7 +275,7 @@ export default function GlobalMap() {
                 {events.map((event) => (
                   <Card 
                     key={event.id} 
-                    className={cn('cursor-pointer transition-all duration-200 hover:shadow-md', selectedEvent?.id === event.id ? 'ring-2 ring-primary' : '')}
+                    className={cn('cursor-pointer transition-all duration-200 hover:shadow-soft', selectedEvent?.id === event.id ? 'ring-2 ring-primary' : '')}
                     onClick={() => handleSelectEvent(event)}
                   >
                     <CardHeader className="pb-3">

@@ -4,7 +4,7 @@ import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu'
 import { Globe, Menu, X, User, LogOut, Settings, BookOpen, Shield } from 'lucide-react'
-import blink from '../lib/blink'
+// blink import removed — was unused
 import { getUserProfile, UserProfile, COURSE_STATUS } from '../lib/userStatus'
 import { appAuth } from '../lib/simpleAuth'
 import { clearAuthToken } from '../lib/auth'
@@ -91,10 +91,15 @@ export default function Navigation() {
     }
   }
 
+  const canAccessCourse = Boolean(
+    (user && (user.role === 'admin' || user.role === 'host')) ||
+    (userProfile && userProfile.isPaid &&
+      (userProfile.courseStatus === COURSE_STATUS.ACTIVE || userProfile.courseStatus === COURSE_STATUS.COMPLETED))
+  )
+
   const handleCertificationCourseClick = (e: React.MouseEvent) => {
-    // If user is enrolled and paid, redirect to course dashboard
-    if (userProfile && userProfile.isPaid && 
-        (userProfile.courseStatus === COURSE_STATUS.ACTIVE || userProfile.courseStatus === COURSE_STATUS.COMPLETED)) {
+    // If user can access the course (admin, host, or enrolled+paid), go to dashboard
+    if (canAccessCourse) {
       e.preventDefault()
       navigate('/course/dashboard')
     }
@@ -103,7 +108,9 @@ export default function Navigation() {
 
   const baseItems = [
     { name: 'Home', href: '/' },
+    { name: '2026 Theme', href: '/theme' },
     { name: 'Events', href: '/events' },
+    { name: 'Process', href: '/process' },
     { name: 'About', href: '/about' },
     { name: 'FAQ', href: '/faq' },
     { name: 'Contact', href: '/contact' },
@@ -120,36 +127,41 @@ export default function Navigation() {
   ]
 
   return (
-    <nav className="bg-white/95 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+    <nav aria-label="Main navigation" className="bg-white/80 dark:bg-background/80 backdrop-blur-lg border-b border-border/50 sticky top-0 z-50">
+      {/* SDG Color Strip */}
+      <div className="flex w-full h-[3px]" aria-hidden="true">
+        {Array.from({ length: 17 }, (_, i) => (
+          <div key={i} className={`flex-1 bg-sdg-${i + 1}`} />
+        ))}
+      </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-[4.5rem]">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-2.5 group">
             <img
               src={logoSrc}
-              alt="Global Goals Jam Marker"
-              className="w-10 h-10 object-contain"
+              alt="Global Goals Jam"
+              className="w-8 h-10 object-contain transition-transform group-hover:scale-105"
               decoding="async"
               onError={(e) => {
                 const img = e.currentTarget as HTMLImageElement
-                // Fallback to SVG logo if marker.png fails
                 if (!img.src.endsWith('/ggj-logo.svg')) img.src = '/ggj-logo.svg'
               }}
             />
-            <span className="text-xl font-semibold text-foreground">Global Goals Jam</span>
+            <span className="text-lg font-display font-bold text-foreground tracking-tight">Global Goals Jam</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-1">
             {(navItems || []).map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
                 onClick={item.onClick}
-                className={`transition-colors duration-200 ${
+                className={`text-sm px-3 py-2 rounded-lg transition-colors duration-200 ${
                   location.pathname === item.href
-                    ? 'text-primary font-medium'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'text-primary font-medium bg-primary/5'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                 }`}
               >
                 {item.name}
@@ -164,7 +176,7 @@ export default function Navigation() {
             ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user.profileImage} alt={user.displayName || user.email} />
                       <AvatarFallback>
@@ -196,16 +208,10 @@ export default function Navigation() {
                       Return to Admin
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onSelect={() => navigate('/course/enroll')}>
+                  <DropdownMenuItem onSelect={() => navigate(canAccessCourse ? '/course/dashboard' : '/course/enroll')}>
                     <BookOpen className="mr-2 h-4 w-4" />
-                    Certification Course
+                    {canAccessCourse ? 'My Course' : 'Certification Course'}
                   </DropdownMenuItem>
-                  {userProfile && (userProfile.courseStatus === COURSE_STATUS.ACTIVE || userProfile.courseStatus === COURSE_STATUS.COMPLETED) && (
-                    <DropdownMenuItem onSelect={() => navigate('/course/dashboard')}>
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      My Course
-                    </DropdownMenuItem>
-                  )}
                   {canSeeHostTools && (
                     <>
                       <DropdownMenuItem asChild>
@@ -255,7 +261,7 @@ export default function Navigation() {
                 <Button variant="ghost" asChild>
                   <Link to="/sign-in">Sign in</Link>
                 </Button>
-                <Button asChild className="bg-primary-solid text-white hover:bg-primary/90">
+                <Button variant="pill" asChild>
                   <Link to="/sign-in">Get Started</Link>
                 </Button>
               </div>
@@ -268,6 +274,8 @@ export default function Navigation() {
               variant="ghost"
               size="sm"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
@@ -277,15 +285,15 @@ export default function Navigation() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
+            <div className="px-3 pt-3 pb-4 space-y-1 rounded-xl shadow-card bg-card border border-border/50 mt-1 mx-2 mb-2">
               {(navItems || []).map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`block px-3 py-2 text-base font-medium transition-colors duration-200 ${
+                  className={`block px-3 py-2.5 text-base rounded-lg transition-colors duration-200 ${
                     location.pathname === item.href
-                      ? 'text-primary font-semibold'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'text-primary font-semibold bg-primary/5'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   }`}
                   onClick={(e) => {
                     item.onClick?.(e)
@@ -295,7 +303,7 @@ export default function Navigation() {
                   {item.name}
                 </Link>
               ))}
-              <div className="pt-4 pb-3 border-t border-border">
+              <div className="pt-4 pb-3 border-t border-border/50">
                 {user ? (
                   <div className="flex items-center px-3">
                     <Avatar className="h-10 w-10">
@@ -314,7 +322,7 @@ export default function Navigation() {
                     <Button variant="ghost" onClick={handleLogin} className="w-full justify-start">
                       Sign in
                     </Button>
-                    <Button asChild className="w-full bg-primary-solid text-white hover:bg-primary/90">
+                    <Button variant="pill" asChild className="w-full">
                       <Link to="/sign-in">Get Started</Link>
                     </Button>
                   </div>

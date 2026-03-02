@@ -22,8 +22,8 @@ export default function SDGCard({
 }: SDGCardProps) {
   return (
     <Card 
-      className={`relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-        isSelected ? 'ring-2 ring-primary shadow-lg' : ''
+      className={`relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-card hover:scale-105 ${
+        isSelected ? 'ring-2 ring-primary shadow-card' : ''
       }`}
       onClick={onClick}
     >
