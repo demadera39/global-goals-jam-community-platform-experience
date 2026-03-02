@@ -18,6 +18,32 @@ export interface FullUser {
  */
 export async function getFullUser(): Promise<FullUser | null> {
   try {
+    // 0) Check if we're in impersonation mode — if so, use the impersonated user
+    //    from localStorage instead of the real Supabase Auth session (which is the admin).
+    const impersonatorUser = typeof window !== 'undefined' ? localStorage.getItem('impersonator_user') : null
+    if (impersonatorUser) {
+      try {
+        const storedStr = localStorage.getItem('user')
+        if (storedStr) {
+          const stored = JSON.parse(storedStr)
+          if (stored?.id && stored?.email) {
+            // Enrich with DB profile
+            const profiles = await safeDbCall(() => db.users.list({ where: { id: stored.id }, limit: 1 }))
+            const profile = profiles?.[0] || null
+            return {
+              id: stored.id,
+              email: stored.email,
+              displayName: profile?.displayName || stored.displayName || stored.email,
+              role: profile?.role || stored.role || 'participant',
+              profileImage: profile?.profileImage || profile?.avatarUrl || null,
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[getFullUser] impersonation fallback error:', e)
+      }
+    }
+
     // 1) Get authenticated user from Supabase Auth
     const { data: { user: authUser } } = await supabase.auth.getUser()
 
