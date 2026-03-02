@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     const impersonationToken = btoa(JSON.stringify({
       userId: targetUser.id,
       email: targetUser.email,
-      displayName: targetUser.displayName,
+      displayName: targetUser.display_name,
       role: targetUser.role,
       impersonated: true,
       actorId: requester.id,
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
       user: {
         id: targetUser.id,
         email: targetUser.email,
-        displayName: targetUser.displayName,
+        displayName: targetUser.display_name,
         role: targetUser.role,
       },
       expiresAt,

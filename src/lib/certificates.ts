@@ -395,12 +395,12 @@ export async function createCertificateRecord(params: {
 
   if (existing?.[0]) {
     const updated = await safeDbCall(() => db.certificates.update(existing[0].id, {
-      recipientName: params.participantName,
-      eventTitle: params.eventTitle,
-      eventLocation: params.eventLocation,
-      eventDate: params.eventDate,
+      recipientName: params.participantName || 'Participant',
+      eventTitle: params.eventTitle || 'Global Goals Jam',
+      eventLocation: params.eventLocation || '—',
+      eventDate: params.eventDate || new Date().toISOString(),
       issuedBy: issuerId,
-      certificateUrl: params.certificateUrl,
+      certificateUrl: params.certificateUrl || '',
       certificateType: certType
     }))
     return updated
@@ -408,14 +408,14 @@ export async function createCertificateRecord(params: {
 
   const res = await safeDbCall(() => db.certificates.create({
     certificateType: certType,
-    eventId: params.eventId,
+    eventId: params.eventId || 'general',
     recipientId: params.recipientId,
-    recipientName: params.participantName,
-    eventTitle: params.eventTitle,
-    eventLocation: params.eventLocation,
-    eventDate: params.eventDate,
+    recipientName: params.participantName || 'Participant',
+    eventTitle: params.eventTitle || 'Global Goals Jam',
+    eventLocation: params.eventLocation || '—',
+    eventDate: params.eventDate || new Date().toISOString(),
     issuedBy: issuerId,
-    certificateUrl: params.certificateUrl
+    certificateUrl: params.certificateUrl || ''
   }))
   return res
 }
@@ -438,15 +438,13 @@ export async function showCertificateInNewTab(data: BuildCertData, opts?: { save
   try {
     const origin = window.location.origin
 
-    const toDataUrl = async (path: string): Promise<string> => {
-      const url = `${origin}${path}`
+    const fetchAsDataUrl = async (url: string): Promise<string> => {
       const res = await fetch(url, { cache: 'no-store' })
       if (!res.ok) throw new Error(`Failed to fetch asset: ${url}`)
       const contentType = res.headers.get('content-type') || ''
 
       if (contentType.includes('svg')) {
         const svgText = await res.text()
-        // Encode SVG as base64 for maximum compatibility inside blob documents and canvases
         const base64 = btoa(unescape(encodeURIComponent(svgText)))
         return `data:image/svg+xml;base64,${base64}`
       } else {
@@ -461,18 +459,16 @@ export async function showCertificateInNewTab(data: BuildCertData, opts?: { save
     }
 
     const logoUrl = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/GGJ_LOGO.png'
-    const signatureUrl = `${origin}/marco-signature.svg`
+    const signatureUrl = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/images/signature.png'
 
     const [logoDataUrl, signatureDataUrl] = await Promise.all([
-      toDataUrl(logoUrl.startsWith('http') ? logoUrl : `${origin}${logoUrl}`),
-      toDataUrl(signatureUrl)
+      fetchAsDataUrl(logoUrl),
+      fetchAsDataUrl(signatureUrl)
     ])
 
     htmlContent = htmlContent
       .replaceAll(logoUrl, logoDataUrl)
       .replaceAll(signatureUrl, signatureDataUrl)
-      // Also replace any remaining relative paths just in case
-      .replaceAll('/marco-signature.svg', signatureDataUrl)
       // Remove crossorigin attributes which can interfere in blob contexts
       .replaceAll('crossorigin="anonymous"', '')
       .replaceAll("crossorigin='anonymous'", '')
