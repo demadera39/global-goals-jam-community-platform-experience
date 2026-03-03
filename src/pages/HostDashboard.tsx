@@ -512,7 +512,7 @@ export default function HostDashboard() {
         description: '',
         fileUrl: newLink.url.trim(),
         fileType: 'link',
-        eventId: newLink.eventId || undefined
+        eventId: (newLink.eventId && newLink.eventId !== '_none') ? newLink.eventId : undefined
       }))
       if (created) {
         const rec = Array.isArray(created) ? created[0] : created
@@ -694,7 +694,7 @@ export default function HostDashboard() {
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
           <div className="grid md:grid-cols-3 gap-4">
-            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => { const a = document.createElement('a'); a.href = '/assets/ggj_assets.zip'; a.download = ''; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}>
+            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => { const a = document.createElement('a'); a.href = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJ_assets.zip'; a.download = ''; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -708,7 +708,7 @@ export default function HostDashboard() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => window.open('/assets/ggj_info_booklet.pdf', '_blank')}>
+            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => window.open('https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/ggj_info_booklet.pdf', '_blank')}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -722,22 +722,20 @@ export default function HostDashboard() {
                 </div>
               </CardContent>
             </Card>
-            <Link to="/organizer-booklet" className="block">
-              <Card className="hover:shadow-soft transition-shadow cursor-pointer h-full">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium">Organizer Booklet</h3>
-                      <p className="text-sm text-muted-foreground">Interactive toolkit</p>
-                    </div>
-                    <Compass className="w-4 h-4 text-muted-foreground" />
+            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => window.open('https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJimpactreport_compressed.pdf', '_blank')}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-primary" />
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
+                  <div className="flex-1">
+                    <h3 className="font-medium">Impact Report</h3>
+                    <p className="text-sm text-muted-foreground">Results & outcomes</p>
+                  </div>
+                  <Eye className="w-4 h-4 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -1215,10 +1213,10 @@ export default function HostDashboard() {
                         <Upload className="w-4 h-4 mr-2" /> {mediaUploading ? 'Uploading…' : 'Choose File'}
                       </Button>
                       {events.length > 0 && (
-                        <Select value={newLink.eventId} onValueChange={(v) => setNewLink(prev => ({ ...prev, eventId: v }))}>
+                        <Select value={newLink.eventId || '_none'} onValueChange={(v) => setNewLink(prev => ({ ...prev, eventId: v === '_none' ? '' : v }))}>
                           <SelectTrigger className="w-[220px]"><SelectValue placeholder="Assign to event (optional)" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">No Event</SelectItem>
+                            <SelectItem value="_none">No Event</SelectItem>
                             {events.map(e => (
                               <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>
                             ))}
@@ -1236,10 +1234,10 @@ export default function HostDashboard() {
                     <Input placeholder="https://..." value={newLink.url} onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))} />
                     <div className="flex items-center gap-2">
                       {events.length > 0 && (
-                        <Select value={newLink.eventId} onValueChange={(v) => setNewLink(prev => ({ ...prev, eventId: v }))}>
+                        <Select value={newLink.eventId || '_none'} onValueChange={(v) => setNewLink(prev => ({ ...prev, eventId: v === '_none' ? '' : v }))}>
                           <SelectTrigger className="w-[220px]"><SelectValue placeholder="Assign to event (optional)" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">No Event</SelectItem>
+                            <SelectItem value="_none">No Event</SelectItem>
                             {events.map(e => (
                               <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>
                             ))}

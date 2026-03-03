@@ -1,14 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
-import { Download, FileText, Image as ImageIcon, FolderDown, BookOpen } from 'lucide-react'
+import { Download, FileText, Image as ImageIcon, FolderDown, BookOpen, BarChart3 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+
+const STORAGE_BASE = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets'
 
 export default function HostAssets() {
   const files = {
-    brandPack: '/assets/ggj_assets.zip',
-    brandExtras: '/assets/ggj_extra_assets.zip',
-    instructionGuide: '/assets/ggj_info_booklet.pdf',
-    organizerBooklet: '/assets/ggj_organisers_2023_small.pdf',
+    brandPack: `${STORAGE_BASE}/GGJ_assets.zip`,
+    brandExtras: `${STORAGE_BASE}/GGJ_extra_assets.zip`,
+    instructionGuide: `${STORAGE_BASE}/ggj_info_booklet.pdf`,
+    impactReport: `${STORAGE_BASE}/GGJimpactreport_compressed.pdf`,
   }
 
   return (
@@ -81,20 +83,25 @@ export default function HostAssets() {
           </CardContent>
         </Card>
 
-        {/* Organizer Booklet */}
+        {/* Impact Report */}
         <Card className="hover:shadow-soft transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary" /> Organizer Booklet
+              <BarChart3 className="w-5 h-5 text-primary" /> Impact Report
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">Interactive organizer booklet with practical toolkit examples, timelines, and checklists for hosts.</p>
+            <p className="text-sm text-muted-foreground">Comprehensive GGJ impact report — key results, outcomes, and stories from Global Goals Jam events.</p>
             <div className="flex flex-wrap gap-2">
               <Button asChild className="gap-2 bg-primary-solid text-white hover:bg-primary/90">
-                <Link to="/organizer-booklet">
-                  <BookOpen className="w-4 h-4" /> Interactive Booklet
-                </Link>
+                <a href={files.impactReport} target="_blank" rel="noopener noreferrer">
+                  <FileText className="w-4 h-4" /> View PDF
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="gap-2">
+                <a href={files.impactReport} download target="_blank" rel="noopener noreferrer">
+                  <Download className="w-4 h-4" /> Download PDF
+                </a>
               </Button>
             </div>
           </CardContent>
