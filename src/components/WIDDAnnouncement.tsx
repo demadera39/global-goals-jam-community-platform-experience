@@ -40,7 +40,7 @@ export default function WIDDAnnouncement() {
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-xs font-semibold uppercase tracking-wider text-[#F5C6CF]">
                 <Sparkles className="w-3.5 h-3.5" />
-                Shared Theme
+                Amplify Your Impact
               </span>
             </div>
 
