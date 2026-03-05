@@ -2,7 +2,7 @@ import { Button } from './ui/button'
 import { ArrowRight, ExternalLink, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-const WIDD_BANNER = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/widd-2026-banner.jpg'
+const WIDD_BANNER = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/widd-2026-banner.png'
 const WIDD_REGISTER_FORM = 'https://forms.gle/XZpJMKv8J8fywnkz7'
 const WIDD_PAGE = 'https://wdo.org/programmes/widd/widd-2026/'
 
