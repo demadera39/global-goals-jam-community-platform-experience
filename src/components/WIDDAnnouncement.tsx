@@ -40,7 +40,7 @@ export default function WIDDAnnouncement() {
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-xs font-semibold uppercase tracking-wider text-[#F5C6CF]">
                 <Sparkles className="w-3.5 h-3.5" />
-                Partnership Announcement
+                Shared Theme
               </span>
             </div>
 
@@ -50,23 +50,23 @@ export default function WIDDAnnouncement() {
             </h2>
 
             <p className="text-[#E8C5CC] text-base sm:text-lg leading-relaxed max-w-xl">
-              The World Design Organization just announced <strong className="text-white">"Resilience"</strong> as the WIDD 2026 theme — the same theme powering our Global Goals Jams this year. This is a unique chance to amplify your local Jam's impact on the world stage.
+              The World Design Organization just announced <strong className="text-white">"Resilience"</strong> as the WIDD 2026 theme — the same theme powering our Global Goals Jams this year. This is a great opportunity to amplify your local Jam's impact by also registering it as a WIDD event.
             </p>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-              <p className="text-sm text-[#E8C5CC] font-medium mb-3">Host a Global Goals Jam as a WIDD event:</p>
+              <p className="text-sm text-[#E8C5CC] font-medium mb-3">Register your Global Goals Jam as a WIDD event:</p>
               <ul className="space-y-2 text-sm text-white/90">
                 <li className="flex items-start gap-2">
                   <span className="text-[#F0B4BF] mt-0.5">1.</span>
-                  <span><strong>Register your Jam</strong> on the WDO website as an official WIDD event</span>
+                  <span><strong>Submit your Jam</strong> via the WDO event form to appear on their global map</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#F0B4BF] mt-0.5">2.</span>
-                  <span><strong>Host on 29 June</strong> or any date around World Industrial Design Day</span>
+                  <span><strong>Host on or around 29 June</strong> — World Industrial Design Day</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#F0B4BF] mt-0.5">3.</span>
-                  <span><strong>Gain global visibility</strong> — your event appears on WDO's worldwide map</span>
+                  <span><strong>Reach a wider audience</strong> through WDO's global design community</span>
                 </li>
               </ul>
             </div>
@@ -107,14 +107,6 @@ export default function WIDDAnnouncement() {
                   // Fallback: hide image if not yet uploaded to storage
                   (e.target as HTMLImageElement).style.display = 'none'
                 }}
-              />
-            </div>
-            <div className="flex items-center gap-3 text-white/60 text-xs">
-              <span>In partnership with</span>
-              <img
-                src="https://wdo.org/wp-content/uploads/WDO-logo.png"
-                alt="World Design Organization"
-                className="h-6 brightness-0 invert opacity-60"
               />
             </div>
           </div>
