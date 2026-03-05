@@ -77,7 +77,7 @@ export default function WIDDAnnouncement() {
                   Register at WDO <ExternalLink className="w-4 h-4 ml-2" />
                 </a>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 rounded-full px-6">
+              <Button asChild size="lg" className="bg-transparent border-2 border-white/40 text-white hover:bg-white/10 rounded-full px-6">
                 <Link to="/theme">
                   Our 2026 Theme <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
