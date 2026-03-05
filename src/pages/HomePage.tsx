@@ -1,4 +1,5 @@
 import HeroSection from '../components/HeroSection'
+import WIDDAnnouncement from '../components/WIDDAnnouncement'
 import SponsorBanner from '../components/SponsorBanner'
 import SponsorSection from '../components/SponsorSection'
 import SponsorSection2 from '../components/SponsorSection'
@@ -19,6 +20,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <FloatingAnnouncement />
       <HeroSection />
+
+      {/* WIDD 2026 Partnership Announcement */}
+      <WIDDAnnouncement />
 
       {/* What is a Global Goals Jam? */}
       <section className="py-20 bg-section-warm">
