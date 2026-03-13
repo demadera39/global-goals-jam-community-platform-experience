@@ -165,14 +165,18 @@ export default function UserManagementPage() {
       try {
         const existing = await db.courseEnrollments.list({
           where: { userId: selectedUser.id },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { enrolledAt: 'desc' },
           limit: 1
         }) as any[]
         const rec = existing?.[0]
         const desired = editForm.courseStatus
         if (desired === 'not_enrolled') {
           if (rec) {
-            await db.courseEnrollments.delete(rec.id)
+            try {
+              await db.courseEnrollments.delete(rec.id)
+            } catch (delErr) {
+              await db.courseEnrollments.update(rec.id, { status: 'expired', updatedAt: new Date().toISOString() })
+            }
           }
         } else {
           const update: any = {
@@ -180,7 +184,7 @@ export default function UserManagementPage() {
             status: desired,
             updatedAt: new Date().toISOString()
           }
-            if (!rec) {
+          if (!rec) {
             update.enrolledAt = new Date().toISOString()
             if (editForm.markPaid) {
               update.amountPaid = '39.99'
@@ -199,8 +203,13 @@ export default function UserManagementPage() {
           }
         }
         await loadEnrollments()
-      } catch (e) {
-        console.warn('Enrollment update failed', e)
+      } catch (e: any) {
+        console.error('Enrollment update failed', e)
+        toast({
+          title: 'Enrollment update failed',
+          description: e?.message || 'Could not save course status / payment',
+          variant: 'destructive'
+        })
       }
 
       toast({
