@@ -43,7 +43,7 @@ interface PasswordResetData {
 export default function UserManagementPage() {
   const { toast } = useToast()
   const [users, setUsers] = useState<UserData[]>([])
-  const [enrollments, setEnrollments] = useState<Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; stripePaymentIntent?: string; enrolledAt?: string }>>({})
+  const [enrollments, setEnrollments] = useState<Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; molliePaymentId?: string; enrolledAt?: string }>>({})
   const [passwordResets, setPasswordResets] = useState<PasswordResetData[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -106,16 +106,16 @@ export default function UserManagementPage() {
         orderBy: { enrolledAt: 'desc' },
         limit: 1000
       }) as any[]
-      const map: Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; stripePaymentIntent?: string; enrolledAt?: string }> = {}
+      const map: Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; molliePaymentId?: string; enrolledAt?: string }> = {}
       for (const e of list) {
         if (!e?.userId) continue
         const status = (e.status === 'completed') ? 'completed' : (e.status === 'active') ? 'active' : (e.status === 'pending') ? 'pending' : 'not_enrolled'
         const isPaid = !!(e.amountPaid && parseFloat(e.amountPaid) > 0)
-        const paidStrict = (status === 'active' || status === 'completed') && !!(e.stripePaymentIntent && String(e.stripePaymentIntent).trim() !== '')
-        // Always keep the most valid/latest record per user
+        const hasPaymentRef = !!(e.molliePaymentId && String(e.molliePaymentId).trim() !== '')
+        const paidStrict = (status === 'active' || status === 'completed') && (isPaid || hasPaymentRef)
         const existing = map[e.userId]
         if (!existing || (existing.status !== 'completed' && status === 'completed') || (existing.status === 'pending' && (status === 'active' || status === 'completed'))) {
-          map[e.userId] = { status, isPaid, paidStrict, stripePaymentIntent: e.stripePaymentIntent, enrolledAt: e.enrolledAt }
+          map[e.userId] = { status, isPaid, paidStrict, molliePaymentId: e.molliePaymentId, enrolledAt: e.enrolledAt }
         }
       }
       setEnrollments(map)
@@ -143,7 +143,7 @@ export default function UserManagementPage() {
       status: user.status,
       location: user.location || '',
       courseStatus: e?.status || 'not_enrolled',
-      markPaid: !!e?.paidStrict
+      markPaid: !!(e?.paidStrict || e?.isPaid)
     })
     setShowEditDialog(true)
   }
@@ -180,20 +180,20 @@ export default function UserManagementPage() {
             status: desired,
             updatedAt: new Date().toISOString()
           }
-          if (!rec) {
+            if (!rec) {
             update.enrolledAt = new Date().toISOString()
             if (editForm.markPaid) {
               update.amountPaid = '39.99'
-              update.stripePaymentIntent = `manual_${Date.now()}`
+              update.molliePaymentId = `manual_${Date.now()}`
             }
             await db.courseEnrollments.create(update)
           } else {
             if (editForm.markPaid) {
               update.amountPaid = rec.amountPaid || '39.99'
-              update.stripePaymentIntent = rec.stripePaymentIntent || `manual_${Date.now()}`
+              update.molliePaymentId = rec.molliePaymentId || `manual_${Date.now()}`
             } else {
               update.amountPaid = rec.amountPaid || null
-              update.stripePaymentIntent = rec.stripePaymentIntent || null
+              update.molliePaymentId = rec.molliePaymentId || null
             }
             await db.courseEnrollments.update(rec.id, update)
           }
@@ -707,10 +707,10 @@ export default function UserManagementPage() {
                         <TableCell>
                           {(() => {
                             const info = enrollments[user.id]
-                            if (info?.paidStrict) {
-                              return <Badge variant="secondary">yes</Badge>
+                            if (info?.paidStrict || info?.isPaid) {
+                              return <Badge variant="green">paid</Badge>
                             }
-                            return <Badge variant="outline">no</Badge>
+                            return <span className="text-muted-foreground text-sm">no</span>
                           })()}
                         </TableCell>
                         <TableCell>{user.location || '-'}</TableCell>
