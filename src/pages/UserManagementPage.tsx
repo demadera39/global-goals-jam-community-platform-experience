@@ -112,7 +112,7 @@ export default function UserManagementPage() {
         const status = (e.status === 'completed') ? 'completed' : (e.status === 'active') ? 'active' : (e.status === 'pending') ? 'pending' : 'not_enrolled'
         const isPaid = !!(e.amountPaid && parseFloat(e.amountPaid) > 0)
         const hasPaymentRef = !!(e.molliePaymentId && String(e.molliePaymentId).trim() !== '')
-        const paidStrict = (status === 'active' || status === 'completed') && (isPaid || hasPaymentRef)
+        const paidStrict = status === 'completed' || ((status === 'active') && (isPaid || hasPaymentRef))
         const existing = map[e.userId]
         if (!existing || (existing.status !== 'completed' && status === 'completed') || (existing.status === 'pending' && (status === 'active' || status === 'completed'))) {
           map[e.userId] = { status, isPaid, paidStrict, molliePaymentId: e.molliePaymentId, enrolledAt: e.enrolledAt }
