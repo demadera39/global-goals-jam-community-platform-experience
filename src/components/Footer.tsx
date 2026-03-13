@@ -21,6 +21,7 @@ export default function Footer() {
         { name: 'Host a Jam', href: '/course/train-the-trainer' },
         { name: 'Toolkit', href: '/toolkit' },
         { name: 'Certification Course', href: '/course/enroll' },
+        { name: '2026 Guide (PDF)', href: 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJ_2026_Resilient_by_Design.pdf', external: true },
       ],
     },
     {
@@ -85,12 +86,23 @@ export default function Footer() {
               <ul className="space-y-2.5">
                 {section.links.map((link) => (
                   <li key={link.name}>
-                    <Link
-                      to={link.href}
-                      className="text-sm text-background/50 hover:text-primary transition-colors"
-                    >
-                      {link.name}
-                    </Link>
+                    {(link as any).external ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-background/50 hover:text-primary transition-colors"
+                      >
+                        {link.name}
+                      </a>
+                    ) : (
+                      <Link
+                        to={link.href}
+                        className="text-sm text-background/50 hover:text-primary transition-colors"
+                      >
+                        {link.name}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -1,7 +1,7 @@
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { Card } from './ui/card'
-import { ArrowRight, Globe, Users, Target } from 'lucide-react'
+import { ArrowRight, Globe, Users, Target, Download } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function HeroSection() {
@@ -67,6 +67,12 @@ export default function HeroSection() {
                 Start your host journey
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
+            </Button>
+            <Button variant="pill-outline" size="lg" asChild className="gap-2">
+              <a href="https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJ_2026_Resilient_by_Design.pdf" target="_blank" rel="noreferrer">
+                <Download className="w-4 h-4" />
+                Download 2026 Guide
+              </a>
             </Button>
           </div>
 

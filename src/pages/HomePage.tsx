@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Link } from 'react-router-dom'
-import { ArrowRight, GraduationCap, Users, Globe } from 'lucide-react'
+import { ArrowRight, GraduationCap, Users, Globe, Download } from 'lucide-react'
 import GlobalEventsOverview from '../components/GlobalEventsOverview'
 import HostExploreBanner from '../components/HostExploreBanner'
 import TestimonialsSection from '../components/TestimonialsSection'
@@ -273,6 +273,12 @@ export default function HomePage() {
               </Button>
               <Button asChild variant="pill-outline">
                 <Link to="/faq">See frequently asked questions</Link>
+              </Button>
+              <Button asChild variant="pill-outline" className="gap-2">
+                <a href="https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJ_2026_Resilient_by_Design.pdf" target="_blank" rel="noreferrer">
+                  <Download className="w-4 h-4" />
+                  Download 2026 Guide
+                </a>
               </Button>
             </CardContent>
           </Card>

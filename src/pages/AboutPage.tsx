@@ -1,7 +1,7 @@
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
-import { Calendar } from 'lucide-react'
+import { Calendar, Download } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import SponsorBanner from '../components/SponsorBanner'
 import { AspectRatio } from '../components/ui/aspect-ratio'
@@ -110,6 +110,12 @@ export default function AboutPage() {
                     </Button>
                     <Button asChild variant="outline" className="rounded-pill">
                       <a href="https://globalgoalsjam.org/organisers/" target="_blank" rel="noreferrer">Host a Jam</a>
+                    </Button>
+                    <Button asChild variant="outline" className="rounded-pill gap-2">
+                      <a href="https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJ_2026_Resilient_by_Design.pdf" target="_blank" rel="noreferrer">
+                        <Download className="w-4 h-4" />
+                        2026 Guide
+                      </a>
                     </Button>
                   </div>
                 </CardContent>
