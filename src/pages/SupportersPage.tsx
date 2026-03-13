@@ -30,7 +30,10 @@ export default function SupportersPage() {
           orderBy: { amount: 'desc' }
         })
         if (!mounted) return
-        setSupporters(donations || [])
+        const visible = (donations || []).filter(
+          (d: Supporter) => d.donorName && d.donorName !== 'Anonymous'
+        )
+        setSupporters(visible)
       } catch (e) {
         console.error('Failed to load supporters', e)
       } finally {

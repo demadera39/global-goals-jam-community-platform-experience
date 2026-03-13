@@ -99,14 +99,21 @@ const DonatePage = () => {
         amountCents = Math.round((tier.amount || 0) * 100)
       }
 
-      const data = await callSupabaseFunction<{ url?: string; error?: string }>('create-mollie-donation', {
+      const data = await callSupabaseFunction<{ url?: string; paymentId?: string; error?: string }>('create-mollie-donation', {
         amount: amountCents,
         tierName,
         returnUrl: window.location.origin
       })
 
       if (data.url) {
-        window.open(data.url, '_blank')
+        if (data.paymentId) {
+          localStorage.setItem('pendingDonation', JSON.stringify({
+            paymentId: data.paymentId,
+            tierName,
+            amount: amountCents,
+          }))
+        }
+        window.location.href = data.url
       } else {
         throw new Error(data.error || 'Failed to create donation session')
       }
