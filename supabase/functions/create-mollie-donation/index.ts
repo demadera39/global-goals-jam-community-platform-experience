@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         amount: { currency: 'EUR', value: amountEur },
         description: `Global Goals Jam Donation - ${tier}`,
-        redirectUrl: `${baseUrl}/donate/success?payment_id={paymentId}`,
+        redirectUrl: `${baseUrl}/donate/success`,
         cancelUrl: `${baseUrl}/donate?canceled=true`,
         webhookUrl,
         metadata: {
