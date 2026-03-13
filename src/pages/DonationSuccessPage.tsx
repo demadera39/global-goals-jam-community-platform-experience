@@ -31,8 +31,8 @@ const DonationSuccessPage = () => {
           const newDonation = await db.donations.create({
             id: `donation_${Date.now()}`,
             stripeSessionId: sessionId,
-            amount: 10000, // Default $100
-            amountDisplay: '$100',
+            amount: 10000, // Default €100
+            amountDisplay: '€100',
             tierName: 'Partner',
             status: 'completed',
             paidAt: new Date().toISOString()
@@ -42,7 +42,7 @@ const DonationSuccessPage = () => {
           setDonation(donations[0])
         }
 
-        // Show form for Partner level ($100) and above
+        // Show form for Partner level (€100) and above
         const donationAmount = donations[0]?.amount || 10000
         setShowForm(donationAmount >= 10000)
       } catch (error) {

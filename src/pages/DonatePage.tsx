@@ -156,7 +156,7 @@ const DonatePage = () => {
                     <div className="mx-auto w-12 h-12 rounded-full bg-pastel-green flex items-center justify-center mb-4">
                       <Icon className="w-6 h-6 text-primary" />
                     </div>
-                    <CardTitle className="text-2xl">{isCustom ? '' : `$${tier.amount}`}</CardTitle>
+                    <CardTitle className="text-2xl">{isCustom ? '' : `€${tier.amount}`}</CardTitle>
                     <h3 className="font-semibold text-lg">{tier.title}</h3>
                     <p className="text-sm text-muted-foreground">{tier.description}</p>
                   </CardHeader>
@@ -175,7 +175,7 @@ const DonatePage = () => {
                           value={customValue ?? ''}
                           onChange={(e) => setCustomValue(e.target.value === '' ? null : Number(e.target.value))}
                           className="w-full border rounded-xl p-2 text-lg"
-                          placeholder="Enter amount in USD (min $5)"
+                          placeholder="Enter amount in EUR (min €5)"
                         />
                         <Button
                           onClick={() => handleDonate(tier, customValue ?? 0)}
@@ -185,7 +185,7 @@ const DonatePage = () => {
                         >
                           {loading ? 'Processing...' : `Donate custom amount`}
                         </Button>
-                        <p className="text-xs text-muted-foreground text-center">Minimum $5. You’ll be redirected to secure checkout.</p>
+                        <p className="text-xs text-muted-foreground text-center">Minimum €5. You’ll be redirected to secure checkout.</p>
                       </div>
                     ) : (
                       <>

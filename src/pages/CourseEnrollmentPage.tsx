@@ -639,7 +639,7 @@ export default function CourseEnrollmentPage() {
           </CardHeader>
           <CardContent className="text-center">
             <div className="mb-6">
-              <span className="text-5xl font-bold">$39.99</span>
+              <span className="text-5xl font-bold">€39.99</span>
               <p className="text-muted-foreground mt-2">One-time payment</p>
             </div>
             

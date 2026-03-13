@@ -105,7 +105,7 @@ export default function HostApplicationFlow() {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Important:</strong> Becoming a host requires completing our 8-day certification course ($39.99).
+                <strong>Important:</strong> Becoming a host requires completing our 8-day certification course (€39.99).
                 This ensures all hosts are properly trained to facilitate impactful Global Goals Jam events.
               </AlertDescription>
             </Alert>
@@ -180,7 +180,7 @@ export default function HostApplicationFlow() {
               <div className="flex items-start gap-3">
                 <CreditCard className="h-5 w-5 text-primary mt-0.5" />
                 <div>
-                  <h4 className="font-medium">Investment: $39.99</h4>
+                  <h4 className="font-medium">Investment: €39.99</h4>
                   <p className="text-sm text-muted-foreground">
                     Your contribution supports the GGJ platform and community
                   </p>
