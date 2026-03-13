@@ -13,7 +13,6 @@ import { ArrowRight, GraduationCap, Users, Globe } from 'lucide-react'
 import GlobalEventsOverview from '../components/GlobalEventsOverview'
 import HostExploreBanner from '../components/HostExploreBanner'
 import TestimonialsSection from '../components/TestimonialsSection'
-import DonateButton from '../components/DonateButton'
 
 export default function HomePage() {
   return (
@@ -275,9 +274,6 @@ export default function HomePage() {
               <Button asChild variant="pill-outline">
                 <Link to="/faq">See frequently asked questions</Link>
               </Button>
-              <div className="pt-4 border-t w-full">
-                <DonateButton variant="pill-outline" size="default" className="w-full" />
-              </div>
             </CardContent>
           </Card>
         </div>

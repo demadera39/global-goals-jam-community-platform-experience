@@ -3,7 +3,6 @@ import { Badge } from './ui/badge'
 import { Card } from './ui/card'
 import { ArrowRight, Globe, Users, Target } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import DonateButton from './DonateButton'
 
 export default function HeroSection() {
   return (
@@ -69,9 +68,6 @@ export default function HeroSection() {
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-            <div>
-              <DonateButton size="lg" variant="pill-outline" className="px-8 py-4 text-lg font-semibold" />
-            </div>
           </div>
 
           {/* Feature Cards */}

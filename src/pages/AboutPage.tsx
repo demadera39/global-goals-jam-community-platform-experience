@@ -4,7 +4,6 @@ import { Button } from '../components/ui/button'
 import { Calendar } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import SponsorBanner from '../components/SponsorBanner'
-import DonateButton from '../components/DonateButton'
 import { AspectRatio } from '../components/ui/aspect-ratio'
 import TestimonialsSection from '../components/TestimonialsSection'
 
@@ -112,7 +111,6 @@ export default function AboutPage() {
                     <Button asChild variant="outline" className="rounded-pill">
                       <a href="https://globalgoalsjam.org/organisers/" target="_blank" rel="noreferrer">Host a Jam</a>
                     </Button>
-                    <DonateButton variant="outline" size="default" />
                   </div>
                 </CardContent>
               </Card>

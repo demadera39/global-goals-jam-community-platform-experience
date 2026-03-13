@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Globe, Heart, Mail, ArrowUpRight } from 'lucide-react'
+import { Globe, Mail, ArrowUpRight } from 'lucide-react'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
@@ -21,7 +21,6 @@ export default function Footer() {
         { name: 'Host a Jam', href: '/course/train-the-trainer' },
         { name: 'Toolkit', href: '/toolkit' },
         { name: 'Certification Course', href: '/course/enroll' },
-        { name: 'Donate', href: '/donate' },
       ],
     },
     {
@@ -119,10 +118,6 @@ export default function Footer() {
               <Link to="/contact" className="text-sm text-background/40 hover:text-primary transition-colors inline-flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5" />
                 Contact
-              </Link>
-              <Link to="/donate" className="text-sm text-background/40 hover:text-primary transition-colors inline-flex items-center gap-1.5">
-                <Heart className="w-3.5 h-3.5" />
-                Support us
               </Link>
             </div>
           </div>
