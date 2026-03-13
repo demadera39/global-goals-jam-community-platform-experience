@@ -1,0 +1,49 @@
+project_id = "kzeoegabvbaonypooaev"
+
+[functions.analyze-website]
+verify_jwt = false
+
+[functions.create-course-checkout]
+verify_jwt = false
+
+[functions.create-donation-session]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.confirm-course-enrollment]
+verify_jwt = false
+
+[functions.impersonate-user]
+verify_jwt = true
+
+[functions.send-message]
+verify_jwt = true
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.scrape-jam-images]
+verify_jwt = true
+
+[functions.list-bucket-images]
+verify_jwt = true
+
+[functions.gemini-ai]
+verify_jwt = true
+
+[functions.delete-user]
+verify_jwt = true
+
+[functions.set-user-password]
+verify_jwt = true
+
+[functions.mollie-webhook]
+verify_jwt = false
+
+[functions.create-mollie-course-checkout]
+verify_jwt = false
+
+[functions.create-mollie-donation]
+verify_jwt = false

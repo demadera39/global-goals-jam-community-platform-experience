@@ -286,11 +286,10 @@ export default function CourseEnrollmentPage() {
       setEnrollment(record)
 
       const baseUrl = window.location.origin
-      const successUrl = `${baseUrl}/course/enroll?success=1&session_id={CHECKOUT_SESSION_ID}&enr_id=${record.id}`
+      const successUrl = `${baseUrl}/course/enroll?success=1&enr_id=${record.id}`
       const cancelUrl = `${baseUrl}/course/enroll?canceled=1`
 
-      // Request Stripe Checkout Session via Edge Function
-      const checkoutData = await callSupabaseFunction<{ url?: string; error?: string }>('create-course-checkout', {
+      const checkoutData = await callSupabaseFunction<{ url?: string; error?: string }>('create-mollie-course-checkout', {
         enrollmentId: record.id,
         userId: user.id,
         email: user.email || '',
@@ -300,13 +299,11 @@ export default function CourseEnrollmentPage() {
       })
       const checkoutUrl = checkoutData.url
       if (checkoutUrl) {
-        // Open Stripe in a new tab as required (must be via user gesture)
         const win = window.open(checkoutUrl, '_blank')
         if (!win || win.closed || typeof win.closed === 'undefined') {
-          // Likely blocked by popup blocker — instruct user
-          toast.warning?.('We tried to open Stripe but your browser blocked it. Please allow pop-ups and click the button again.')
+          toast.warning?.('We tried to open the payment page but your browser blocked it. Please allow pop-ups and click the button again.')
         } else {
-          toast('Checkout opened in a new tab')
+          toast('Payment page opened in a new tab')
         }
       } else {
         toast.error('Failed to start checkout')

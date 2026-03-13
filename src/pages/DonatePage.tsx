@@ -27,58 +27,57 @@ const DonatePage = () => {
   const donationTiers = [
     {
       amount: 25,
-      priceId: 'price_1S19pERi3jJmKDrbDsevnK85',
       title: 'Supporter',
       description: 'Help fund toolkit development',
       icon: Heart,
-      impact: '25 - covers the generation of toolkits for 10 hosts',
-      requiresForm: false
+      impact: '€25 - covers the generation of toolkits for 10 hosts',
+      requiresForm: false,
+      isCustom: false
     },
     {
       amount: 50,
-      priceId: 'price_1S19pERi3jJmKDrb47m0HsUQ',
       title: 'Contributor', 
       description: 'Support global community growth',
       icon: Coffee,
-      impact: '50 - Enables the development of webinars and community communication',
-      requiresForm: false
+      impact: '€50 - Enables the development of webinars and community communication',
+      requiresForm: false,
+      isCustom: false
     },
     {
       amount: 100,
-      priceId: 'price_1S19pERi3jJmKDrbuS5jOdq8',
       title: 'Partner',
       description: 'Champion sustainable innovation',
       icon: Globe,
-      impact: '100 - Funds this full platform for 1 month',
-      requiresForm: true
+      impact: '€100 - Funds this full platform for 1 month',
+      requiresForm: true,
+      isCustom: false
     },
     {
       amount: 250,
-      priceId: 'price_1S19pERi3jJmKDrbprJ5T2lw',
       title: 'Advocate',
       description: 'Accelerate SDG impact worldwide',
       icon: Target,
-      impact: '250 - Sponsors the host certification of at last 5 organizers who cannot afford the certification fee',
-      requiresForm: true
+      impact: '€250 - Sponsors the host certification of at least 5 organizers who cannot afford the certification fee',
+      requiresForm: true,
+      isCustom: false
     },
     {
       amount: 500,
-      priceId: 'price_1S19pERi3jJmKDrbnsV0Nsu1',
       title: 'Champion',
       description: 'Lead the movement for change',
       icon: Award,
-      impact: '500 - Funds the community in all abovementioned ways for at least 6 months',
-      requiresForm: true
+      impact: '€500 - Funds the community in all abovementioned ways for at least 6 months',
+      requiresForm: true,
+      isCustom: false
     },
-    // Custom amount card: user fills amount (minimum $5)
     {
       amount: null,
-      priceId: 'custom',
-      title: 'Choose your amount (minimum 5 dollars)',
+      title: 'Choose your amount (minimum €5)',
       description: 'Impact: endless love from the community',
       icon: Heart,
       impact: 'Endless love from the community',
-      requiresForm: false
+      requiresForm: false,
+      isCustom: true
     }
   ]
 
@@ -86,27 +85,23 @@ const DonatePage = () => {
     setLoading(true)
     try {
       let amountCents: number
-      let priceId = tier.priceId
       let tierName = tier.title
 
-      if (tier.priceId === 'custom') {
+      if (tier.isCustom) {
         if (!customAmount || Number(customAmount) < 5) {
-          toast.error('Please enter a custom amount of at least $5')
+          toast.error('Please enter a custom amount of at least €5')
           setLoading(false)
           return
         }
         amountCents = Math.round(Number(customAmount) * 100)
-        priceId = null
-        tierName = `Custom: $${customAmount}`
+        tierName = `Custom: €${customAmount}`
       } else {
         amountCents = Math.round((tier.amount || 0) * 100)
       }
 
-      const data = await callSupabaseFunction<{ url?: string; error?: string }>('create-donation-session', {
-        priceId,
+      const data = await callSupabaseFunction<{ url?: string; error?: string }>('create-mollie-donation', {
         amount: amountCents,
         tierName,
-        requiresForm: tier.requiresForm,
         returnUrl: window.location.origin
       })
 
@@ -149,7 +144,7 @@ const DonatePage = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {donationTiers.map((tier, index) => {
               const Icon = tier.icon
-              const isCustom = tier.priceId === 'custom'
+              const isCustom = tier.isCustom
               return (
                 <Card key={tier.title + index} className={`relative transition-all duration-300 hover:shadow-card-hover ${index === 2 ? 'border-primary shadow-card' : 'shadow-soft'}`}>
                   {index === 2 && (

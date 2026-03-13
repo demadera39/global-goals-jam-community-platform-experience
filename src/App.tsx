@@ -142,6 +142,7 @@ function App() {
             <Route path="/host-directory" element={<HostDirectoryPage />} />
             <Route path="/organizer-booklet" element={<OrganizerBookletPage />} />
             <Route path="/donate" element={<DonatePage />} />
+            <Route path="/donate/success" element={<DonationSuccessPage />} />
             <Route path="/supporters" element={<SupportersPage />} />
             <Route path="/sponsors" element={<SupportersPage />} />
             <Route path="/sign-in" element={<SignInPage />} />
