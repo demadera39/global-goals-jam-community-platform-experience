@@ -32,7 +32,9 @@ import {
   BookOpen,
   Compass,
   FileText,
-  Clock
+  Clock,
+  FileUp,
+  UserPlus
 } from 'lucide-react'
 import { db, auth, storage, safeDbCall, supabase } from '../lib/supabase'
 import { getFullUser } from '../lib/userProfile'
@@ -41,6 +43,7 @@ import type { UserProfile } from '../lib/userStatus'
 import { getStoredUser } from '../lib/auth'
 import { appAuth } from '../lib/simpleAuth'
 import HostAssets from '../components/HostAssets'
+import { showCertificateInNewTab } from '../lib/certificates'
 import { FloatingFeedback } from '../components/FloatingFeedback'
 import DonateButton from '../components/DonateButton'
 import RichTextEditor from '../components/RichTextEditor'
@@ -82,6 +85,8 @@ interface Registration {
   id: string
   eventId: string
   participantId: string
+  firstName?: string
+  lastName?: string
   registrationDate: string
   status: string
   notes?: string
@@ -117,6 +122,12 @@ export default function HostDashboard() {
   const mediaInputRef = useRef<HTMLInputElement | null>(null)
   const [mediaUploading, setMediaUploading] = useState(false)
   const [newLink, setNewLink] = useState({ title: '', url: '', eventId: '' })
+
+  // Manual participant add state
+  const [addParticipantEventId, setAddParticipantEventId] = useState('')
+  const [newParticipant, setNewParticipant] = useState({ firstName: '', lastName: '' })
+  const [addingParticipant, setAddingParticipant] = useState(false)
+  const csvInputRef = useRef<HTMLInputElement | null>(null)
 
   // Certificate generation overlay state
   const [certGenerating, setCertGenerating] = useState(false)
@@ -526,6 +537,88 @@ export default function HostDashboard() {
     }
   }
 
+  // Manual participant add
+  const handleAddParticipant = async () => {
+    if (!newParticipant.firstName.trim() || !newParticipant.lastName.trim() || !addParticipantEventId) return
+    setAddingParticipant(true)
+    try {
+      const created = await safeDbCall(() => db.eventRegistrations.create({
+        eventId: addParticipantEventId,
+        participantId: `manual_${Date.now()}`,
+        firstName: newParticipant.firstName.trim(),
+        lastName: newParticipant.lastName.trim(),
+        status: 'registered',
+      }))
+      if (created) {
+        const rec = Array.isArray(created) ? created[0] : created
+        setRegistrations(prev => [rec as any, ...prev])
+      }
+      setNewParticipant({ firstName: '', lastName: '' })
+      toast.success('Participant added')
+    } catch (e) {
+      console.error('Add participant failed:', e)
+      toast.error('Failed to add participant')
+    } finally {
+      setAddingParticipant(false)
+    }
+  }
+
+  // CSV upload handler (expects: First Name, Last Name)
+  const handleCSVUpload = async (file: File) => {
+    if (!addParticipantEventId) {
+      toast.error('Please select an event first')
+      return
+    }
+    const text = await file.text()
+    const lines = text.split(/\r?\n/).filter(l => l.trim())
+    if (lines.length === 0) { toast.error('CSV file is empty'); return }
+
+    // Detect if first line is header
+    const firstLine = lines[0].toLowerCase()
+    const startIndex = (firstLine.includes('name') || firstLine.includes('first') || firstLine.includes('last')) ? 1 : 0
+
+    const participants: { firstName: string; lastName: string }[] = []
+    for (let i = startIndex; i < lines.length; i++) {
+      // Support both comma and semicolon separators, handle quoted fields
+      const parts = lines[i].match(/(".*?"|[^",;\t]+)/g)?.map(s => s.replace(/^"|"$/g, '').trim()) || []
+      if (parts.length >= 2) {
+        participants.push({ firstName: parts[0], lastName: parts[1] })
+      } else if (parts.length === 1 && parts[0].includes(' ')) {
+        // Single "Full Name" column - split on first space
+        const [first, ...rest] = parts[0].split(' ')
+        participants.push({ firstName: first, lastName: rest.join(' ') })
+      }
+    }
+
+    if (participants.length === 0) {
+      toast.error('No valid participants found. Use: First Name, Last Name')
+      return
+    }
+
+    setAddingParticipant(true)
+    let added = 0
+    for (const p of participants) {
+      try {
+        const created = await safeDbCall(() => db.eventRegistrations.create({
+          eventId: addParticipantEventId,
+          participantId: `manual_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          firstName: p.firstName,
+          lastName: p.lastName,
+          status: 'registered',
+        }))
+        if (created) {
+          const rec = Array.isArray(created) ? created[0] : created
+          setRegistrations(prev => [rec as any, ...prev])
+          added++
+        }
+      } catch (e) {
+        console.error('Failed to add participant:', p, e)
+      }
+    }
+    setAddingParticipant(false)
+    toast.success(`Added ${added} participant${added !== 1 ? 's' : ''} from CSV`)
+  }
+
   // CSV Export helpers
   async function fetchUsersByIds(ids: string[]): Promise<Record<string, { email?: string; displayName?: string }>> {
     const unique = Array.from(new Set(ids)).filter(Boolean)
@@ -546,15 +639,20 @@ export default function HostDashboard() {
       toast.info('No participants to export yet.')
       return
     }
-    const userMap = await fetchUsersByIds(rows.map(r => r.participantId))
-    const header = ['event_title','event_id','participant_id','participant_name','participant_email','registration_date']
+    const nonManualIds = rows.map(r => r.participantId).filter(id => id && !id.startsWith('manual_'))
+    const userMap = await fetchUsersByIds(nonManualIds)
+    const header = ['event_title','first_name','last_name','participant_email','registration_date']
     const findEventTitle = (id: string) => events.find(e => e.id === id)?.title || ''
     const dataLines = rows.map(r => {
       const u = userMap[r.participantId] || {}
-      const name = (u.displayName || '').replaceAll('"','""')
+      const firstName = (r.firstName || '').replaceAll('"','""')
+      const lastName = (r.lastName || '').replaceAll('"','""')
+      const displayName = u.displayName || ''
+      const fn = firstName || displayName.split(' ')[0] || ''
+      const ln = lastName || displayName.split(' ').slice(1).join(' ') || ''
       const email = (u.email || '').replaceAll('"','""')
       const title = (findEventTitle(r.eventId) || '').replaceAll('"','""')
-      return `"${title}","${r.eventId}","${r.participantId}","${name}","${email}","${r.registrationDate}"`
+      return `"${title}","${fn.replaceAll('"','""')}","${ln.replaceAll('"','""')}","${email}","${r.registrationDate}"`
     })
     const csv = [header.join(','), ...dataLines].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -1067,6 +1165,88 @@ export default function HostDashboard() {
               </Button>
             </div>
 
+            {/* Add participants manually or via CSV */}
+            {events.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <UserPlus className="w-5 h-5" /> Add Participants
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">Manually add participants or upload a CSV file (First Name, Last Name).</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Select Event</Label>
+                    <Select value={addParticipantEventId || '_none'} onValueChange={(v) => setAddParticipantEventId(v === '_none' ? '' : v)}>
+                      <SelectTrigger className="w-full mt-1"><SelectValue placeholder="Choose an event..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">Select an event</SelectItem>
+                        {events.map(e => (
+                          <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {addParticipantEventId && (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {/* Manual single add */}
+                      <div className="p-4 border rounded-xl space-y-3">
+                        <div className="font-medium text-sm">Add Single Participant</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="First Name"
+                            value={newParticipant.firstName}
+                            onChange={(e) => setNewParticipant(prev => ({ ...prev, firstName: e.target.value }))}
+                          />
+                          <Input
+                            placeholder="Last Name"
+                            value={newParticipant.lastName}
+                            onChange={(e) => setNewParticipant(prev => ({ ...prev, lastName: e.target.value }))}
+                          />
+                        </div>
+                        <Button
+                          onClick={handleAddParticipant}
+                          disabled={!newParticipant.firstName.trim() || !newParticipant.lastName.trim() || addingParticipant}
+                          className="w-full"
+                        >
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          {addingParticipant ? 'Adding...' : 'Add Participant'}
+                        </Button>
+                      </div>
+
+                      {/* CSV upload */}
+                      <div className="p-4 border rounded-xl space-y-3">
+                        <div className="font-medium text-sm">Upload CSV</div>
+                        <p className="text-xs text-muted-foreground">CSV format: <code className="bg-muted px-1 rounded">First Name, Last Name</code> (one per line)</p>
+                        <input
+                          ref={csvInputRef}
+                          type="file"
+                          accept=".csv,.txt,.tsv"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.currentTarget.files?.[0]
+                            if (file) handleCSVUpload(file)
+                            if (csvInputRef.current) csvInputRef.current.value = ''
+                          }}
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => csvInputRef.current?.click()}
+                          disabled={addingParticipant}
+                          className="w-full"
+                        >
+                          <FileUp className="w-4 h-4 mr-2" />
+                          {addingParticipant ? 'Importing...' : 'Upload CSV File'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Participant list by event */}
             <div className="space-y-4">
               {events.map((event) => {
                 const eventRegistrations = registrations.filter(r => r.eventId === event.id)
@@ -1077,40 +1257,80 @@ export default function HostDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <CardTitle className="text-lg">{event.title}</CardTitle>
-                          <p className="text-sm text-muted-foreground">{eventRegistrations.length} participants registered</p>
+                          <p className="text-sm text-muted-foreground">{eventRegistrations.length} participant{eventRegistrations.length !== 1 ? 's' : ''}</p>
                         </div>
-                        <Button size="sm" variant="outline" onClick={() => exportParticipantsCSV(event.id)}>
-                          <Download className="w-4 h-4 mr-2" /> Export CSV
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => exportParticipantsCSV(event.id)}>
+                            <Download className="w-4 h-4 mr-2" /> Export CSV
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {eventRegistrations.map((registration) => (
-                          <div key={registration.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
-                            <div>
-                              <p className="font-medium">Participant</p>
-                              <p className="text-sm text-muted-foreground">Registered {formatDate(registration.registrationDate)}</p>
+                        {eventRegistrations.map((registration) => {
+                          const name = (registration.firstName && registration.lastName)
+                            ? `${registration.firstName} ${registration.lastName}`
+                            : null
+                          return (
+                            <div key={registration.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
+                              <div>
+                                <p className="font-medium">{name || 'Participant'}</p>
+                                <p className="text-sm text-muted-foreground">Registered {formatDate(registration.registrationDate)}</p>
+                              </div>
+                              <div className="flex gap-2">
+                                {name && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      showCertificateInNewTab({
+                                        participantName: name,
+                                        eventTitle: event.title,
+                                        eventLocation: event.location,
+                                        eventDate: event.eventDate,
+                                        certificateKind: 'participation',
+                                      })
+                                    }}
+                                  >
+                                    <Award className="w-4 h-4 mr-1" /> Certificate
+                                  </Button>
+                                )}
+                                <Button size="sm" variant="ghost" onClick={() => {
+                                  if (!confirm('Remove this participant?')) return
+                                  safeDbCall(() => db.eventRegistrations.delete(registration.id)).then(() => {
+                                    setRegistrations(prev => prev.filter(r => r.id !== registration.id))
+                                    toast.success('Participant removed')
+                                  })
+                                }}>
+                                  <Trash2 className="w-4 h-4 text-muted-foreground" />
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" onClick={() => window.open(`/events/${event.id}`, '_blank')}>
-                                <Eye className="w-4 h-4 mr-1" /> View Event
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </CardContent>
                   </Card>
                 )
               })}
 
-              {registrations.length === 0 && (
+              {registrations.length === 0 && events.length === 0 && (
                 <Card>
                   <CardContent className="text-center py-12">
                     <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">No participants yet</h3>
-                    <p className="text-muted-foreground">Participants will appear here once they register for your events.</p>
+                    <p className="text-muted-foreground">Create an event first, then add participants manually or let them register.</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {registrations.length === 0 && events.length > 0 && (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No participants yet</h3>
+                    <p className="text-muted-foreground">Add participants manually above or let them register for your events.</p>
                   </CardContent>
                 </Card>
               )}
