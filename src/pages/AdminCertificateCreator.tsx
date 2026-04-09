@@ -13,16 +13,23 @@ import { useNavigate } from 'react-router-dom'
 import CertificateTemplate from '../components/CertificateTemplate'
 import { toast } from 'sonner'
 
-type CertificateType = 'general' | 'host' | 'participant'
+type CertificateType = 'general' | 'host' | 'participant' | 'custom'
 
 interface CertificateData {
   name: string
   year: string
+  yearTo: string // optional end year for a range
   certificateDate: string // ISO date format
   certificateType: CertificateType
   organization: string
   issuedBy: string
   customText: string
+  // Custom / tailored fields
+  customTitle: string
+  customSubject: string
+  periodLabel: string
+  locationLabel: string
+  bodyOverride: string
 }
 
 const DEFAULT_ISSUED_BY = 'Global Goals Jam'
@@ -42,6 +49,11 @@ const CERTIFICATE_TYPES: { value: CertificateType; label: string; description: s
     value: 'participant',
     label: 'Participant Certificate',
     description: 'Recognition for participating in a Global Goals Jam event'
+  },
+  {
+    value: 'custom',
+    label: 'Custom / Tailored Certificate',
+    description: 'Fully custom title, period, location and body — e.g. "Global Goals Jam from 2017 to 2025 for India in Delhi NCR"'
   }
 ]
 
@@ -52,11 +64,17 @@ export default function AdminCertificateCreator() {
   const [certificateData, setCertificateData] = useState<CertificateData>({
     name: '',
     year: new Date().getFullYear().toString(),
+    yearTo: '',
     certificateDate: new Date().toISOString().split('T')[0], // Today's date in ISO format
     certificateType: 'general',
     organization: 'Global Goals Jam',
     issuedBy: DEFAULT_ISSUED_BY,
-    customText: ''
+    customText: '',
+    customTitle: '',
+    customSubject: '',
+    periodLabel: '',
+    locationLabel: '',
+    bodyOverride: ''
   })
 
   const handleInputChange = (field: keyof CertificateData, value: string) => {
@@ -234,18 +252,36 @@ export default function AdminCertificateCreator() {
                   />
                 </div>
 
-                {/* Year */}
+                {/* Year / Year range */}
                 <div>
-                  <Label htmlFor="year">Year *</Label>
-                  <Input
-                    id="year"
-                    type="number"
-                    value={certificateData.year}
-                    onChange={(e) => handleInputChange('year', e.target.value)}
-                    placeholder="2024"
-                    min="1900"
-                    max={new Date().getFullYear().toString()}
-                  />
+                  <Label>Year *</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Input
+                        id="year"
+                        type="number"
+                        value={certificateData.year}
+                        onChange={(e) => handleInputChange('year', e.target.value)}
+                        placeholder="2024"
+                        min="1900"
+                        max={new Date().getFullYear().toString()}
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">Year (or start of range)</p>
+                    </div>
+                    <div>
+                      <Input
+                        id="yearTo"
+                        type="number"
+                        value={certificateData.yearTo}
+                        onChange={(e) => handleInputChange('yearTo', e.target.value)}
+                        placeholder="End year (optional)"
+                        min="1900"
+                        max={new Date().getFullYear().toString()}
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">End year (for a range)</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Leave End Year blank for a single year; fill it to render as "2017 – 2025".</p>
                 </div>
 
                 {/* Certificate Date */}
@@ -293,7 +329,74 @@ export default function AdminCertificateCreator() {
                     placeholder="Add a custom message or achievement description"
                     className="min-h-24"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Appears as an italic line below the main body.</p>
                 </div>
+
+                {/* Custom / Tailored fields — only shown when type === 'custom' */}
+                {certificateData.certificateType === 'custom' && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-[10px]">TAILORED</Badge>
+                      <p className="text-xs text-muted-foreground">These fields override the default title, header and body.</p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="customTitle">Certificate Title</Label>
+                      <Input
+                        id="customTitle"
+                        value={certificateData.customTitle}
+                        onChange={(e) => handleInputChange('customTitle', e.target.value)}
+                        placeholder="e.g., Certificate of Recognition"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Leave blank to use "Certificate of Recognition".</p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="periodLabel">Period</Label>
+                      <Input
+                        id="periodLabel"
+                        value={certificateData.periodLabel}
+                        onChange={(e) => handleInputChange('periodLabel', e.target.value)}
+                        placeholder="e.g., 2017 – 2025"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Shown in the header strip. Leave blank to fall back to the single year above.</p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="locationLabel">Location</Label>
+                      <Input
+                        id="locationLabel"
+                        value={certificateData.locationLabel}
+                        onChange={(e) => handleInputChange('locationLabel', e.target.value)}
+                        placeholder="e.g., India — Delhi NCR"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Country, city or region — appended to the header.</p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="customSubject">Subject Label</Label>
+                      <Input
+                        id="customSubject"
+                        value={certificateData.customSubject}
+                        onChange={(e) => handleInputChange('customSubject', e.target.value)}
+                        placeholder="e.g., Long-time Contributor, Ambassador, Organiser"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Small footer label under the signature line.</p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="bodyOverride">Body Paragraph</Label>
+                      <Textarea
+                        id="bodyOverride"
+                        value={certificateData.bodyOverride}
+                        onChange={(e) => handleInputChange('bodyOverride', e.target.value)}
+                        placeholder="e.g., has been recognised for their dedication and contribution to Global Goals Jam events across India, from 2017 to 2025, shaping the Delhi NCR community."
+                        className="min-h-28"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Fully replaces the default body sentence.</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -355,11 +458,17 @@ export default function AdminCertificateCreator() {
                     <CertificateTemplate
                       recipientName={certificateData.name}
                       year={certificateData.year}
+                      yearTo={certificateData.yearTo}
                       eventDate={certificateData.certificateDate}
                       certificateType={certificateData.certificateType}
                       organization={certificateData.organization}
                       issuedBy={certificateData.issuedBy}
                       customText={certificateData.customText}
+                      customTitle={certificateData.customTitle}
+                      customSubject={certificateData.customSubject}
+                      periodLabel={certificateData.periodLabel}
+                      locationLabel={certificateData.locationLabel}
+                      bodyOverride={certificateData.bodyOverride}
                     />
                   </div>
                 ) : (

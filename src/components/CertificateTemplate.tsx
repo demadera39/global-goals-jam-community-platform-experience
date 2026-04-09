@@ -12,10 +12,17 @@ interface CertificateTemplateProps {
   // New fields for admin certificate creator
   recipientName?: string
   year?: string
-  certificateType?: 'general' | 'host' | 'participant'
+  yearTo?: string // optional end year — when set, renders as "year – yearTo"
+  certificateType?: 'general' | 'host' | 'participant' | 'custom'
   organization?: string
   issuedBy?: string
   customText?: string
+  // Tailored certificate fields (used when certificateType === 'custom')
+  customTitle?: string      // e.g. "Certificate of Recognition"
+  customSubject?: string    // e.g. "Long-time Contributor"
+  periodLabel?: string      // e.g. "2017 – 2025"
+  locationLabel?: string    // e.g. "India — Delhi NCR"
+  bodyOverride?: string     // free-form body paragraph that replaces the default
 }
 
 // Certificate with outer frame and SDG color bar - improved alignment and spacing
@@ -32,14 +39,22 @@ export const CertificateTemplate = React.forwardRef<HTMLDivElement, CertificateT
     // New admin creator fields
     recipientName,
     year,
+    yearTo,
     certificateType = 'general',
     organization,
     issuedBy,
-    customText
+    customText,
+    customTitle,
+    customSubject,
+    periodLabel,
+    locationLabel,
+    bodyOverride
   }, ref) => {
     // Support both old and new field names
     const displayName = recipientName || participantName || ''
-    const displayYear = year || editionYear || String(new Date().getFullYear())
+    const baseYear = year || editionYear || String(new Date().getFullYear())
+    const endYear = yearTo?.trim()
+    const displayYear = endYear && endYear !== baseYear ? `${baseYear} – ${endYear}` : baseYear
     const displayOrganization = organization || 'Global Goals Jam'
     const displayIssuedBy = issuedBy || 'Marco van Hout, Founder Global Goals Jam'
 
@@ -48,7 +63,18 @@ export const CertificateTemplate = React.forwardRef<HTMLDivElement, CertificateT
     let subjectLabel = 'Recipient'
     let bodyText = ''
 
-    if (certificateType === 'host' || certificateKind === 'host') {
+    if (certificateType === 'custom') {
+      titleText = customTitle?.trim() || 'Certificate of Recognition'
+      subjectLabel = customSubject?.trim() || 'Recipient'
+      const suffixBits = [
+        periodLabel?.trim() ? periodLabel.trim() : '',
+        locationLabel?.trim() ? locationLabel.trim() : ''
+      ].filter(Boolean)
+      const suffix = suffixBits.length ? ` (${suffixBits.join(' · ')})` : ''
+      bodyText = bodyOverride?.trim()
+        ? bodyOverride.trim()
+        : `is recognised for their contribution to the Global Goals Jam${suffix}.`
+    } else if (certificateType === 'host' || certificateKind === 'host') {
       titleText = 'Certificate of Hosting'
       subjectLabel = 'Host'
       bodyText = `is hereby recognised as an eligible and recognised facilitator and host for Global Goals Jams around the world${
@@ -108,7 +134,18 @@ export const CertificateTemplate = React.forwardRef<HTMLDivElement, CertificateT
         {/* Titles - moved up and improved spacing */}
         <div className="absolute top-[300px] left-0 right-0 text-center px-20">
           <div className="text-xs tracking-[0.22em] text-[#6B7280] mb-3 font-normal">
-            {displayOrganization.toUpperCase()} — CERTIFICATION YEAR {displayYear}
+            {(() => {
+              const yearWord = endYear && endYear !== baseYear ? 'YEARS' : 'YEAR'
+              const certLabel = `CERTIFICATION ${yearWord} ${displayYear}`
+              if (certificateType === 'custom') {
+                return [
+                  displayOrganization.toUpperCase(),
+                  periodLabel?.trim() ? periodLabel.trim().toUpperCase() : certLabel,
+                  locationLabel?.trim() ? locationLabel.trim().toUpperCase() : ''
+                ].filter(Boolean).join(' — ')
+              }
+              return `${displayOrganization.toUpperCase()} — ${certLabel}`
+            })()}
           </div>
           <h1 className="text-[38px] font-black text-[#111827] leading-tight mb-5">{titleText}</h1>
 
