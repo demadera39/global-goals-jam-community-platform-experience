@@ -18,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
 import { sendTestReceiptEmail } from '@/lib/notifications'
 import { appAuth } from '@/lib/simpleAuth'
+import MessageUserDialog, { MessageTemplate } from '@/components/admin/MessageUserDialog'
 
 interface UserData {
   id: string
@@ -56,6 +57,9 @@ export default function UserManagementPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingInviteId, setProcessingInviteId] = useState<string | null>(null)
   const [processingInquiryId, setProcessingInquiryId] = useState<string | null>(null)
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false)
+  const [messageRecipient, setMessageRecipient] = useState<UserData | null>(null)
+  const [messageTemplate, setMessageTemplate] = useState<MessageTemplate>('invite')
   const [editForm, setEditForm] = useState({
     displayName: '',
     role: '',
@@ -428,6 +432,12 @@ export default function UserManagementPage() {
     return !(info && (info.status === 'active' || info.status === 'completed'))
   }
 
+  const openMessageDialog = (user: UserData, template: MessageTemplate = 'invite') => {
+    setMessageRecipient(user)
+    setMessageTemplate(template)
+    setMessageDialogOpen(true)
+  }
+
   const sendCourseInvite = async (user: UserData) => {
     setProcessingInviteId(user.id)
     try {
@@ -632,21 +642,38 @@ export default function UserManagementPage() {
         return
       }
 
-      const res = await fetch(config.functions.impersonateUserUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentToken}`
-        },
-        body: JSON.stringify({ userId: user.id, ttlMinutes: 60 })
-      })
+      let res: Response
+      try {
+        res = await fetch(config.functions.impersonateUserUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentToken}`
+          },
+          body: JSON.stringify({ userId: user.id, ttlMinutes: 60 })
+        })
+      } catch (networkErr: any) {
+        throw new Error(`Network error reaching impersonate-user: ${networkErr?.message || networkErr}`)
+      }
 
-      // Try to parse JSON safely
+      // Try to parse JSON safely; if the body isn't JSON (e.g. HTML 500), keep the raw text so we can show it.
       let data: any = null
-      try { data = await res.json() } catch { data = null }
+      let rawBody = ''
+      try {
+        rawBody = await res.text()
+        try { data = JSON.parse(rawBody) } catch { data = null }
+      } catch { /* ignore */ }
 
       if (!res.ok || !data?.token) {
-        const errMsg = data?.error || (res.status === 403 ? 'Forbidden — your admin session is not recognized. Sign in via email+password and try again.' : 'Failed to impersonate')
+        console.error('[impersonate] non-ok response', { status: res.status, data, rawBody })
+        const serverError = data?.error || (rawBody && rawBody.length < 400 ? rawBody : '')
+        const context =
+          res.status === 401 ? 'Admin session invalid — sign out and back in with email + password.' :
+          res.status === 403 ? 'Admin access required — your account must have role = "admin".' :
+          res.status === 404 ? 'Target user not found.' :
+          res.status >= 500 ? 'Edge function crashed (check Supabase function logs).' :
+          'Failed to impersonate.'
+        const errMsg = serverError ? `${context} — ${serverError}` : `${context} (HTTP ${res.status})`
         throw new Error(errMsg)
       }
 
@@ -669,7 +696,12 @@ export default function UserManagementPage() {
       window.location.href = '/profile'
     } catch (e: any) {
       console.error('Impersonation failed', e)
-      toast({ title: 'Impersonation failed', description: e?.message || 'Could not switch session', variant: 'destructive' })
+      toast({
+        title: 'Impersonation failed',
+        description: e?.message || 'Could not switch session — see browser console for details.',
+        variant: 'destructive',
+        duration: 10000
+      })
     } finally {
       setIsProcessing(false)
     }
@@ -837,37 +869,29 @@ export default function UserManagementPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {shouldShowInvite(user) && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => sendCourseInvite(user)}
-                                title="Invite to course"
-                                disabled={processingInviteId === user.id}
-                              >
-                                {processingInviteId === user.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Send className="h-4 w-4" />
-                                )}
-                              </Button>
-                            )}
-                            {enrollments[user.id]?.needsPaymentReview && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => sendPaymentInquiry(user)}
-                                title="Ask about failed payment — send a friendly follow-up with a fresh enrollment link"
-                                disabled={processingInquiryId === user.id}
-                                className="text-amber-700 hover:text-amber-900"
-                              >
-                                {processingInquiryId === user.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Mail className="h-4 w-4" />
-                                )}
-                              </Button>
-                            )}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => {
+                                const info = enrollments[user.id]
+                                const defaultTemplate: MessageTemplate = info?.needsPaymentReview
+                                  ? 'payment_followup'
+                                  : shouldShowInvite(user)
+                                    ? 'invite'
+                                    : 'custom'
+                                openMessageDialog(user, defaultTemplate)
+                              }}
+                              title={
+                                enrollments[user.id]?.needsPaymentReview
+                                  ? 'Message — defaults to payment follow-up'
+                                  : shouldShowInvite(user)
+                                    ? 'Message — defaults to course invite'
+                                    : 'Send a message'
+                              }
+                              className={enrollments[user.id]?.needsPaymentReview ? 'text-amber-700 hover:text-amber-900' : ''}
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
                             <Button
                               size="icon"
                               variant="ghost"
@@ -1188,6 +1212,18 @@ export default function UserManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Unified Message Dialog */}
+      <MessageUserDialog
+        open={messageDialogOpen}
+        onOpenChange={setMessageDialogOpen}
+        recipient={messageRecipient ? {
+          id: messageRecipient.id,
+          email: messageRecipient.email,
+          displayName: messageRecipient.displayName
+        } : null}
+        initialTemplate={messageTemplate}
+      />
     </div>
   )
 }
