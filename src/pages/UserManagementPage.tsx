@@ -115,10 +115,17 @@ export default function UserManagementPage() {
         // This covers real Mollie payments AND manual admin overrides (both write amount_paid).
         const isPaid = !!(e.amountPaid && parseFloat(e.amountPaid) > 0)
         const paidStrict = isPaid
-        // Real Mollie payment = amount recorded AND payment ref looks like a Mollie transaction id (tr_...).
+        // Real payment = amount recorded AND payment ref looks like a real provider id.
+        // `mollie_payment_id` was renamed from `stripe_session_id` in migration
+        // 20260313100000_stripe_to_mollie.sql, so legacy Stripe sessions (cs_/pi_) are
+        // also stored there and count as real payments.
         const molliePaymentId = String(e.molliePaymentId || '').trim()
-        const hasRealPayment = isPaid && molliePaymentId.startsWith('tr_')
-        // Manual override = paid but without a real Mollie ref (e.g. "manual_<timestamp>", legacy Stripe, empty).
+        const hasRealPayment = isPaid && (
+          molliePaymentId.startsWith('tr_') ||  // Mollie transaction
+          molliePaymentId.startsWith('cs_') ||  // Stripe checkout session (legacy)
+          molliePaymentId.startsWith('pi_')     // Stripe payment intent (legacy)
+        )
+        // Manual override = paid but no real provider ref (e.g. "manual_<timestamp>" or empty).
         const isManualOverride = isPaid && !hasRealPayment
         // Flag users who look "done" but have no recorded payment — likely abandoned / expired Mollie checkouts
         // where the course status was flipped manually or via legacy data.
@@ -206,8 +213,12 @@ export default function UserManagementPage() {
               update.amountPaid = rec.amountPaid || '39.99'
               update.molliePaymentId = rec.molliePaymentId || `manual_${Date.now()}`
             } else {
-              update.amountPaid = rec.amountPaid || null
-              update.molliePaymentId = rec.molliePaymentId || null
+              // Explicitly clear payment when admin unchecks "Mark as paid".
+              // Previous code used `rec.amountPaid || null` which kept the
+              // existing value (e.g. '39.99' stays '39.99'), making the
+              // checkbox a silent no-op.
+              update.amountPaid = null
+              update.molliePaymentId = null
             }
             await db.courseEnrollments.update(rec.id, update)
           }
@@ -1055,7 +1066,10 @@ export default function UserManagementPage() {
                 <Label htmlFor="markPaid">Mark as paid (manual override)</Label>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Marking as paid will set a manual payment reference and allow access immediately.</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Checked → sets <code>amount_paid = 39.99</code> and a manual reference (keeps any real Mollie/Stripe ref if present).<br />
+              Unchecked → <strong>clears both</strong> <code>amount_paid</code> and <code>mollie_payment_id</code> for this enrollment.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>
