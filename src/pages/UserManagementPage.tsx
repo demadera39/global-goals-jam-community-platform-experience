@@ -43,7 +43,7 @@ interface PasswordResetData {
 export default function UserManagementPage() {
   const { toast } = useToast()
   const [users, setUsers] = useState<UserData[]>([])
-  const [enrollments, setEnrollments] = useState<Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; needsPaymentReview: boolean; molliePaymentId?: string; amountPaid?: string | null; enrolledAt?: string }>>({})
+  const [enrollments, setEnrollments] = useState<Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; hasRealPayment: boolean; isManualOverride: boolean; needsPaymentReview: boolean; molliePaymentId?: string; amountPaid?: string | null; enrolledAt?: string }>>({})
   const [passwordResets, setPasswordResets] = useState<PasswordResetData[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -55,6 +55,7 @@ export default function UserManagementPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingInviteId, setProcessingInviteId] = useState<string | null>(null)
+  const [processingInquiryId, setProcessingInquiryId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({
     displayName: '',
     role: '',
@@ -106,20 +107,25 @@ export default function UserManagementPage() {
         orderBy: { enrolledAt: 'desc' },
         limit: 1000
       }) as any[]
-      const map: Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; needsPaymentReview: boolean; molliePaymentId?: string; amountPaid?: string | null; enrolledAt?: string }> = {}
+      const map: Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; hasRealPayment: boolean; isManualOverride: boolean; needsPaymentReview: boolean; molliePaymentId?: string; amountPaid?: string | null; enrolledAt?: string }> = {}
       for (const e of list) {
         if (!e?.userId) continue
         const status = (e.status === 'completed') ? 'completed' : (e.status === 'active') ? 'active' : (e.status === 'pending') ? 'pending' : 'not_enrolled'
-        // Single source of truth for "paid": actual amount_paid > 0.
-        // This also covers manual admin overrides, which write amount_paid = '39.99'.
+        // Single source of truth for any kind of "paid": actual amount_paid > 0.
+        // This covers real Mollie payments AND manual admin overrides (both write amount_paid).
         const isPaid = !!(e.amountPaid && parseFloat(e.amountPaid) > 0)
         const paidStrict = isPaid
-        // Flag users who look "done" but have no recorded payment — likely abandoned / expired
-        // Mollie checkouts where the course status was flipped manually or via legacy data.
+        // Real Mollie payment = amount recorded AND payment ref looks like a Mollie transaction id (tr_...).
+        const molliePaymentId = String(e.molliePaymentId || '').trim()
+        const hasRealPayment = isPaid && molliePaymentId.startsWith('tr_')
+        // Manual override = paid but without a real Mollie ref (e.g. "manual_<timestamp>", legacy Stripe, empty).
+        const isManualOverride = isPaid && !hasRealPayment
+        // Flag users who look "done" but have no recorded payment — likely abandoned / expired Mollie checkouts
+        // where the course status was flipped manually or via legacy data.
         const needsPaymentReview = (status === 'active' || status === 'completed') && !isPaid
         const existing = map[e.userId]
         if (!existing || (existing.status !== 'completed' && status === 'completed') || (existing.status === 'pending' && (status === 'active' || status === 'completed'))) {
-          map[e.userId] = { status, isPaid, paidStrict, needsPaymentReview, molliePaymentId: e.molliePaymentId, amountPaid: e.amountPaid, enrolledAt: e.enrolledAt }
+          map[e.userId] = { status, isPaid, paidStrict, hasRealPayment, isManualOverride, needsPaymentReview, molliePaymentId: e.molliePaymentId, amountPaid: e.amountPaid, enrolledAt: e.enrolledAt }
         }
       }
       setEnrollments(map)
@@ -465,6 +471,67 @@ export default function UserManagementPage() {
     }
   }
 
+  // Payment inquiry — friendly follow-up for users whose Mollie checkout expired
+  const sendPaymentInquiry = async (user: UserData) => {
+    const confirm = window.confirm(
+      `Send a friendly payment follow-up to ${user.email}?\n\nThis asks if they hit an issue with checkout and offers a fresh link to complete enrollment.`
+    )
+    if (!confirm) return
+
+    setProcessingInquiryId(user.id)
+    try {
+      const enrollUrl = `${window.location.origin}/course/enroll?utm_source=admin_inquiry&utm_medium=email&utm_campaign=ggj_course_payment_followup`
+      const firstName = (user.displayName || user.email || '').split('@')[0]
+      toast({ title: 'Sending follow-up...', description: `Sending to ${user.email}` })
+      const recipient = String(user.email || '').trim()
+      if (!recipient || !recipient.includes('@')) {
+        throw new Error('Invalid recipient email')
+      }
+      const result: any = await new Promise(async (resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Email send timed out. Please try again.')), 15000)
+        try {
+          const res = await notifications.email({
+            to: recipient,
+            from: 'Global Goals Jam <marco@globalgoalsjam.org>',
+            subject: 'Everything OK with your GGJ enrollment?',
+            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111827;">
+              <div style="background: #00A651; padding: 24px; text-align: center;">
+                <h1 style="color: white; margin: 0;">A quick check-in</h1>
+              </div>
+              <div style="padding: 24px; line-height: 1.6;">
+                <p>Hi ${firstName},</p>
+                <p>I noticed you started signing up for the <strong>GGJ Host Certification Course</strong>, but your payment didn't come through. These things happen — a bank redirect can time out, the iDEAL app doesn't always open, or life just got in the way.</p>
+                <p>Was there anything that went wrong on your side? I'd love to hear it so we can smooth things out.</p>
+                <p>If you're still keen to join and support the Global Goals Jam movement, you can pick up right where you left off:</p>
+                <p style="text-align: center;"><a href="${enrollUrl}" style="display:inline-block;padding:12px 24px;background:#00A651;color:white;text-decoration:none;border-radius:8px;font-weight:bold;">Complete my enrollment</a></p>
+                <p>Either way, just reply to this email — I read every message.</p>
+                <p>Warmly,<br/>Marco<br/><em>Founder, Global Goals Jam</em></p>
+              </div>
+            </div>`,
+            text: `Hi ${firstName},\n\nI noticed you started signing up for the GGJ Host Certification Course, but your payment didn't come through. Was there anything that went wrong on your side? I'd love to hear it so we can smooth things out.\n\nIf you're still keen to join, you can pick up where you left off here:\n${enrollUrl}\n\nEither way, just reply to this email — I read every message.\n\nWarmly,\nMarco — Founder, Global Goals Jam`,
+          })
+          clearTimeout(timer)
+          resolve(res)
+        } catch (e) {
+          clearTimeout(timer)
+          reject(e)
+        }
+      })
+
+      if (result && (result as any).success) {
+        const msgId = (result as any).messageId ? ` (ID: ${(result as any).messageId})` : ''
+        toast({ title: 'Follow-up sent', description: `Message sent to ${user.email}${msgId}` })
+      } else {
+        toast({ title: 'Email failed', description: 'Could not send follow-up email', variant: 'destructive' })
+      }
+    } catch (err: any) {
+      console.error('Payment inquiry email error', err)
+      toast({ title: 'Email error', description: err?.message || 'Failed to send follow-up', variant: 'destructive' })
+    } finally {
+      setProcessingInquiryId(null)
+    }
+  }
+
   // Certificate download handler
   const handleDownloadCertificate = async (user: UserData) => {
     try {
@@ -720,8 +787,25 @@ export default function UserManagementPage() {
                         <TableCell>
                           {(() => {
                             const info = enrollments[user.id]
-                            if (info?.isPaid) {
-                              return <Badge variant="green">paid</Badge>
+                            if (info?.hasRealPayment) {
+                              return (
+                                <Badge
+                                  variant="green"
+                                  title={`Real Mollie payment (${info.molliePaymentId})`}
+                                >
+                                  paid
+                                </Badge>
+                              )
+                            }
+                            if (info?.isManualOverride) {
+                              return (
+                                <Badge
+                                  variant="secondary"
+                                  title={`Marked paid manually (ref: ${info.molliePaymentId || '—'}). No real Mollie transaction recorded.`}
+                                >
+                                  paid · manual
+                                </Badge>
+                              )
                             }
                             if (info?.needsPaymentReview) {
                               return (
@@ -754,6 +838,22 @@ export default function UserManagementPage() {
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                   <Send className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
+                            {enrollments[user.id]?.needsPaymentReview && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => sendPaymentInquiry(user)}
+                                title="Ask about failed payment — send a friendly follow-up with a fresh enrollment link"
+                                disabled={processingInquiryId === user.id}
+                                className="text-amber-700 hover:text-amber-900"
+                              >
+                                {processingInquiryId === user.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Mail className="h-4 w-4" />
                                 )}
                               </Button>
                             )}
