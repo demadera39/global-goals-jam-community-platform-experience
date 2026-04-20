@@ -43,7 +43,7 @@ interface PasswordResetData {
 export default function UserManagementPage() {
   const { toast } = useToast()
   const [users, setUsers] = useState<UserData[]>([])
-  const [enrollments, setEnrollments] = useState<Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; molliePaymentId?: string; enrolledAt?: string }>>({})
+  const [enrollments, setEnrollments] = useState<Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; needsPaymentReview: boolean; molliePaymentId?: string; amountPaid?: string | null; enrolledAt?: string }>>({})
   const [passwordResets, setPasswordResets] = useState<PasswordResetData[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -106,16 +106,20 @@ export default function UserManagementPage() {
         orderBy: { enrolledAt: 'desc' },
         limit: 1000
       }) as any[]
-      const map: Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; molliePaymentId?: string; enrolledAt?: string }> = {}
+      const map: Record<string, { status: 'not_enrolled' | 'pending' | 'active' | 'completed'; isPaid: boolean; paidStrict: boolean; needsPaymentReview: boolean; molliePaymentId?: string; amountPaid?: string | null; enrolledAt?: string }> = {}
       for (const e of list) {
         if (!e?.userId) continue
         const status = (e.status === 'completed') ? 'completed' : (e.status === 'active') ? 'active' : (e.status === 'pending') ? 'pending' : 'not_enrolled'
+        // Single source of truth for "paid": actual amount_paid > 0.
+        // This also covers manual admin overrides, which write amount_paid = '39.99'.
         const isPaid = !!(e.amountPaid && parseFloat(e.amountPaid) > 0)
-        const hasPaymentRef = !!(e.molliePaymentId && String(e.molliePaymentId).trim() !== '')
-        const paidStrict = status === 'completed' || ((status === 'active') && (isPaid || hasPaymentRef))
+        const paidStrict = isPaid
+        // Flag users who look "done" but have no recorded payment — likely abandoned / expired
+        // Mollie checkouts where the course status was flipped manually or via legacy data.
+        const needsPaymentReview = (status === 'active' || status === 'completed') && !isPaid
         const existing = map[e.userId]
         if (!existing || (existing.status !== 'completed' && status === 'completed') || (existing.status === 'pending' && (status === 'active' || status === 'completed'))) {
-          map[e.userId] = { status, isPaid, paidStrict, molliePaymentId: e.molliePaymentId, enrolledAt: e.enrolledAt }
+          map[e.userId] = { status, isPaid, paidStrict, needsPaymentReview, molliePaymentId: e.molliePaymentId, amountPaid: e.amountPaid, enrolledAt: e.enrolledAt }
         }
       }
       setEnrollments(map)
@@ -143,7 +147,7 @@ export default function UserManagementPage() {
       status: user.status,
       location: user.location || '',
       courseStatus: e?.status || 'not_enrolled',
-      markPaid: !!(e?.paidStrict || e?.isPaid)
+      markPaid: !!e?.isPaid
     })
     setShowEditDialog(true)
   }
@@ -716,8 +720,18 @@ export default function UserManagementPage() {
                         <TableCell>
                           {(() => {
                             const info = enrollments[user.id]
-                            if (info?.paidStrict || info?.isPaid) {
+                            if (info?.isPaid) {
                               return <Badge variant="green">paid</Badge>
+                            }
+                            if (info?.needsPaymentReview) {
+                              return (
+                                <Badge
+                                  variant="amber"
+                                  title={`Enrollment is ${info.status} but no payment recorded. Check Mollie — may be expired / abandoned checkout.`}
+                                >
+                                  needs review
+                                </Badge>
+                              )
                             }
                             return <span className="text-muted-foreground text-sm">no</span>
                           })()}
