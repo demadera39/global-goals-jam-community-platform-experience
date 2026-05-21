@@ -614,32 +614,37 @@ export default function UserManagementPage() {
     try {
       setIsProcessing(true)
 
-      // Get current user from localStorage
-      const currentUserStr = localStorage.getItem('user')
+      // The live Supabase session is the ONLY trustworthy source of the admin
+      // identity + token. Impersonation overlays localStorage ('auth_token' and
+      // 'user'), but it never touches the real Supabase session (stored under
+      // Supabase's own key) — so getSession() always returns the real admin,
+      // even mid-impersonation. Reading localStorage here is what made repeat
+      // impersonation fail: 'auth_token' held a fake token (gateway 401) and
+      // 'user' held the previously-impersonated person (false "Admin only").
+      const { data: { session } } = await supabase.auth.getSession()
+      const currentToken = session?.access_token || ''
+      const adminAuthId = session?.user?.id || ''
 
-      if (!currentUserStr) {
-        toast({ title: 'Sign in required', description: 'Please sign in as an admin before impersonating.', variant: 'destructive' })
+      if (!currentToken || !adminAuthId) {
+        toast({ title: 'Admin session expired', description: 'Sign out and sign back in with email + password, then try again.', variant: 'destructive' })
         return
       }
 
-      let currentUser: any = null
-      try { currentUser = JSON.parse(currentUserStr) } catch { currentUser = null }
-      if (!currentUser?.id || currentUser?.role !== 'admin') {
-        toast({ title: 'Admin only', description: 'You must be an admin to impersonate users.', variant: 'destructive' })
-        return
-      }
-
-      // Get the real Supabase JWT from the active session (localStorage auth_token is not reliably stored)
-      let currentToken = (localStorage.getItem('auth_token') || '').trim()
-      if (!currentToken || currentToken.length < 16) {
-        // Fallback: get token from Supabase session
-        const { data: { session } } = await supabase.auth.getSession()
-        currentToken = session?.access_token || ''
-      }
-
-      if (!currentToken || currentToken.length < 16) {
-        toast({ title: 'Missing token', description: 'Please sign out and sign back in (email + password), then try again.', variant: 'destructive' })
-        return
+      // Capture the admin record so "Return to admin" can restore the display.
+      // If we're already impersonating, keep the original admin record intact.
+      let impersonatorRecord = localStorage.getItem('impersonator_user')
+      if (!impersonatorRecord) {
+        let adminProfile: any = null
+        try {
+          const rows = await db.users.list({ where: { id: adminAuthId }, limit: 1 }) as any[]
+          adminProfile = rows?.[0] || null
+        } catch { /* best effort */ }
+        impersonatorRecord = JSON.stringify({
+          id: adminAuthId,
+          email: session?.user?.email || adminProfile?.email || '',
+          displayName: adminProfile?.displayName || session?.user?.email || '',
+          role: adminProfile?.role || 'admin'
+        })
       }
 
       let res: Response
@@ -678,7 +683,7 @@ export default function UserManagementPage() {
       }
 
       // Store admin (impersonator) state so we can return later
-      localStorage.setItem('impersonator_user', currentUserStr)
+      localStorage.setItem('impersonator_user', impersonatorRecord)
       localStorage.setItem('impersonator_token', currentToken)
 
       // Switch to target user session
