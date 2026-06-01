@@ -122,7 +122,9 @@ export default function Navigation() {
   )
   const navItems = [
     ...(baseItems ?? []),
-    ...(canSeeHostTools ? [{ name: 'Community', href: '/community' }] : [])
+    // Community forum is hidden for now — it has no activity yet. Re-enable by
+    // restoring this entry once the forum is seeded / in use.
+    // ...(canSeeHostTools ? [{ name: 'Community', href: '/community' }] : [])
   ]
 
   return (
