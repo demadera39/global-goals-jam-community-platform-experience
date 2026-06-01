@@ -395,6 +395,10 @@ export default function HostDashboard() {
         }
       } else {
         const created = await safeDbCall(() => db.events.create({
+          // The deployed events.id column has no working default, so generate
+          // one client-side (same pattern used for enrollments). Without this
+          // every insert sends id=null and Postgres rejects it with 23502.
+          id: (crypto?.randomUUID?.() || `evt_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`),
           ...eventData,
           hostId: user.id
         }))
