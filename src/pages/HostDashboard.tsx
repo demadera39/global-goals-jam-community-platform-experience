@@ -7,6 +7,7 @@ import { Label } from '../components/ui/label'
 import { Textarea } from '../components/ui/textarea'
 import { Badge } from '../components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+import { Progress } from '../components/ui/progress'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import {
@@ -34,7 +35,8 @@ import {
   FileText,
   Clock,
   FileUp,
-  UserPlus
+  UserPlus,
+  Circle
 } from 'lucide-react'
 import { db, auth, storage, safeDbCall, supabase } from '../lib/supabase'
 import { getFullUser } from '../lib/userProfile'
@@ -794,6 +796,51 @@ export default function HostDashboard() {
             <DonateButton variant="pill-outline" size="default" className="self-start sm:self-auto" />
           </div>
         </div>
+
+        {/* Onboarding checklist — guides new hosts; hides itself once every step is done */}
+        {hostEligible && (() => {
+          const steps = [
+            { key: 'create', label: 'Create your first jam event', done: events.length > 0 },
+            { key: 'publish', label: 'Publish it so people can register', done: events.some(e => e.status === 'published') },
+            { key: 'participants', label: 'Add your participants', done: registrations.length > 0 },
+            { key: 'complete', label: 'Wrap up your jam & issue certificates', done: events.some(e => e.status === 'completed') },
+          ]
+          const doneCount = steps.filter(s => s.done).length
+          if (doneCount === steps.length) return null
+          const pct = Math.round((doneCount / steps.length) * 100)
+          return (
+            <Card className="mb-8 border-primary/20 bg-primary/5">
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Get your jam off the ground</h2>
+                    <p className="text-sm text-muted-foreground">A few quick steps to run your first Global Goals Jam.</p>
+                  </div>
+                  <div className="text-sm font-medium text-primary whitespace-nowrap">{doneCount} of {steps.length} done</div>
+                </div>
+                <Progress value={pct} className="h-2 mb-4" />
+                <ul className="space-y-2.5">
+                  {steps.map((s) => (
+                    <li key={s.key} className="flex items-center gap-3">
+                      {s.done
+                        ? <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                        : <Circle className="w-5 h-5 text-muted-foreground/40 flex-shrink-0" />}
+                      <span className={`text-sm ${s.done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{s.label}</span>
+                    </li>
+                  ))}
+                </ul>
+                {events.length === 0 && canCreateEvents && (
+                  <Button
+                    className="mt-5 bg-primary-solid text-white hover:bg-primary/90"
+                    onClick={() => { resetForm(); setShowNewEventDialog(true) }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Create your first event
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })()}
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
