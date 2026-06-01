@@ -96,50 +96,16 @@ export default function GlobalEventsOverview() {
     }
   }, [loading, stats.totalEvents])
 
-  // Get a few featured events (prioritize current year, but show others if needed)
-  const featuredEvents = useMemo(() => {
+  // Upcoming jams only — never back-fill the homepage with past/grayed events.
+  // If there are no upcoming jams we show a warm invitation instead (below).
+  const upcomingFeatured = useMemo(() => {
     const eList = events ?? []
     const now = new Date()
-    
-    // Prioritize current year events but include other years if current year has < 3
-    const thisYearEvents = eList.filter((e) => {
-      if (!e.eventDate) return false
-      return new Date(e.eventDate).getFullYear() === currentYear
-    })
-    
-    const otherYearEvents = eList.filter((e) => {
-      if (!e.eventDate) return false
-      return new Date(e.eventDate).getFullYear() !== currentYear
-    })
-    
-    // Sort: upcoming first, then recent past
-    const sortEvents = (list: typeof eList) => list.sort((a, b) => {
-      const dateA = new Date(a.eventDate)
-      const dateB = new Date(b.eventDate)
-      
-      const isAUpcoming = dateA >= now
-      const isBUpcoming = dateB >= now
-      
-      if (isAUpcoming && isBUpcoming) {
-        return dateA.getTime() - dateB.getTime()
-      }
-      
-      if (!isAUpcoming && !isBUpcoming) {
-        return dateB.getTime() - dateA.getTime()
-      }
-      
-      return isAUpcoming ? -1 : 1
-    })
-    
-    const sortedThisYear = sortEvents(thisYearEvents)
-    const sortedOtherYears = sortEvents(otherYearEvents)
-    
-    // Combine: current year first, then fill with other years if needed
-    const combined = [...sortedThisYear, ...sortedOtherYears]
-    
-    // Show up to 3 featured events
-    return combined.slice(0, 3)
-  }, [events, currentYear])
+    return eList
+      .filter((e) => e.eventDate && new Date(e.eventDate) >= now)
+      .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
+      .slice(0, 3)
+  }, [events])
 
   if (loading) {
     return (
@@ -269,65 +235,82 @@ export default function GlobalEventsOverview() {
           </Card>
         </div>
 
-        {/* Featured Events Preview */}
+        {/* Upcoming Jams — upcoming only; warm invitation when none are scheduled */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Zap className="w-5 h-5 text-primary" />
-            <h3 className="text-xl font-semibold">Featured Events</h3>
+            <h3 className="text-xl font-semibold">Upcoming Jams</h3>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {featuredEvents.map((event) => {
-              const eventDate = new Date(event.eventDate)
-              const isPast = eventDate < new Date()
-              
-              return (
-                <Link key={event.id} to={`/events/${event.id}`} className="group">
-                  <Card className={cn(
-                    "h-full overflow-hidden transition-all group-hover:shadow-xl group-hover:-translate-y-1",
-                    isPast ? "opacity-70" : ""
-                  )}>
-                    <div className="h-32 relative">
-                      {event.coverImage ? (
-                        <img 
-                          src={event.coverImage} 
-                          alt={event.title} 
-                          className={cn(
-                            "w-full h-full object-cover",
-                            isPast ? "grayscale" : ""
-                          )}
-                          loading="lazy" 
-                        />
-                      ) : (
-                        <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/5" />
-                      )}
-                      <div className="absolute top-2 right-2">
-                        <Badge variant={isPast ? "secondary" : "default"} className="bg-card/90 text-foreground">
-                          {isPast ? 'Completed' : 'Upcoming'}
-                        </Badge>
-                      </div>
-                    </div>
-                    <CardContent className="pt-4 pb-4">
-                      <h4 className="font-semibold text-base line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-                        {event.title}
-                      </h4>
-                      <div className="space-y-1.5 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          <span>{eventDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        </div>
-                        {event.location && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
-                            <span className="truncate" title={event.location}>{event.location}</span>
-                          </div>
+
+          {upcomingFeatured.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {upcomingFeatured.map((event) => {
+                const eventDate = new Date(event.eventDate)
+                return (
+                  <Link key={event.id} to={`/events/${event.id}`} className="group">
+                    <Card className="h-full overflow-hidden transition-all group-hover:shadow-xl group-hover:-translate-y-1">
+                      <div className="h-32 relative">
+                        {event.coverImage ? (
+                          <img
+                            src={event.coverImage}
+                            alt={event.title}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/5" />
                         )}
+                        <div className="absolute top-2 right-2">
+                          <Badge variant="default" className="bg-card/90 text-foreground">Upcoming</Badge>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              )
-            })}
-          </div>
+                      <CardContent className="pt-4 pb-4">
+                        <h4 className="font-semibold text-base line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                          {event.title}
+                        </h4>
+                        <div className="space-y-1.5 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4" />
+                            <span>{eventDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          </div>
+                          {event.location && (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4" />
+                              <span className="truncate" title={event.location}>{event.location}</span>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            // No upcoming jams → invitation, not grayed-out past events
+            <Card className="overflow-hidden border-dashed">
+              <CardContent className="py-10 px-6 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-pastel-green flex items-center justify-center mx-auto mb-4">
+                  <Zap className="w-7 h-7 text-primary" />
+                </div>
+                <h4 className="font-display text-xl font-bold mb-2">No jams scheduled right now</h4>
+                <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                  Be the first to host a Global Goals Jam this edition — bring designers and
+                  changemakers together in your city and register it as a WIDD 2026 event.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <Button asChild size="lg" className="bg-primary-solid text-white hover:bg-primary/90">
+                    <Link to="/course/enroll">
+                      Become a host <ArrowRight className="w-4 h-4 ml-2" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg">
+                    <Link to="/events">Browse past jams</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* View All CTA */}

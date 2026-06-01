@@ -83,7 +83,13 @@ export default function EventsPage() {
       setUser(state.user)
       setLoading(state.isLoading)
     })
-    return unsubscribe
+    // Failsafe: the events list is public, so never let the page hang on the
+    // auth spinner if auth init stalls. Force render after 3s regardless.
+    const failsafe = setTimeout(() => setLoading(false), 3000)
+    return () => {
+      unsubscribe()
+      clearTimeout(failsafe)
+    }
   }, [])
 
   const loadEvents = useCallback(async (retryCount = 0) => {
@@ -208,8 +214,30 @@ export default function EventsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background">
+        {/* Hero skeleton */}
+        <section className="relative py-20 hero-pattern">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="h-6 w-40 bg-muted rounded-full animate-pulse mb-4" />
+            <div className="h-11 w-2/3 max-w-xl bg-muted rounded-lg animate-pulse mb-3" />
+            <div className="h-5 w-1/2 max-w-md bg-muted rounded animate-pulse" />
+          </div>
+        </section>
+        {/* Card grid skeleton */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-xl border bg-card overflow-hidden">
+                <div className="h-40 bg-muted animate-pulse" />
+                <div className="p-4 space-y-3">
+                  <div className="h-5 w-3/4 bg-muted rounded animate-pulse" />
+                  <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
+                  <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }

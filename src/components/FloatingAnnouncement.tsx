@@ -30,10 +30,10 @@ export default function FloatingAnnouncement() {
       role="region"
       aria-label="Platform launch announcement"
       aria-live="polite"
-      className="fixed inset-x-0 top-4 z-50 flex justify-center pointer-events-none"
+      className="w-full flex justify-center px-4 pt-4"
     >
-      <div className="pointer-events-auto max-w-3xl w-full mx-4">
-        <div className="flex items-center justify-between gap-4 bg-primary-solid text-white rounded-lg shadow-card p-3 sm:p-4 transition-transform duration-300 transform translate-y-0">
+      <div className="max-w-3xl w-full">
+        <div className="flex items-center justify-between gap-4 bg-primary-solid text-white rounded-lg shadow-card p-3 sm:p-4">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 mt-0.5">
               <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" aria-hidden>
