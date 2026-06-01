@@ -66,8 +66,10 @@ export default function ContactPage() {
       `
 
       const result = await notifications.email({
-        to: 'marco@globalgoalsjam.org',
+        // Send to both inboxes so submissions are seen quickly.
+        to: ['marco@globalgoalsjam.org', 'me@marcovanhout.com'],
         from: 'Global Goals Jam <marco@globalgoalsjam.org>',
+        replyTo: data.email,
         subject: `Contact Form: ${data.subject}`,
         html: emailHtml,
         text: `New contact form submission from ${data.name} (${data.email})\n\nSubject: ${data.subject}\n\nMessage:\n${data.message}`,

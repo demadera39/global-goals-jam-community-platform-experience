@@ -215,11 +215,12 @@ export const storage = {
 // ---------------------------------------------------------------------------
 export const notifications = {
   async email(params: {
-    to: string
+    to: string | string[]
     from: string
     subject: string
     html: string
     text?: string
+    replyTo?: string
   }) {
     const { data, error } = await supabase.functions.invoke('send-email', {
       body: params,
