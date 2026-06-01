@@ -7,7 +7,7 @@ import { Label } from '../components/ui/label'
 import { Textarea } from '../components/ui/textarea'
 import { Badge } from '../components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import {
   Plus,
@@ -114,6 +114,8 @@ export default function HostDashboard() {
   const [showNewEventDialog, setShowNewEventDialog] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  // Inline validation: which required event fields are currently flagged empty
+  const [eventFieldErrors, setEventFieldErrors] = useState<{ title?: boolean; location?: boolean; description?: boolean; startDate?: boolean }>({})
   const headerInputRef = useRef<HTMLInputElement | null>(null)
   const [headerUploading, setHeaderUploading] = useState(false)
 
@@ -285,6 +287,10 @@ export default function HostDashboard() {
 
   const handleInputChange = (field: string, value: string) => {
     setEventForm(prev => ({ ...prev, [field]: value }))
+    // Clear the inline error for this field as soon as the user provides a value
+    if (value && value.trim() && field in eventFieldErrors) {
+      setEventFieldErrors(prev => ({ ...prev, [field]: false }))
+    }
   }
 
   const resetForm = () => {
@@ -307,6 +313,7 @@ export default function HostDashboard() {
       customRegistrationLink: ''
     })
     setSelectedEvent(null)
+    setEventFieldErrors({})
   }
 
   const openEditDialog = (event: Event) => {
@@ -336,16 +343,22 @@ export default function HostDashboard() {
     // Tell the user exactly which field is missing instead of a generic toast —
     // people were filling everything in but still hitting this.
     if (!user) { toast.error('You must be signed in to create an event'); return }
-    const missing: string[] = []
-    if (!eventForm.title.trim()) missing.push('Title')
-    if (!eventForm.description.trim()) missing.push('Description')
-    if (!eventForm.location.trim()) missing.push('Location')
-    if (!eventForm.startDate) missing.push('Start date')
+    const errs = {
+      title: !eventForm.title.trim(),
+      location: !eventForm.location.trim(),
+      description: !eventForm.description.trim(),
+      startDate: !eventForm.startDate,
+    }
+    const missing = Object.entries(errs).filter(([, v]) => v).map(([k]) =>
+      k === 'startDate' ? 'Start date' : k.charAt(0).toUpperCase() + k.slice(1)
+    )
     if (missing.length) {
-      toast.error(`Please fill in: ${missing.join(', ')}`)
+      setEventFieldErrors(errs)
+      toast.error(`Please fill in the highlighted field${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}`)
       console.warn('[saveEvent] missing fields:', missing, { eventForm })
       return
     }
+    setEventFieldErrors({})
 
     // Enforce role-based creation/editing. If this trips when the admin sees the
     // user as a host, the most likely cause is profile load not finishing (or
@@ -903,22 +916,25 @@ export default function HostDashboard() {
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>{selectedEvent ? 'Edit Event' : 'Create New Event'}</DialogTitle>
+                    <DialogDescription>Fields marked with * are required.</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="title">Event Title *</Label>
-                        <Input id="title" value={eventForm.title} onChange={(e) => handleInputChange('title', e.target.value)} placeholder="Enter event title..." />
+                        <Label htmlFor="title" className={eventFieldErrors.title ? 'text-destructive' : ''}>Event Title *</Label>
+                        <Input id="title" value={eventForm.title} onChange={(e) => handleInputChange('title', e.target.value)} placeholder="Enter event title..." aria-invalid={!!eventFieldErrors.title} className={eventFieldErrors.title ? 'border-destructive focus-visible:ring-destructive' : ''} />
+                        {eventFieldErrors.title && <p className="text-xs text-destructive mt-1">Event title is required</p>}
                       </div>
                       <div>
-                        <Label htmlFor="location">Location *</Label>
-                        <Input id="location" value={eventForm.location} onChange={(e) => handleInputChange('location', e.target.value)} placeholder="Enter event location..." />
+                        <Label htmlFor="location" className={eventFieldErrors.location ? 'text-destructive' : ''}>Location *</Label>
+                        <Input id="location" value={eventForm.location} onChange={(e) => handleInputChange('location', e.target.value)} placeholder="Enter event location..." aria-invalid={!!eventFieldErrors.location} className={eventFieldErrors.location ? 'border-destructive focus-visible:ring-destructive' : ''} />
+                        {eventFieldErrors.location && <p className="text-xs text-destructive mt-1">Location is required</p>}
                       </div>
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <Label htmlFor="description">Description * (with formatting)</Label>
+                        <Label htmlFor="description" className={eventFieldErrors.description ? 'text-destructive' : ''}>Description * (with formatting)</Label>
                         <Button
                           type="button"
                           variant="outline"
@@ -948,18 +964,22 @@ export default function HostDashboard() {
                           <span className="mr-1">&#10024;</span> AI Assist
                         </Button>
                       </div>
-                      <RichTextEditor
-                        value={eventForm.description}
-                        onChange={(value) => handleInputChange('description', value)}
-                        placeholder="Describe your event... Use formatting tools above for headers, bold, italic, lists, etc."
-                        minHeight="150px"
-                      />
+                      <div className={eventFieldErrors.description ? 'rounded-md ring-1 ring-destructive' : ''}>
+                        <RichTextEditor
+                          value={eventForm.description}
+                          onChange={(value) => handleInputChange('description', value)}
+                          placeholder="Describe your event... Use formatting tools above for headers, bold, italic, lists, etc."
+                          minHeight="150px"
+                        />
+                      </div>
+                      {eventFieldErrors.description && <p className="text-xs text-destructive mt-1">Description is required</p>}
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="startDate">Start Date *</Label>
-                        <Input id="startDate" type="date" value={eventForm.startDate} onChange={(e) => handleInputChange('startDate', e.target.value)} />
+                        <Label htmlFor="startDate" className={eventFieldErrors.startDate ? 'text-destructive' : ''}>Start Date *</Label>
+                        <Input id="startDate" type="date" value={eventForm.startDate} onChange={(e) => handleInputChange('startDate', e.target.value)} aria-invalid={!!eventFieldErrors.startDate} className={eventFieldErrors.startDate ? 'border-destructive focus-visible:ring-destructive' : ''} />
+                        {eventFieldErrors.startDate && <p className="text-xs text-destructive mt-1">Start date is required</p>}
                       </div>
                       <div>
                         <Label htmlFor="endDate">End Date</Label>
