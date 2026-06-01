@@ -6,7 +6,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { config } from '../lib/config';
+import { supabase } from '../lib/supabase';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -18,20 +18,21 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(config.api.baseUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'forgot-password', email: email.trim().toLowerCase() })
-      });
-      const result = await res.json();
-      if (res.ok && result?.success !== false) {
-        setEmailSent(true);
-        toast.success('Password reset instructions sent to your email!');
-      } else {
-        toast.error(result?.error || 'Failed to send reset email');
-      }
+      // Use Supabase Auth's native recovery flow. This sends a magic link
+      // whose URL fragment triggers the PASSWORD_RECOVERY event on
+      // /reset-password, where ResetPasswordPage calls auth.updateUser to
+      // set the new password. The previous code POSTed to
+      // `${supabaseUrl}/functions/v1/auth` which is not a deployed function,
+      // so every reset request silently 404'd.
+      const normalized = email.trim().toLowerCase();
+      const redirectTo = `${window.location.origin}/reset-password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(normalized, { redirectTo });
+      if (error) throw error;
+      setEmailSent(true);
+      toast.success('If an account exists for that email, a reset link has been sent.');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to send reset email');
+      console.error('Password reset error:', error);
+      toast.error(error?.message || 'Failed to send reset email');
     } finally {
       setIsLoading(false);
     }

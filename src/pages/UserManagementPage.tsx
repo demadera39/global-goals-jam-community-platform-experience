@@ -261,29 +261,22 @@ export default function UserManagementPage() {
 
     setIsProcessing(true)
     try {
-      const response = await fetch(config.api.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'forgot-password',
-          email: selectedUser.email
-        })
+      // Use Supabase Auth's native recovery flow (not the dead /auth endpoint).
+      // Supabase emails the recipient a magic link that lands on /reset-password
+      // and triggers PASSWORD_RECOVERY for the inline updateUser flow.
+      const redirectTo = `${window.location.origin}/reset-password`
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        selectedUser.email.trim().toLowerCase(),
+        { redirectTo }
+      )
+      if (error) throw error
+
+      toast({
+        title: 'Password reset sent',
+        description: `Reset link emailed to ${selectedUser.email}. If it doesn't arrive within a few minutes, check Supabase Auth → SMTP settings.`,
       })
-
-      const result = await response.json()
-
-      if (result.success) {
-        toast({
-          title: 'Password reset sent',
-          description: `Password reset email sent to ${selectedUser.email}`,
-        })
-        setShowPasswordDialog(false)
-        await loadPasswordResets()
-      } else {
-        throw new Error(result.error || 'Failed to send reset email')
-      }
+      setShowPasswordDialog(false)
+      await loadPasswordResets()
     } catch (error: any) {
       console.error('Failed to send password reset:', error)
       toast({
@@ -319,29 +312,44 @@ export default function UserManagementPage() {
 
     setIsProcessing(true)
     try {
-      // Edge-safe PBKDF2 password hashing (matches functions/auth implementation)
-      const hashedPassword = await pbkdf2Hash(newPassword)
+      // Call the set-user-password edge function. It uses the service-role key
+      // to update auth.users.encrypted_password for Supabase Auth users (UUID
+      // ids) AND mirror to public.users.password_hash for legacy users. The
+      // previous code only updated password_hash, which silently did nothing
+      // for Supabase Auth users — they could never log in with the new
+      // password.
+      const { data: { session } } = await supabase.auth.getSession()
+      const adminToken = session?.access_token || ''
+      if (!adminToken) {
+        throw new Error('Admin session expired — sign back in and try again.')
+      }
 
-      await db.users.update(selectedUser.id, {
-        passwordHash: hashedPassword,
-        password_hash: hashedPassword,
-        updatedAt: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/set-user-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ userId: selectedUser.id, email: selectedUser.email, password: newPassword }),
       })
+      const result = await res.json().catch(() => ({}))
+      if (!res.ok || !result?.success) {
+        throw new Error(result?.error || `HTTP ${res.status} from set-user-password`)
+      }
 
       toast({
         title: 'Password updated',
-        description: `Password has been set for ${selectedUser.email}`
+        description: `New password set for ${selectedUser.email} (${result.backend === 'supabase_auth' ? 'Supabase Auth — they can sign in immediately' : 'legacy auth path'}).`
       })
 
       setShowPasswordDialog(false)
       setNewPassword('')
       setConfirmPassword('')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to set password:', error)
       toast({
         title: 'Update failed',
-        description: 'Failed to update user password',
+        description: error?.message || 'Failed to update user password',
         variant: 'destructive'
       })
     } finally {
