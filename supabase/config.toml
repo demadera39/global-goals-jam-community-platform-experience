@@ -24,6 +24,9 @@ verify_jwt = true
 [functions.send-email]
 verify_jwt = false
 
+[functions.diag-user]
+verify_jwt = true
+
 [functions.scrape-jam-images]
 verify_jwt = true
 

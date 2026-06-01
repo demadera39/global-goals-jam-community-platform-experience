@@ -333,13 +333,36 @@ export default function HostDashboard() {
   }
 
   const saveEvent = async () => {
-    if (!user || !eventForm.title.trim() || !eventForm.description.trim() || !eventForm.location.trim() || !eventForm.startDate) {
-      toast.error('Please fill in all required fields')
+    // Tell the user exactly which field is missing instead of a generic toast —
+    // people were filling everything in but still hitting this.
+    if (!user) { toast.error('You must be signed in to create an event'); return }
+    const missing: string[] = []
+    if (!eventForm.title.trim()) missing.push('Title')
+    if (!eventForm.description.trim()) missing.push('Description')
+    if (!eventForm.location.trim()) missing.push('Location')
+    if (!eventForm.startDate) missing.push('Start date')
+    if (missing.length) {
+      toast.error(`Please fill in: ${missing.join(', ')}`)
+      console.warn('[saveEvent] missing fields:', missing, { eventForm })
       return
     }
 
-    // Enforce role-based creation/editing
-    if (!canCreateEvents) { toast.error('Only approved hosts can create or edit events.'); return }
+    // Enforce role-based creation/editing. If this trips when the admin sees the
+    // user as a host, the most likely cause is profile load not finishing (or
+    // a stale localStorage), so include diagnostics in the toast/console.
+    if (!canCreateEvents) {
+      console.error('[saveEvent] canCreateEvents=false', { profile, user, hostEligible })
+      if (!profile) {
+        toast.error('Your profile is still loading — give it a moment and try again.')
+      } else if (profile.role !== 'host' && profile.role !== 'admin') {
+        toast.error(`Your account role is "${profile.role}", which can't create events. Email marco@globalgoalsjam.org if this is wrong.`)
+      } else if (profile.status !== 'approved') {
+        toast.error(`Your account status is "${profile.status}" — must be "approved" to create events.`)
+      } else {
+        toast.error('Cannot create events right now. Sign out and back in, then try again.')
+      }
+      return
+    }
     setSubmitting(true)
     try {
       const eventData = {
@@ -390,9 +413,24 @@ export default function HostDashboard() {
       invalidateEventsCache()
       resetForm()
       setShowNewEventDialog(false)
-    } catch (error) {
+    } catch (error: any) {
+      // Surface the real error so hosts can actually act on it (or send us a
+      // useful screenshot). Common shapes from supabase-js: { message, code,
+      // details, hint } or a plain Error.
       console.error('Failed to save event:', error)
-      toast.error('Failed to save event. Please try again.')
+      const code = error?.code || error?.status || ''
+      const detail = error?.details || error?.hint || ''
+      const baseMsg = error?.message || (typeof error === 'string' ? error : 'Unknown error')
+      const friendly =
+        code === '23505' ? 'An event with the same id already exists.' :
+        code === '23503' ? 'Your account record is missing — sign out and back in, then try again.' :
+        code === '42501' || /row-level security|rls|permission/i.test(baseMsg) ?
+          'Permission denied by the database. Your session may have expired — sign out and back in.' :
+        code === 'PGRST301' || /jwt expired|invalid jwt/i.test(baseMsg) ?
+          'Your session expired. Sign in again.' :
+        ''
+      const full = [friendly || 'Failed to save event.', baseMsg, detail].filter(Boolean).join(' — ')
+      toast.error(full, { duration: 10000 })
     } finally {
       setSubmitting(false)
     }
