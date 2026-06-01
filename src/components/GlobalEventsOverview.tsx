@@ -235,14 +235,16 @@ export default function GlobalEventsOverview() {
           </Card>
         </div>
 
-        {/* Upcoming Jams — upcoming only; warm invitation when none are scheduled */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Zap className="w-5 h-5 text-primary" />
-            <h3 className="text-xl font-semibold">Upcoming Jams</h3>
-          </div>
-
-          {upcomingFeatured.length > 0 ? (
+        {/* Upcoming Jams — only rendered when there are upcoming jams.
+            An empty section reads as inactivity, so we omit it entirely
+            otherwise; the impact stats + "Explore all events" CTA carry the
+            section, and past activity lives in the diversity carousel below. */}
+        {upcomingFeatured.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="w-5 h-5 text-primary" />
+              <h3 className="text-xl font-semibold">Upcoming Jams</h3>
+            </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {upcomingFeatured.map((event) => {
                 const eventDate = new Date(event.eventDate)
@@ -286,32 +288,8 @@ export default function GlobalEventsOverview() {
                 )
               })}
             </div>
-          ) : (
-            // No upcoming jams → invitation, not grayed-out past events
-            <Card className="overflow-hidden border-dashed">
-              <CardContent className="py-10 px-6 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-pastel-green flex items-center justify-center mx-auto mb-4">
-                  <Zap className="w-7 h-7 text-primary" />
-                </div>
-                <h4 className="font-display text-xl font-bold mb-2">No jams scheduled right now</h4>
-                <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                  Be the first to host a Global Goals Jam this edition — bring designers and
-                  changemakers together in your city and register it as a WIDD 2026 event.
-                </p>
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  <Button asChild size="lg" className="bg-primary-solid text-white hover:bg-primary/90">
-                    <Link to="/course/enroll">
-                      Become a host <ArrowRight className="w-4 h-4 ml-2" />
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size="lg">
-                    <Link to="/events">Browse past jams</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* View All CTA */}
         <div className="text-center pt-6 border-t">
