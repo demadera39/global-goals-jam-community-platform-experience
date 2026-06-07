@@ -364,6 +364,66 @@ export function buildSessionPlanHtml(plan: SessionPlanExportData) {
   return buildBaseDocument('Session Plan', header + daysHtml, { pageSize: 'A4', orientation: 'portrait' })
 }
 
+// Export for the grounded 4-sprint jam agenda (format ggj.jam-agenda.v1)
+export function buildJamAgendaHtml(agenda: any, methodsById: Record<string, any> = {}) {
+  const meta = agenda?.meta || {}
+  const proposedByKey: Record<string, any> = {}
+  for (const p of (agenda?.proposedMethods || [])) proposedByKey[p.key] = p
+  const title = meta.challenge
+    ? `${meta.sdgLabel ? meta.sdgLabel + ': ' : ''}${meta.challenge}`
+    : 'Global Goals Jam Agenda'
+
+  const header = `
+    <div class="row between">
+      <h1 class="h">${escapeHtml(title)}</h1>
+      <span class="pill">4-Sprint Jam Agenda</span>
+    </div>
+    <div class="meta">
+      ${meta.jamDuration ? `<span>${escapeHtml(String(meta.jamDuration))} day(s)</span>` : ''}
+      ${meta.participants ? `<span>· ${escapeHtml(String(meta.participants))} participants</span>` : ''}
+      ${meta.difficulty ? `<span>· ${escapeHtml(String(meta.difficulty))}</span>` : ''}
+    </div>
+    ${agenda?.overviewMarkdown ? `<div class="lead">${markdownToBasicHtml(agenda.overviewMarkdown)}</div>` : ''}
+  `
+
+  const sprintsHtml = (agenda?.sprints || []).map((sprint: any) => {
+    const blocks = (sprint.blocks || []).map((b: any) => {
+      const m = b.methodId ? methodsById[b.methodId] : (b.proposedMethodKey ? proposedByKey[b.proposedMethodKey] : null)
+      const mTitle = m?.title || b.title || 'Activity'
+      const tasks = Array.isArray(m?.tasks) && m.tasks.length
+        ? `<h4>How to run it</h4><ol>${m.tasks.map((t: string) => `<li>${escapeHtml(t)}</li>`).join('')}</ol>` : ''
+      const wcwo = [
+        m?.whenToUse ? `<p><strong>When:</strong> ${escapeHtml(m.whenToUse)}</p>` : '',
+        m?.whyUse ? `<p><strong>Why:</strong> ${escapeHtml(m.whyUse)}</p>` : '',
+        m?.output ? `<p><strong>Output:</strong> ${escapeHtml(m.output)}</p>` : '',
+      ].join('')
+      const attribution = m?.attributionName
+        ? `<p class="d">Method from the Metodic library · ${escapeHtml(m.attributionName)}</p>` : ''
+      return `
+        <div class="activity">
+          <div class="time"><div class="t">${escapeHtml(b.startTime || '')}</div><div class="d">${escapeHtml(b.duration || '')}</div></div>
+          <div style="flex:1">
+            <h4>${escapeHtml(mTitle)}${m?.durationLabel ? ` <span class="d">(${escapeHtml(m.durationLabel)})</span>` : ''}</h4>
+            ${m?.description ? `<p class="muted">${escapeHtml(m.description)}</p>` : ''}
+            ${b.rationale ? `<p class="d"><em>${escapeHtml(b.rationale)}</em></p>` : ''}
+            ${tasks}${wcwo}${attribution}
+          </div>
+        </div>`
+    }).join('')
+    return `
+      <div class="day">
+        <div class="day-head"><div class="bubble">${escapeHtml((sprint.phase || '?').charAt(0).toUpperCase())}</div>
+          <div><strong>${escapeHtml(sprint.title || '')}</strong>${sprint.objective ? `<div class="d">${escapeHtml(sprint.objective)}</div>` : ''}</div>
+        </div>
+        ${blocks}
+      </div>`
+  }).join('')
+
+  const cta = `<div class="note"><strong>Build the full toolkit in Metodic</strong> — turn these methods into facilitator guides, worksheets and slides, and run your jam live at <a href="https://metodic.io">metodic.io</a>.</div>`
+
+  return buildBaseDocument(title, header + sprintsHtml + cta, { pageSize: 'A4', orientation: 'portrait' })
+}
+
 // Base document builder shared by all item exports
 function buildBaseDocument(title: string, bodyHtml: string, opts?: { pageSize?: 'A4' | 'A3', orientation?: 'portrait' | 'landscape' }) {
   const pageSize = opts?.pageSize || 'A4'

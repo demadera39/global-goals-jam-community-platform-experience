@@ -26,6 +26,7 @@ import SDGCard from './SDGCard'
 import MethodCard from './MethodCard'
 import ParticipantTemplate from './ParticipantTemplate'
 import SessionPlan from './SessionPlan'
+import JamAgenda from './JamAgenda'
 import MetodicUpsell from './MetodicUpsell'
 import { buildToolkitHtml, markdownToBasicHtml, buildMethodCardHtml, buildParticipantTemplateHtml, buildSessionPlanHtml } from '../lib/toolkitExport'
 
@@ -366,6 +367,17 @@ export default function ToolkitDisplay({
       w.print()
       w.close()
     }, 250)
+  }
+
+  // New grounded format: render the dedicated JamAgenda view.
+  if (structured?.format === 'ggj.jam-agenda.v1') {
+    return (
+      <Card className="mt-8 overflow-hidden">
+        <CardContent className="p-5 sm:p-7">
+          <JamAgenda agenda={structured} onDownload={onDownload} />
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

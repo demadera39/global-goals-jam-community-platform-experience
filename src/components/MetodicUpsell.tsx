@@ -23,6 +23,45 @@ export function metodicUrl(content: string) {
   return `https://metodic.io/?${params.toString()}`
 }
 
+/**
+ * Hand off a GGJ brief to Metodic's toolkit builder as a "spark". Metodic's
+ * /create-toolkit reads this and (with the companion change) prefills the form
+ * via expand-spark. Until that ships, the link still lands users on the builder
+ * (behind the subscribe/credit gate) with UTM tracking — graceful degradation.
+ */
+export function metodicSparkUrl(spark: {
+  workshopTitle: string
+  challenge: string
+  sdgLabel?: string
+  durationDays: number
+  participants: string
+  difficulty?: string
+  localContext?: string
+}) {
+  const payload = {
+    title: spark.workshopTitle,
+    goal: spark.challenge,
+    problem_context: [
+      spark.sdgLabel ? `SDG focus: ${spark.sdgLabel}` : '',
+      spark.difficulty ? `Level: ${spark.difficulty}` : '',
+      spark.localContext || '',
+    ].filter(Boolean).join('. '),
+    rough_timing: spark.durationDays >= 2 ? 'multi-day' : 'full-day',
+    participants: spark.participants,
+    source: 'globalgoalsjam',
+  }
+  // utf-8-safe base64
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+  const params = new URLSearchParams({
+    spark: b64,
+    utm_source: 'globalgoalsjam',
+    utm_medium: 'toolkit',
+    utm_campaign: 'ggj_build_in_metodic',
+    utm_content: 'jam_agenda_cta',
+  })
+  return `https://metodic.io/create-toolkit?${params.toString()}`
+}
+
 interface MetodicUpsellProps {
   /** UTM content tag so we can tell which placement converts. */
   source: string

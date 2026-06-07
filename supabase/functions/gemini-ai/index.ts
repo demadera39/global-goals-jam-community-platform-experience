@@ -80,12 +80,52 @@ Deno.serve(async (req) => {
     }
 
     const isToolkit = action === 'generate_toolkit'
+    const isAgenda = action === 'generate_jam_agenda'
 
     // Build the system instruction based on action type
     let system =
       'You are an AI assistant for the Global Goals Jam (GGJ) community platform, focused on the UN Sustainable Development Goals (SDGs). The toolkit generation experience is powered by Metodic (metodic.io), a facilitation methodology platform.'
 
     switch (action) {
+      case 'generate_jam_agenda':
+        system =
+          'You are a master facilitation designer for the Global Goals Jam, powered by Metodic (metodic.io). ' +
+          'You are given a CATALOG of REAL facilitation methods (each has a unique "id"). Your job is to SELECT the best methods from this catalog and ARRANGE them into a sophisticated, time-boxed agenda across the four GGJ sprints. ' +
+          GGJ_SPRINT_GUIDANCE +
+          '\n\nHARD RULES:' +
+          '\n- Reference every chosen method by its EXACT "id" from the provided catalog. Do NOT invent method ids.' +
+          '\n- Do NOT rewrite or invent method bodies — the platform already has the full method content; you only select, order, time-box, and explain WHY each method fits THIS challenge at THIS moment.' +
+          '\n- You MAY propose at most 1-2 net-new methods ONLY if there is a genuine gap the catalog cannot fill. Put these in "proposedMethods" with "flagged": true, and set the block\'s "methodId" to null and "proposedMethodKey" to the proposed method\'s "key".' +
+          '\n- Build a realistic contiguous timeline: each jam day runs 09:00–17:00, includes breaks and a lunch, and each sprint maps to a portion of the day(s) in order (Understand → Define → Prototype → Implement).' +
+          '\n- Tailor objectives and rationale specifically to the challenge, SDG, participant count and difficulty given.' +
+          '\n- Keep it tight: 3-6 blocks per sprint (including breaks). Be concise — this is a scannable agenda, not an essay.' +
+          '\n\nReturn ONLY a single valid JSON object (no markdown fences) with EXACTLY this shape:' +
+          '\n{' +
+          '\n  "overviewMarkdown": string,            // 200-350 words. The learning-flow narrative of the whole jam. Markdown headings + bullets allowed.' +
+          '\n  "learningFlow": string,                // optional one-paragraph through-line of how participants transform across the 4 sprints' +
+          '\n  "sprints": [' +
+          '\n    {' +
+          '\n      "phase": "understand"|"define"|"prototype"|"implement",' +
+          '\n      "title": string,                   // e.g. "Sprint 1 — Understand & Empathise"' +
+          '\n      "objective": string,               // 1-2 sentences, specific to this challenge' +
+          '\n      "blocks": [' +
+          '\n        {' +
+          '\n          "methodId": string|null,       // EXACT id from the catalog, or null if proposed' +
+          '\n          "proposedMethodKey": string|null,' +
+          '\n          "title": string,               // echo the method title (resilience if id lookup fails)' +
+          '\n          "startTime": "HH:MM",' +
+          '\n          "endTime": "HH:MM",' +
+          '\n          "duration": string,            // e.g. "45 min"' +
+          '\n          "rationale": string            // 1-2 concise sentences: WHY this method here, tied to the challenge/SDG. Do NOT restate the method description.' +
+          '\n        }' +
+          '\n      ]' +
+          '\n    }' +
+          '\n  ],' +
+          '\n  "proposedMethods": [' +
+          '\n    { "key": string, "title": string, "description": string, "phase": "understand"|"define"|"prototype"|"implement", "rationale": string, "flagged": true }' +
+          '\n  ]' +
+          '\n}'
+        break
       case 'generate_toolkit':
         system =
           'You are a Transdisciplinary Methodology Architect generating a complete, ready-to-run Global Goals Jam toolkit, powered by Metodic (metodic.io). ' +
@@ -117,12 +157,20 @@ Deno.serve(async (req) => {
       system += `\n\nAdditional context: ${context}`
     }
 
-    // Heavy structured generation → Sonnet. Light text tasks → Haiku (fast/cheap).
+    // Model selection:
+    // - Full toolkit (legacy, big bodies) → Sonnet primary.
+    // - Jam agenda → Haiku primary: the task is grounded SELECTION + short
+    //   rationale from a real catalog, which Haiku handles well and ~3x faster,
+    //   keeping us safely under the edge gateway timeout. Sonnet is the fallback.
+    // - Light text tasks → Haiku.
     const primaryModel = isToolkit ? SONNET_MODEL : HAIKU_MODEL
     const fallbackModel = isToolkit ? HAIKU_MODEL : SONNET_MODEL
     const modelChain = [primaryModel, fallbackModel]
 
-    const maxTokens = isToolkit ? 32768 : 2048
+    // Agenda output is only selection + rationale (not full method bodies), so it
+    // stays small and fast — keeping it well under the edge gateway timeout.
+    const maxTokens = isToolkit ? 32768 : isAgenda ? 8192 : 2048
+    const temperature = isAgenda ? 0.5 : isToolkit ? 0.7 : 0.8
 
     const callClaude = async (model: string): Promise<Response> => {
       const controller = new AbortController()
@@ -138,7 +186,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             model,
             max_tokens: maxTokens,
-            temperature: isToolkit ? 0.7 : 0.8,
+            temperature,
             system,
             messages: [{ role: 'user', content: prompt }],
           }),

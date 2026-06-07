@@ -26,7 +26,8 @@ import {
 import { db, auth, safeDbCall, supabase } from '../lib/supabase'
 import { getFullUser } from '../lib/userProfile'
 import ToolkitDisplay from '../components/ToolkitDisplay'
-import { buildToolkitHtml, markdownToBasicHtml } from '../lib/toolkitExport'
+import { buildToolkitHtml, markdownToBasicHtml, buildJamAgendaHtml } from '../lib/toolkitExport'
+import { fetchMethods, toCatalogForPrompt, indexById } from '../lib/metodicMethods'
 
 interface User {
   id: string
@@ -92,6 +93,7 @@ export default function ToolkitPage() {
   const [isCertified, setIsCertified] = useState(false)
   const [saving, setSaving] = useState(false)
   const [savedToolkitId, setSavedToolkitId] = useState<string | null>(null)
+  const [genStatus, setGenStatus] = useState('')
 
   // Form state
   const [formData, setFormData] = useState({
@@ -352,87 +354,41 @@ export default function ToolkitPage() {
 
     try {
       const selectedSDG = sdgOptions.find(sdg => sdg.value === formData.sdgFocus)
+      const days = parseInt(formData.jamDuration) || 1
+      const totalHours = days * 8
 
-      // Build comprehensive prompt with strict JSON output
-      const totalHours = parseInt(formData.jamDuration) * 8
-      const prompt = `You are an expert facilitator creating a comprehensive Global Goals Jam toolkit. Tailor everything precisely to the inputs.
+      // 1) Retrieve REAL methods from Metodic's library (grounding — not invention)
+      setGenStatus('Pulling real methods from the Metodic library…')
+      const { methods, grounded } = await fetchMethods({
+        challenge: formData.challenge,
+        sdgFocus: formData.sdgFocus,
+        language: 'en',
+      })
+      const catalog = toCatalogForPrompt(methods)
+      const methodsById = indexById(methods)
+      const validIds = new Set(methods.map(m => m.id))
+      const titleIndex = new Map(methods.map(m => [m.title.toLowerCase().trim(), m.id]))
 
-Return ONLY a single valid JSON object (no commentary, no markdown fences) with this exact shape:
-{
-  "overviewMarkdown": string, // 500-1200 words. Use headings and bullet lists.
-  "sessionPlan": {
-    "days": [
-      {
-        "day": number,
-        "theme": string,
-        "objective": string,
-        "activities": [
-          {
-            "time": "HH:MM",
-            "duration": "NN min",
-            "title": string,
-            "description": string,
-            "materials": string[],
-            "steps": string[],
-            "facilitatorNotes": string[],
-            "energyLevel": "low" | "medium" | "high"
-          }
-        ]
-      }
-    ]
-  },
-  "methodCards": [
-    {
-      "title": string,
-      "description": string,
-      "duration": string,
-      "participants": string,
-      "phase": "understand" | "define" | "prototype" | "implement",
-      "difficulty": "easy" | "medium" | "hard",
-      "materials": string[],
-      "steps": string[],
-      "tips": string[]
-    }
-  ],
-  "templates": [
-    {
-      "title": string,
-      "description": string,
-      "phase": "understand" | "define" | "prototype" | "implement",
-      "sections": [
-        { "title": string, "type": "text" | "list" | "canvas" | "rating", "prompt": string, "options"?: string[] }
-      ]
-    }
-  ]
-}
+      // 2) Ask the AI to SELECT + ARRANGE catalog methods into a 4-sprint agenda
+      setGenStatus('Designing your 4-sprint agenda…')
+      const prompt = `Design a complete Global Goals Jam agenda for the brief below by SELECTING and ARRANGING methods from the provided CATALOG. Reference methods by their exact "id".
 
-Strict requirements:
-- Build a complete hour-by-hour schedule that covers exactly ${totalHours} hours in total across ${formData.jamDuration} day(s), including breaks. Do not stop early.
-- Start each day at 09:00 and end at 17:00 with contiguous activities.
-- Methods must align with the 4 sprints and with SDG ${selectedSDG?.label || 'General'}.
-- Include facilitator notes and concrete materials.
-- Templates must match the methods you propose.
-
-Context:
+BRIEF:
 Challenge: ${formData.challenge}
-SDG Focus: ${selectedSDG?.label || 'General SDG'}
-Duration: ${formData.jamDuration} day(s) (${totalHours} hours total)
+SDG focus: ${selectedSDG?.label || 'General SDG'}
+Duration: ${days} day(s) (${totalHours} hours total; each day runs 09:00–17:00)
 Participants: ${formData.participants}
-Difficulty Level: ${formData.difficultyLevel}
-Local Context: ${formData.localContext || 'No specific local context provided'}
-Available Resources: ${formData.resources || 'Standard workshop materials (flip charts, markers, post-its)'}
+Difficulty: ${formData.difficultyLevel}
+${formData.localContext ? `Local context: ${formData.localContext}\n` : ''}${formData.resources ? `Available resources: ${formData.resources}\n` : ''}
+CATALOG (${catalog.length} real methods — choose by "id"):
+${JSON.stringify(catalog)}`
 
-Make it specific, actionable, and tailored. Output valid JSON only.`
-
-      console.log('[ToolkitPage] 🚀 Starting AI generation with prompt length:', prompt.length)
+      console.log('[ToolkitPage] 🚀 Generating grounded agenda; catalog size:', catalog.length, 'grounded:', grounded)
       const startTime = Date.now()
 
       let text: string = ''
       const { data: aiResult, error: aiError } = await supabase.functions.invoke('gemini-ai', {
-        body: {
-          prompt: `Return ONLY valid JSON answering the following. If you cannot, fix formatting and still return a single JSON object.\n\n${prompt}`,
-          action: 'generate_toolkit',
-        },
+        body: { prompt, action: 'generate_jam_agenda' },
       })
 
       // supabase.functions.invoke surfaces non-2xx responses as a
@@ -451,23 +407,72 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
       text = aiResult?.text || ''
 
       const duration = ((Date.now() - startTime) / 1000).toFixed(2)
-      console.log(`[ToolkitPage] ✓ AI generation complete in ${duration}s, text length:`, text?.length, 'truncated:', aiResult?.truncated)
+      console.log(`[ToolkitPage] ✓ Agenda generated in ${duration}s, text length:`, text?.length, 'truncated:', aiResult?.truncated)
 
       if (!text || text.length < 20) {
-        throw new Error('The AI returned an empty toolkit. Please try again.')
+        throw new Error('The AI returned an empty agenda. Please try again.')
       }
 
-      // Try to parse structured JSON (robust extraction + truncation repair)
-      let structured: any = extractJsonObject(text)
-      if (!structured) {
-        console.warn('[ToolkitPage] Could not parse structured JSON; storing raw text')
+      const agenda: any = extractJsonObject(text)
+      if (!agenda || !Array.isArray(agenda.sprints)) {
+        throw new Error('The AI returned an unexpected format. Please try again.')
       }
-      const contentToStore = structured ? JSON.stringify(structured) : text
+
+      // 3) Validate method ids (anti-hallucination): repair by title, else demote to a flagged proposal
+      const proposed: any[] = Array.isArray(agenda.proposedMethods) ? [...agenda.proposedMethods] : []
+      for (const sprint of agenda.sprints) {
+        if (!Array.isArray(sprint.blocks)) { sprint.blocks = []; continue }
+        for (const b of sprint.blocks) {
+          if (b.methodId && !validIds.has(b.methodId)) {
+            const byTitle = titleIndex.get((b.title || '').toLowerCase().trim())
+            if (byTitle) {
+              b.methodId = byTitle
+            } else {
+              const key = `auto_${proposed.length + 1}`
+              proposed.push({
+                key,
+                title: b.title || 'Custom activity',
+                description: '',
+                phase: sprint.phase,
+                rationale: b.rationale || '',
+                flagged: true,
+              })
+              b.methodId = null
+              b.proposedMethodKey = key
+            }
+          }
+        }
+      }
+      agenda.proposedMethods = proposed
+
+      // 4) Attach meta + format marker + a self-contained snapshot of the methods used
+      const usedIds = new Set<string>()
+      for (const s of agenda.sprints) for (const b of (s.blocks || [])) if (b.methodId) usedIds.add(b.methodId)
+      const usedMethods: Record<string, any> = {}
+      usedIds.forEach((id) => { if (methodsById[id]) usedMethods[id] = methodsById[id] })
+
+      agenda.format = 'ggj.jam-agenda.v1'
+      agenda.meta = {
+        sdgFocus: formData.sdgFocus,
+        sdgLabel: selectedSDG?.label || '',
+        jamDuration: formData.jamDuration,
+        participants: formData.participants,
+        challenge: formData.challenge,
+        difficulty: formData.difficultyLevel,
+        grounded,
+        methodCatalogIds: Array.from(usedIds),
+        generatedAt: new Date().toISOString(),
+      }
+
+      const contentToStore = JSON.stringify({ ...agenda, _methods: usedMethods })
+
+      if (!grounded) {
+        toast.warning('The Metodic method library was unavailable, so this agenda uses a small fallback set.')
+      }
       if (aiResult?.truncated) {
-        toast.warning('This jam was large, so the toolkit may be slightly trimmed. Try a shorter duration for full detail.')
+        toast.warning('This jam was large, so the agenda may be slightly trimmed. Try a shorter duration for full detail.')
       }
 
-      // For logged-in users, ALWAYS use full generation
       setIsPreview(false)
       setGeneratedContent(contentToStore)
 
@@ -498,6 +503,7 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
     } finally {
       console.log('[ToolkitPage] 🏁 Generation process finished (success or error)')
       setGenerating(false)
+      setGenStatus('')
     }
   }
 
@@ -794,13 +800,13 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
                       </div>
                       <div>
                         <h3 className="text-2xl font-bold text-foreground mb-3">
-                          🤖 AI is generating your toolkit
+                          🤖 Building your jam agenda
                         </h3>
                         <p className="text-base text-muted-foreground leading-relaxed">
-                          Creating a comprehensive session plan with detailed facilitation guides, method cards, and templates...
+                          {genStatus || 'Selecting real facilitation methods from the Metodic library and arranging them across the four GGJ sprints…'}
                         </p>
                         <p className="text-sm text-primary font-medium mt-4">
-                          This usually takes 15-30 seconds
+                          This usually takes 30–60 seconds
                         </p>
                       </div>
                       <div className="flex justify-center gap-3">
@@ -845,6 +851,25 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
                       challenge={formData.challenge}
                       onDownload={() => {
                         const selectedSDG = sdgOptions.find(sdg => sdg.value === formData.sdgFocus)
+
+                        // New grounded agenda format → dedicated export
+                        try {
+                          const maybe = JSON.parse(generatedContent)
+                          if (maybe?.format === 'ggj.jam-agenda.v1') {
+                            const html = buildJamAgendaHtml(maybe, maybe._methods || {})
+                            const blob = new Blob([html], { type: 'text/html' })
+                            const url = URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = url
+                            a.download = `ggj_agenda_${(selectedSDG?.label || 'jam').replace(/[^a-z0-9]/gi, '_')}.html`
+                            document.body.appendChild(a)
+                            a.click()
+                            document.body.removeChild(a)
+                            URL.revokeObjectURL(url)
+                            return
+                          }
+                        } catch (_) { /* fall through to legacy export */ }
+
                         // Try to build from structured JSON when available
                         let contentHtml = ''
                         try {
