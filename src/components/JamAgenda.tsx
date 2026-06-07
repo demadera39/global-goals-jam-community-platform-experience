@@ -10,6 +10,14 @@ import { markdownToBasicHtml } from '../lib/toolkitExport'
 import { metodicSparkUrl } from './MetodicUpsell'
 import type { MetodicMethod, SprintPhase } from '../lib/metodicMethods'
 
+// Metodic brand tokens — scoped locally to this "Powered by Metodic" zone so the
+// rest of GGJ keeps its green identity. Coral = Metodic's primary (hsl 16 80% 61%).
+const METODIC_CORAL = 'hsl(16, 80%, 61%)'
+const METODIC_CORAL_SOFT = 'hsl(16, 80%, 61%, 0.12)'
+const METODIC_CREAM = 'hsl(28, 60%, 97%)'
+const METODIC_LOGO =
+  'https://firebasestorage.googleapis.com/v0/b/blink-451505.firebasestorage.app/o/user-uploads%2Fz9Up8fyufsOU2ncxMU2r2iGBON23%2Flogotype__fc060903.png?alt=media&token=9075314a-0c8f-4585-be0d-b9fdfd4092f6'
+
 interface JamBlock {
   methodId: string | null
   proposedMethodKey?: string | null
@@ -149,12 +157,34 @@ export default function JamAgenda({ agenda, onDownload }: { agenda: ParsedJamAge
 
   return (
     <div className="space-y-8">
+      {/* Powered-by-Metodic band — the coral/cream brand zone */}
+      <div
+        className="flex flex-col gap-2 rounded-xl border px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+        style={{ borderColor: METODIC_CORAL_SOFT, background: METODIC_CREAM }}
+      >
+        <div className="flex items-center gap-2.5">
+          <img src={METODIC_LOGO} alt="Metodic" className="h-5 w-auto object-contain" loading="lazy" />
+          <span className="text-xs text-muted-foreground">
+            AI facilitation methods, powered by Metodic
+          </span>
+        </div>
+        <a
+          href={handoffUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
+          style={{ color: METODIC_CORAL }}
+        >
+          Build in Metodic <ExternalLink className="h-3 w-3" />
+        </a>
+      </div>
+
       {/* Header */}
       <div>
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <Badge className="bg-primary/10 text-primary hover:bg-primary/10"><Sparkles className="mr-1 h-3 w-3" />4-Sprint Jam Agenda</Badge>
+          <Badge className="border-0 text-white hover:opacity-90" style={{ backgroundColor: METODIC_CORAL }}><Sparkles className="mr-1 h-3 w-3" />4-Sprint Jam Agenda</Badge>
           {meta.grounded !== false && (
-            <Badge variant="outline" className="text-[11px]"><BookOpen className="mr-1 h-3 w-3" />Grounded in the Metodic method library</Badge>
+            <Badge variant="outline" className="text-[11px]" style={{ borderColor: METODIC_CORAL_SOFT, color: METODIC_CORAL }}><BookOpen className="mr-1 h-3 w-3" />Grounded in the Metodic method library</Badge>
           )}
         </div>
         <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
@@ -238,12 +268,18 @@ export default function JamAgenda({ agenda, onDownload }: { agenda: ParsedJamAge
         })}
       </div>
 
-      {/* Metodic handoff — the funnel */}
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background p-6 sm:p-7">
+      {/* Metodic handoff — the funnel (coral brand zone) */}
+      <div
+        className="rounded-2xl border p-6 sm:p-7"
+        style={{ borderColor: METODIC_CORAL_SOFT, background: `linear-gradient(135deg, ${METODIC_CREAM}, hsl(0 0% 100%))` }}
+      >
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-xl">
-            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary">
-              <Sparkles className="h-3 w-3" />Next step
+            <div className="mb-2 flex items-center gap-2">
+              <img src={METODIC_LOGO} alt="Metodic" className="h-4 w-auto object-contain" loading="lazy" />
+              <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style={{ backgroundColor: METODIC_CORAL_SOFT, color: METODIC_CORAL }}>
+                Next step
+              </span>
             </div>
             <h3 className="font-display text-lg font-bold tracking-tight sm:text-xl">Build the full toolkit in Metodic</h3>
             <p className="mt-1.5 text-sm text-muted-foreground">
@@ -255,7 +291,8 @@ export default function JamAgenda({ agenda, onDownload }: { agenda: ParsedJamAge
             href={handoffUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary-solid px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+            style={{ backgroundColor: METODIC_CORAL }}
           >
             Build in Metodic <ExternalLink className="h-4 w-4" />
           </a>
@@ -269,7 +306,7 @@ export default function JamAgenda({ agenda, onDownload }: { agenda: ParsedJamAge
             <Download className="mr-2 h-4 w-4" />Download agenda (HTML)
           </Button>
         )}
-        <Button asChild variant="ghost" className="text-primary">
+        <Button asChild variant="ghost" style={{ color: METODIC_CORAL }}>
           <a href={handoffUrl} target="_blank" rel="noopener noreferrer">
             Continue in Metodic <ArrowRight className="ml-2 h-4 w-4" />
           </a>
