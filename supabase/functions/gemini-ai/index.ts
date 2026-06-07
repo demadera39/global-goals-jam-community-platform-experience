@@ -1,8 +1,23 @@
 import { corsHeaders } from '../_shared/cors.ts'
 
+// NOTE: slug is still "gemini-ai" for backwards-compat with existing callers
+// (ToolkitPage, AIAssistant, HostDashboard), but this function is now powered
+// by Anthropic Claude — Sonnet for heavy toolkit generation, Haiku for light
+// tasks. Mirrors Metodic's facilitation engines (metodic.io).
+
 const RATE_LIMIT_WINDOW = 60_000 // 1 minute
 const MAX_REQUESTS_PER_WINDOW = 20
 const requestLog = new Map<string, number[]>()
+
+// Generation can be slow for large toolkits — give it room before aborting.
+const REQUEST_TIMEOUT_MS = 110_000
+
+const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
+const ANTHROPIC_VERSION = '2023-06-01'
+
+// Override via secrets if model names change.
+const SONNET_MODEL = Deno.env.get('CLAUDE_SONNET_MODEL') || 'claude-sonnet-4-6'
+const HAIKU_MODEL = Deno.env.get('CLAUDE_HAIKU_MODEL') || 'claude-haiku-4-5'
 
 function isRateLimited(key: string): boolean {
   const now = Date.now()
@@ -14,17 +29,39 @@ function isRateLimited(key: string): boolean {
   return false
 }
 
+// The GGJ method is a Double-Diamond-derived 4-sprint design sprint.
+// Every generated toolkit MUST map cleanly onto these four sprints/phases.
+const GGJ_SPRINT_GUIDANCE = `
+The Global Goals Jam runs as a structured design sprint built from FOUR SPRINTS. Everything you produce must map cleanly onto these four sprints/phases (use the lowercase phase keys exactly in JSON):
+
+1. UNDERSTAND (phase key: "understand") — Sprint 1: Frame & empathise. Map the system around the challenge, gather data and lived experience, identify who is affected and the root causes. Outputs: problem framing, stakeholder/system maps, insights.
+2. DEFINE (phase key: "define") — Sprint 2: Reframe & ideate. Converge insights into a sharp "How Might We", then diverge into many ideas. Outputs: design challenge statement, prioritised idea(s).
+3. PROTOTYPE (phase key: "prototype") — Sprint 3: Make it tangible. Build a low-fidelity prototype of the chosen concept and test the riskiest assumptions with people. Outputs: prototype, test feedback.
+4. IMPLEMENT (phase key: "implement") — Sprint 4: Plan for real-world impact & scale. Define next steps, partners, resources and how the concept connects to the relevant SDG target. Outputs: action/implementation plan, pitch.
+
+Rules:
+- Distribute the session timeline so each day/segment clearly belongs to one of the four sprints, in order.
+- Every methodCard MUST have a "phase" of exactly "understand" | "define" | "prototype" | "implement".
+- Methods must be specific and SDG-relevant — avoid generic "post-it brainstorm" filler. Favour concrete, named techniques with facilitator guidance.
+- Always include the four sprints; never skip a sprint even for short jams (compress instead).`
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+
   try {
-    const apiKey = Deno.env.get('GEMINI_API_KEY')
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
     if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: 'Gemini API not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      return json(
+        { error: 'AI is not configured yet. The ANTHROPIC_API_KEY secret is missing on this project.' },
+        500,
       )
     }
 
@@ -32,95 +69,142 @@ Deno.serve(async (req) => {
     const { prompt, action, context } = body
 
     if (!prompt && !action) {
-      return new Response(
-        JSON.stringify({ error: 'prompt or action is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return json({ error: 'prompt or action is required' }, 400)
     }
 
     // Rate limit by authorization header (user session)
     const authHeader = req.headers.get('authorization') || 'anonymous'
     const rateLimitKey = authHeader.slice(-16)
     if (isRateLimited(rateLimitKey)) {
-      return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return json({ error: 'Rate limit exceeded. Please wait a moment and try again.' }, 429)
     }
 
+    const isToolkit = action === 'generate_toolkit'
+
     // Build the system instruction based on action type
-    let systemInstruction = 'You are an AI assistant for the Global Goals Jam community platform, focused on the UN Sustainable Development Goals (SDGs).'
+    let system =
+      'You are an AI assistant for the Global Goals Jam (GGJ) community platform, focused on the UN Sustainable Development Goals (SDGs). The toolkit generation experience is powered by Metodic (metodic.io), a facilitation methodology platform.'
 
     switch (action) {
       case 'generate_toolkit':
-        systemInstruction += ' You generate structured toolkit content for design sprint workshops. Return ONLY valid JSON.'
+        system =
+          'You are a Transdisciplinary Methodology Architect generating a complete, ready-to-run Global Goals Jam toolkit, powered by Metodic (metodic.io). ' +
+          'You design world-class, design-sprint workshop toolkits that are specific, contextual and immediately actionable — never generic filler. ' +
+          'You draw on Design Thinking, the Double Diamond, service design, systems thinking, speculative design and inclusive facilitation practice. ' +
+          GGJ_SPRINT_GUIDANCE +
+          '\n\nReturn ONLY a single valid JSON object — no commentary, no markdown fences.'
         break
       case 'event_description':
-        systemInstruction += ' You help hosts write compelling event descriptions for Global Goals Jam events. Be inspiring and action-oriented.'
+        system +=
+          ' You help hosts write compelling event descriptions for Global Goals Jam events. Be inspiring and action-oriented.'
         break
       case 'sdg_match':
-        systemInstruction += ' You suggest relevant UN SDGs based on event themes. Return a JSON array of SDG numbers (1-17) with brief explanations.'
+        system +=
+          ' You suggest relevant UN SDGs based on event themes. Return a JSON array of SDG numbers (1-17) with brief explanations.'
         break
       case 'impact_summary':
-        systemInstruction += ' You generate concise impact summaries from event results and outcomes data.'
+        system += ' You generate concise impact summaries from event results and outcomes data.'
         break
       case 'course_qa':
-        systemInstruction += ' You answer questions about the GGJ Host Certification Course content. Be helpful and educational.'
+        system +=
+          ' You answer questions about the GGJ Host Certification Course content. Be helpful and educational.'
         break
       default:
-        systemInstruction += ' Be helpful, concise, and focused on sustainable development topics.'
+        system += ' Be helpful, concise, and focused on sustainable development topics.'
     }
 
     if (context) {
-      systemInstruction += `\n\nAdditional context: ${context}`
+      system += `\n\nAdditional context: ${context}`
     }
 
-    // Call Gemini API
-    const model = 'gemini-2.0-flash'
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+    // Heavy structured generation → Sonnet. Light text tasks → Haiku (fast/cheap).
+    const primaryModel = isToolkit ? SONNET_MODEL : HAIKU_MODEL
+    const fallbackModel = isToolkit ? HAIKU_MODEL : SONNET_MODEL
+    const modelChain = [primaryModel, fallbackModel]
 
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        systemInstruction: { parts: [{ text: systemInstruction }] },
-        generationConfig: {
-          temperature: action === 'generate_toolkit' ? 0.7 : 0.8,
-          maxOutputTokens: 4096,
-          topP: 0.95,
-        },
-      }),
-    })
+    const maxTokens = isToolkit ? 32768 : 2048
 
-    if (!geminiResponse.ok) {
-      const errorData = await geminiResponse.text()
-      console.error('Gemini API error:', geminiResponse.status, errorData)
-      return new Response(
-        JSON.stringify({ error: 'AI service temporarily unavailable', details: geminiResponse.status }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    const callClaude = async (model: string): Promise<Response> => {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+      try {
+        return await fetch(ANTHROPIC_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': ANTHROPIC_VERSION,
+          },
+          body: JSON.stringify({
+            model,
+            max_tokens: maxTokens,
+            temperature: isToolkit ? 0.7 : 0.8,
+            system,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+          signal: controller.signal,
+        })
+      } finally {
+        clearTimeout(timer)
+      }
+    }
+
+    let usedModel = ''
+    let data: any = null
+    let lastErr = ''
+    let lastStatus = 0
+
+    for (const model of modelChain) {
+      try {
+        const resp = await callClaude(model)
+        if (resp.ok) {
+          data = await resp.json()
+          usedModel = model
+          break
+        }
+        lastStatus = resp.status
+        lastErr = await resp.text()
+        console.error(`[gemini-ai/claude] model ${model} failed (${resp.status}): ${lastErr.slice(0, 500)}`)
+        // 400 (e.g. unknown model) / 404 → try the fallback model.
+        // 401/403 → key problem, no point retrying another model.
+        if (resp.status === 401 || resp.status === 403) break
+      } catch (e) {
+        lastErr = e instanceof Error ? e.message : String(e)
+        if (lastErr.includes('aborted')) lastErr = 'The AI request timed out. Please try again.'
+        console.error(`[gemini-ai/claude] model ${model} threw:`, lastErr)
+      }
+    }
+
+    if (!data) {
+      if (lastStatus === 401 || lastStatus === 403) {
+        return json({ error: 'AI authentication failed. The ANTHROPIC_API_KEY is missing or invalid.' }, 502)
+      }
+      if (lastStatus === 429) {
+        return json({ error: 'The AI service is busy right now. Please try again in a moment.' }, 429)
+      }
+      return json(
+        { error: 'AI service temporarily unavailable. Please try again shortly.', details: lastErr.slice(0, 500) },
+        502,
       )
     }
 
-    const geminiData = await geminiResponse.json()
-    const text = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    const stopReason = data?.stop_reason || null
+    const text: string = Array.isArray(data?.content)
+      ? data.content.filter((b: any) => b?.type === 'text').map((b: any) => b.text).join('')
+      : ''
 
     if (!text) {
-      return new Response(
-        JSON.stringify({ error: 'AI returned empty response' }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      return json(
+        { error: 'The AI returned an empty response. Please try again.', stopReason },
+        502,
       )
     }
 
-    return new Response(
-      JSON.stringify({ text, model }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    // stop_reason === 'max_tokens' means the output is truncated — we still
+    // return it; the client repairs the partial JSON.
+    return json({ text, model: usedModel, stopReason, truncated: stopReason === 'max_tokens' })
   } catch (error) {
-    console.error('gemini-ai error:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    console.error('[gemini-ai/claude] error:', error)
+    return json({ error: error instanceof Error ? error.message : 'Unexpected error' }, 500)
   }
 })

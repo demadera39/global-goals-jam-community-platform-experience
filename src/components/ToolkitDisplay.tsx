@@ -26,6 +26,7 @@ import SDGCard from './SDGCard'
 import MethodCard from './MethodCard'
 import ParticipantTemplate from './ParticipantTemplate'
 import SessionPlan from './SessionPlan'
+import MetodicUpsell from './MetodicUpsell'
 import { buildToolkitHtml, markdownToBasicHtml, buildMethodCardHtml, buildParticipantTemplateHtml, buildSessionPlanHtml } from '../lib/toolkitExport'
 
 interface ToolkitDisplayProps {
@@ -653,12 +654,16 @@ export default function ToolkitDisplay({
 
         <Separator />
 
+        {/* Subtle funnel to Metodic — the platform that powers the generator */}
+        <div className="px-6 pt-6">
+          <MetodicUpsell source="toolkit_display_footer" />
+        </div>
+
         {/* Footer with Download */}
         <div className="p-6 bg-muted/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="text-sm text-muted-foreground">Built with <a href="https://metodic.io" target="_blank" rel="noopener noreferrer" className="underline decoration-2 text-foreground">Metodic.io</a></div>
-              <Badge variant="outline" className="text-xs">metodic.io</Badge>
+              <MetodicUpsell source="toolkit_display_builtwith" variant="line" />
             </div>
             <div className="flex gap-2">
               <Button onClick={handlePrintPDF} variant="outline" className="border-primary text-primary hover:bg-primary/10"><Printer className="w-4 h-4 mr-2" />Print All</Button>

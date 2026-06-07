@@ -273,6 +273,42 @@ export default function ToolkitPage() {
   }
 
   // Robustly extract a JSON object from AI output that may include code fences or extra text
+  // Attempt to repair JSON that was truncated mid-stream (e.g. the model hit
+  // its max-token budget on a long 3-day jam). We close any open strings,
+  // arrays and objects so the bulk of the toolkit still renders.
+  function repairTruncatedJson(input: string): string {
+    let s = input
+    // Drop a trailing partial token after the last complete value, if any.
+    const stack: string[] = []
+    let inString = false
+    let escaped = false
+    let lastSafe = -1 // index just after the last balanced top-level-ish value
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i]
+      if (inString) {
+        if (escaped) { escaped = false }
+        else if (ch === '\\') { escaped = true }
+        else if (ch === '"') { inString = false }
+        continue
+      }
+      if (ch === '"') { inString = true; continue }
+      if (ch === '{' || ch === '[') { stack.push(ch === '{' ? '}' : ']') }
+      else if (ch === '}' || ch === ']') { stack.pop(); lastSafe = i }
+      else if (ch === ',') { lastSafe = i }
+    }
+    // If we ended mid-string, cut back to the last safe boundary.
+    if (inString && lastSafe >= 0) {
+      s = s.slice(0, lastSafe + 1)
+      // recompute open structures on the trimmed string
+      return repairTruncatedJson(s)
+    }
+    // Remove a dangling trailing comma.
+    s = s.replace(/,\s*$/, '')
+    // Close any still-open arrays/objects in reverse order.
+    while (stack.length) s += stack.pop()
+    return s
+  }
+
   function extractJsonObject(raw: string): any | null {
     if (!raw) return null
     let s = raw.trim()
@@ -281,18 +317,19 @@ export default function ToolkitPage() {
     // find first opening brace and last closing brace
     const start = s.indexOf('{')
     const end = s.lastIndexOf('}')
-    if (start >= 0 && end > start) {
-      const candidate = s.slice(start, end + 1)
-      try {
-        return JSON.parse(candidate)
-      } catch (_) {
-        try {
-          const fixed = candidate.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')
-          return JSON.parse(fixed)
-        } catch (_) { /* ignore */ }
-      }
-    }
-    try { return JSON.parse(s) } catch (_) {}
+    const candidate = start >= 0 && end > start ? s.slice(start, end + 1) : s
+    // 1) straight parse
+    try { return JSON.parse(candidate) } catch (_) { /* fall through */ }
+    // 2) strip trailing commas
+    try {
+      return JSON.parse(candidate.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']'))
+    } catch (_) { /* fall through */ }
+    // 3) repair truncation (close open strings/arrays/objects)
+    try {
+      const fromBrace = start >= 0 ? s.slice(start) : s
+      const repaired = repairTruncatedJson(fromBrace).replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')
+      return JSON.parse(repaired)
+    } catch (_) { /* ignore */ }
     return null
   }
 
@@ -398,19 +435,37 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
         },
       })
 
-      if (aiError) throw aiError
+      // supabase.functions.invoke surfaces non-2xx responses as a
+      // FunctionsHttpError whose real message lives in error.context (a Response).
+      if (aiError) {
+        let serverMessage = aiError.message
+        try {
+          const ctx = (aiError as any).context
+          if (ctx && typeof ctx.json === 'function') {
+            const bodyJson = await ctx.json()
+            if (bodyJson?.error) serverMessage = bodyJson.error
+          }
+        } catch (_) { /* keep default message */ }
+        throw new Error(serverMessage)
+      }
       text = aiResult?.text || ''
 
       const duration = ((Date.now() - startTime) / 1000).toFixed(2)
-      console.log(`[ToolkitPage] ✓ AI generation complete in ${duration}s, text length:`, text?.length)
+      console.log(`[ToolkitPage] ✓ AI generation complete in ${duration}s, text length:`, text?.length, 'truncated:', aiResult?.truncated)
 
       if (!text || text.length < 20) {
-        throw new Error('AI generation returned invalid content')
+        throw new Error('The AI returned an empty toolkit. Please try again.')
       }
 
-      // Try to parse structured JSON (robust extraction)
+      // Try to parse structured JSON (robust extraction + truncation repair)
       let structured: any = extractJsonObject(text)
+      if (!structured) {
+        console.warn('[ToolkitPage] Could not parse structured JSON; storing raw text')
+      }
       const contentToStore = structured ? JSON.stringify(structured) : text
+      if (aiResult?.truncated) {
+        toast.warning('This jam was large, so the toolkit may be slightly trimmed. Try a shorter duration for full detail.')
+      }
 
       // For logged-in users, ALWAYS use full generation
       setIsPreview(false)
@@ -421,31 +476,24 @@ Make it specific, actionable, and tailored. Output valid JSON only.`
 
     } catch (error: any) {
       console.error('[ToolkitPage] ✗ Generation failed:', error)
-      
-      // Detailed error message for users
-      let userMessage = 'Failed to generate toolkit. '
-      
-      const status = error?.status || error?.response?.status
-      const apiMsg = error?.details?.error?.message || error?.details?.message || error?.response?.data?.error?.message
 
-      if (status === 401 || status === 403) {
-        userMessage += 'OpenAI authentication failed. Please check API key configuration.'
-      } else if (status === 429 || /rate limit/i.test(error?.message || '')) {
-        userMessage += 'OpenAI rate limit reached. Please try again in a few minutes.'
-      } else if (/api key|unauthorized/i.test(error?.message || '')) {
-        userMessage += 'OpenAI API key is missing or invalid. Please contact support.'
-      } else if (/network|fetch|timeout/i.test(error?.message || '')) {
+      const msg = (error?.message || '').toString()
+      let userMessage = 'Failed to generate toolkit. '
+
+      if (/not configured|missing|invalid|authentication/i.test(msg)) {
+        userMessage += 'The AI service is not configured yet — please contact the GGJ team.'
+      } else if (/rate limit|busy/i.test(msg)) {
+        userMessage += 'The AI is busy right now. Please try again in a moment.'
+      } else if (/timed out|timeout/i.test(msg)) {
+        userMessage += 'The request timed out. Try again, or pick a shorter jam duration.'
+      } else if (/network|fetch|failed to fetch/i.test(msg)) {
         userMessage += 'Network error. Please check your connection and try again.'
-      } else if (apiMsg) {
-        userMessage += apiMsg
-      } else if (error?.message) {
-        userMessage += error.message
+      } else if (msg) {
+        userMessage += msg
       } else {
-        userMessage += 'Unknown error occurred. Please try again.'
+        userMessage += 'Something went wrong. Please try again.'
       }
 
-      if (status) userMessage += ` (HTTP ${status})`
-      
       toast.error(userMessage)
     } finally {
       console.log('[ToolkitPage] 🏁 Generation process finished (success or error)')
