@@ -597,6 +597,10 @@ ${JSON.stringify(catalog)}`
       const durationMinutes = parseInt(formData.jamDuration || '0') * 480
 
       const newToolkit = {
+        // The live toolkits.id has no working default, so generate one client-side.
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : `tk_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
         title: truncatedTitle,
         description: `AI-generated ${formData.jamDuration}-day GGJ toolkit for ${formData.participants} participants`,
         content: generatedContent,
@@ -636,8 +640,9 @@ ${JSON.stringify(catalog)}`
 
       toast.success('Toolkit saved to your library! It is now visible under "My Toolkits".')
     } catch (e: any) {
-      console.error('[ToolkitPage] Save failed:', e)
-      toast.error('Failed to save toolkit. Please try again.')
+      const msg = e?.message || e?.error_description || e?.details || ''
+      console.error('[ToolkitPage] Save failed:', msg || e, e)
+      toast.error(msg ? `Failed to save: ${msg}` : 'Failed to save toolkit. Please try again.')
     } finally {
       setSaving(false)
     }
