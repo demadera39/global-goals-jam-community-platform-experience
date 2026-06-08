@@ -21,6 +21,7 @@ import {
   Loader2,
   User as UserIcon,
   MapPin,
+  Plus,
   Save as SaveIcon
 } from 'lucide-react'
 import { db, auth, safeDbCall, supabase } from '../lib/supabase'
@@ -642,6 +643,18 @@ ${JSON.stringify(catalog)}`
     }
   }
 
+  const startNewToolkit = () => {
+    setGeneratedContent('')
+    setSavedToolkitId(null)
+    setIsPreview(false)
+    setFormData({
+      challenge: '', sdgFocus: '', jamDuration: '', participants: '',
+      resources: '', difficultyLevel: 'intermediate', localContext: '',
+    })
+    setEditingInputs(true)
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
+  }
+
   return (
     <div className={`min-h-screen bg-background ${sdgThemeClass}`}>
       {/* Compact header — keep the focus on the form below */}
@@ -859,12 +872,17 @@ ${JSON.stringify(catalog)}`
                         {formData.jamDuration} day{formData.jamDuration !== '1' ? 's' : ''} · {formData.participants} · {formData.difficultyLevel}
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => { setEditingInputs(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80) }}
-                    >
-                      <Wand2 className="w-4 h-4 mr-2" />Edit &amp; regenerate
-                    </Button>
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => { setEditingInputs(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80) }}
+                      >
+                        <Wand2 className="w-4 h-4 mr-2" />Edit &amp; regenerate
+                      </Button>
+                      <Button variant="ghost" onClick={startNewToolkit}>
+                        <Plus className="w-4 h-4 mr-2" />Start new
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -973,7 +991,7 @@ ${JSON.stringify(catalog)}`
                         className="bg-primary-solid text-white hover:bg-primary/90"
                       >
                         <SaveIcon className="w-4 h-4 mr-2" />
-                        {saving ? 'Saving…' : 'Save to My Toolkits'}
+                        {saving ? 'Saving…' : savedToolkitId ? 'Saved ✓' : 'Save to My Toolkits'}
                       </Button>
                       {savedToolkitId && (
                         <Button
@@ -983,6 +1001,9 @@ ${JSON.stringify(catalog)}`
                           View Saved Toolkit
                         </Button>
                       )}
+                      <Button variant="ghost" onClick={startNewToolkit}>
+                        <Plus className="w-4 h-4 mr-2" />Start a new toolkit
+                      </Button>
                     </div>
 
                   </div>
