@@ -8,7 +8,7 @@ import {
   FileText, Info, AlertCircle,
 } from 'lucide-react'
 import { markdownToBasicHtml } from '../lib/toolkitExport'
-import { metodicSparkUrl } from './MetodicUpsell'
+import { metodicBuildUrl } from './MetodicUpsell'
 import type { MetodicMethod, SprintPhase } from '../lib/metodicMethods'
 
 // Metodic brand tokens — scoped locally to this "Powered by Metodic" zone so the
@@ -208,14 +208,22 @@ export default function JamAgenda({ agenda, onDownload }: { agenda: ParsedJamAge
   )
 
   const days = parseInt(meta.jamDuration || '1') || 1
-  const handoffUrl = metodicSparkUrl({
-    workshopTitle: meta.challenge ? `${meta.sdgLabel ? meta.sdgLabel + ' — ' : ''}${meta.challenge}` : 'Global Goals Jam',
+  // Collect the real method titles we placed, so the Metodic architect can
+  // continue the build from the same shortlist.
+  const methodTitles: string[] = []
+  for (const s of sprints) {
+    for (const b of (s.blocks || [])) {
+      const t = (b.methodId && methodsById[b.methodId]?.title) || b.title
+      if (t && !methodTitles.includes(t)) methodTitles.push(t)
+    }
+  }
+  const handoffUrl = metodicBuildUrl({
     challenge: meta.challenge || '',
     sdgLabel: meta.sdgLabel,
     durationDays: days,
-    participants: meta.participants || '',
+    participants: meta.participants,
     difficulty: meta.difficulty,
-    localContext: undefined,
+    methods: methodTitles,
   })
 
   return (
@@ -238,7 +246,7 @@ export default function JamAgenda({ agenda, onDownload }: { agenda: ParsedJamAge
           className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
           style={{ color: METODIC_CORAL }}
         >
-          Build in Metodic <ExternalLink className="h-3 w-3" />
+          Open in Studio <ExternalLink className="h-3 w-3" />
         </a>
       </div>
 
@@ -344,10 +352,10 @@ export default function JamAgenda({ agenda, onDownload }: { agenda: ParsedJamAge
                 Next step
               </span>
             </div>
-            <h3 className="font-display text-lg font-bold tracking-tight sm:text-xl">Build the full toolkit in Metodic</h3>
+            <h3 className="font-display text-lg font-bold tracking-tight sm:text-xl">Continue building in Metodic Studio</h3>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              This agenda is your starting point. Open it in Metodic to turn each method into facilitator
-              guides, participant worksheets and presentation slides — then run it live and track your jam.
+              Open this agenda in Metodic's Studio — the AI architect picks up your brief and shortlisted
+              methods, then turns them into facilitator guides, worksheets and slides you can run live.
             </p>
           </div>
           <a
@@ -357,7 +365,7 @@ export default function JamAgenda({ agenda, onDownload }: { agenda: ParsedJamAge
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
             style={{ backgroundColor: METODIC_CORAL }}
           >
-            Build in Metodic <ExternalLink className="h-4 w-4" />
+            Open in Metodic Studio <ExternalLink className="h-4 w-4" />
           </a>
         </div>
       </div>
@@ -371,7 +379,7 @@ export default function JamAgenda({ agenda, onDownload }: { agenda: ParsedJamAge
         )}
         <Button asChild variant="ghost" style={{ color: METODIC_CORAL }}>
           <a href={handoffUrl} target="_blank" rel="noopener noreferrer">
-            Continue in Metodic <ArrowRight className="ml-2 h-4 w-4" />
+            Continue in Metodic Studio <ArrowRight className="ml-2 h-4 w-4" />
           </a>
         </Button>
       </div>

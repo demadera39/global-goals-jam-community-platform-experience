@@ -644,40 +644,33 @@ ${JSON.stringify(catalog)}`
 
   return (
     <div className={`min-h-screen bg-background ${sdgThemeClass}`}>
-      {/* Hero Section */}
-      <section className="relative py-20 hero-pattern">
-        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">AI-Powered</p>
-          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
-            <Wand2 className="w-4 h-4 mr-2" />
-            Session Planning
-          </Badge>
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
-            Toolkit <span className="text-primary-solid">Generator</span>
-          </h1>
-          {user && (
-            <div className="mb-4 flex justify-center">
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
-                <UserIcon className="w-4 h-4" />
-                Signed in as {user.displayName || user.email}
+      {/* Compact header — keep the focus on the form below */}
+      <section className="border-b bg-muted/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                  <Wand2 className="h-3 w-3" /> AI Session Planner
+                </span>
               </div>
+              <h1 className="mt-2 font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Toolkit <span className="text-primary-solid">Generator</span>
+              </h1>
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                Answer a few questions and we'll build a 4-sprint jam agenda from real facilitation methods — powered by Metodic.
+              </p>
             </div>
-          )}
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Create customized session plans with detailed guides, method cards, and templates tailored to your challenge and SDG focus.
-          </p>
-          <p className="mt-4 text-sm text-muted-foreground max-w-2xl mx-auto">
-            The full Jamkit is available to certified hosts. Complete the{' '}
-            <Link to="/course/train-the-trainer" className="text-primary hover:underline font-medium">
-              Train-the-Trainer course
-            </Link>{' '}
-            to unlock all facilitation guides, method cards, and templates.
-          </p>
+            {user && (
+              <span className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
+                <UserIcon className="h-3.5 w-3.5" /> {user.displayName || user.email}
+              </span>
+            )}
+          </div>
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs defaultValue="generator" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="generator">Generate Toolkit</TabsTrigger>
@@ -692,7 +685,10 @@ ${JSON.stringify(catalog)}`
                   AI Toolkit Generator
                 </CardTitle>
                 <p className="text-muted-foreground">
-                  Answer a few questions about your session and we'll generate a comprehensive toolkit with facilitation guides, method cards, and templates.
+                  Answer a few questions and we'll build a 4-sprint jam agenda from real facilitation methods. Continue in{' '}
+                  <span className="font-medium text-foreground">Metodic</span> to turn it into facilitator guides and slides, or complete the{' '}
+                  <Link to="/course/train-the-trainer" className="text-primary hover:underline font-medium">Train-the-Trainer course</Link>{' '}
+                  to unlock the full Jamkit.
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">

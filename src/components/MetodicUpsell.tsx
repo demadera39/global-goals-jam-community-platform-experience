@@ -24,42 +24,42 @@ export function metodicUrl(content: string) {
 }
 
 /**
- * Hand off a GGJ brief to Metodic's toolkit builder as a "spark". Metodic's
- * /create-toolkit reads this and (with the companion change) prefills the form
- * via expand-spark. Until that ships, the link still lands users on the builder
- * (behind the subscribe/credit gate) with UTM tracking — graceful degradation.
+ * Hand off a GGJ jam brief (and the methods we already selected) to Metodic's
+ * Session Studio, where the AI architect continues the build. The brief is
+ * encoded as `ggj_brief` (base64) and Session Studio auto-sends it to the
+ * architect as the opening message. Until the Metodic companion reader ships,
+ * the link still lands users in the Studio (behind the gate) with UTM tracking.
  */
-export function metodicSparkUrl(spark: {
-  workshopTitle: string
+export function metodicBuildUrl(brief: {
   challenge: string
   sdgLabel?: string
   durationDays: number
-  participants: string
+  participants?: string
   difficulty?: string
-  localContext?: string
+  methods?: string[]
 }) {
-  const payload = {
-    title: spark.workshopTitle,
-    goal: spark.challenge,
-    problem_context: [
-      spark.sdgLabel ? `SDG focus: ${spark.sdgLabel}` : '',
-      spark.difficulty ? `Level: ${spark.difficulty}` : '',
-      spark.localContext || '',
-    ].filter(Boolean).join('. '),
-    rough_timing: spark.durationDays >= 2 ? 'multi-day' : 'full-day',
-    participants: spark.participants,
-    source: 'globalgoalsjam',
+  const dur = brief.durationDays >= 2 ? `${brief.durationDays}-day` : 'one-day'
+  const parts: string[] = [
+    `I'm planning a Global Goals Jam — a ${dur} design sprint${brief.participants ? ` for ${brief.participants} participants` : ''}${brief.difficulty ? ` (${brief.difficulty} level)` : ''}.`,
+    '',
+    `Challenge: ${brief.challenge}`,
+  ]
+  if (brief.sdgLabel) parts.push(`SDG focus: ${brief.sdgLabel}`)
+  parts.push('', 'Please design the full session using the four Global Goals Jam sprints in order — Understand, Define, Prototype, Implement — as a timed agenda with facilitator guidance.')
+  if (brief.methods && brief.methods.length) {
+    parts.push('', `I've already shortlisted these methods — build the agenda around them and flesh them out: ${brief.methods.slice(0, 16).join('; ')}.`)
   }
+  const initialMessage = parts.join('\n')
   // utf-8-safe base64
-  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+  const b64 = btoa(unescape(encodeURIComponent(initialMessage)))
   const params = new URLSearchParams({
-    spark: b64,
+    ggj_brief: b64,
     utm_source: 'globalgoalsjam',
     utm_medium: 'toolkit',
     utm_campaign: 'ggj_build_in_metodic',
     utm_content: 'jam_agenda_cta',
   })
-  return `https://metodic.io/create-toolkit?${params.toString()}`
+  return `https://metodic.io/session-studio?${params.toString()}`
 }
 
 interface MetodicUpsellProps {
