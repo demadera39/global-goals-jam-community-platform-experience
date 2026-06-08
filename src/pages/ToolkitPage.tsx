@@ -1,5 +1,5 @@
 import { toast } from 'sonner'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
@@ -94,6 +94,11 @@ export default function ToolkitPage() {
   const [saving, setSaving] = useState(false)
   const [savedToolkitId, setSavedToolkitId] = useState<string | null>(null)
   const [genStatus, setGenStatus] = useState('')
+  // Flow: once a result exists we collapse the form to a compact "brief" bar and
+  // scroll the user to the result, so it's clear the output is below.
+  const [editingInputs, setEditingInputs] = useState(true)
+  const resultRef = useRef<HTMLDivElement | null>(null)
+  const formRef = useRef<HTMLDivElement | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -479,6 +484,10 @@ ${JSON.stringify(catalog)}`
       // Do not auto-save. Show explicit Save button for users to add to their library.
       setSavedToolkitId(null)
 
+      // Collapse the form and bring the freshly-built agenda into view.
+      setEditingInputs(false)
+      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200)
+
     } catch (error: any) {
       console.error('[ToolkitPage] ✗ Generation failed:', error)
 
@@ -687,6 +696,8 @@ ${JSON.stringify(catalog)}`
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
+                {(editingInputs || !generatedContent) ? (
+                <div ref={formRef} className="space-y-6 scroll-mt-24">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
@@ -834,15 +845,35 @@ ${JSON.stringify(catalog)}`
                       ) : (
                         <>
                           <Wand2 className="w-5 h-5 mr-2" />
-                          Generate Custom Toolkit
+                          {generatedContent ? 'Regenerate' : 'Generate Custom Toolkit'}
                         </>
                       )}
                     </Button>
                   </div>
                 )}
+                </div>
+                ) : (
+                  <div ref={formRef} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/30 p-4 scroll-mt-24">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Your brief</p>
+                      <p className="truncate font-medium">
+                        {sdgOptions.find(s => s.value === formData.sdgFocus)?.label}: {formData.challenge}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formData.jamDuration} day{formData.jamDuration !== '1' ? 's' : ''} · {formData.participants} · {formData.difficultyLevel}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => { setEditingInputs(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80) }}
+                    >
+                      <Wand2 className="w-4 h-4 mr-2" />Edit &amp; regenerate
+                    </Button>
+                  </div>
+                )}
 
                 {generatedContent && (
-                  <>
+                  <div ref={resultRef} className="scroll-mt-24">
                     <ToolkitDisplay
                       content={generatedContent}
                       sdgFocus={formData.sdgFocus}
@@ -958,7 +989,7 @@ ${JSON.stringify(catalog)}`
                       )}
                     </div>
 
-                  </>
+                  </div>
                 )}
               </CardContent>
             </Card>
