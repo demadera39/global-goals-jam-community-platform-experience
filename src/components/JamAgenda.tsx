@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { Card, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import {
   Target, Lightbulb, Zap, TrendingUp, Clock, Users, MapPin,
   ChevronDown, ChevronRight, ExternalLink, Sparkles, ArrowRight, Download, BookOpen,
+  FileText, Info, AlertCircle,
 } from 'lucide-react'
 import { markdownToBasicHtml } from '../lib/toolkitExport'
 import { metodicSparkUrl } from './MetodicUpsell'
@@ -66,65 +67,127 @@ const PHASE_META: Record<SprintPhase, { label: string; icon: any; color: string;
 }
 const PHASE_ORDER: SprintPhase[] = ['understand', 'define', 'prototype', 'implement']
 
+// Metodic's category palette (fallback when the DB category_color isn't a hex).
+const CATEGORY_HEX: Record<string, string> = {
+  // design
+  Research: '#14b8a6', 'Define Intentions': '#ec4899', 'Know User': '#22c55e',
+  'Frame Insights': '#a855f7', 'Ideation & Concepts': '#f59e0b', 'Prototype & Test': '#3b82f6',
+  // sdg
+  'Goal Cards': '#00A651', 'Systems Lenses': '#9333ea', 'Scale & Context': '#14b8a6', 'Technology & Future': '#f59e0b',
+  // behavioralchange / foresight / team / culture / product
+  Diagnosis: '#14b8a6', Nudges: '#f59e0b', Habits: '#3b82f6', Ethics: '#ef4444',
+  Scanning: '#14b8a6', Scenarios: '#a855f7', 'Stress-Testing': '#3b82f6', Readiness: '#22c55e',
+  Foundation: '#14b8a6', Safety: '#22c55e', Rituals: '#f59e0b', Evolution: '#3b82f6',
+  'The Self': '#14b8a6', 'The Team': '#22c55e', 'The Map': '#a855f7', 'The Bridge': '#3b82f6',
+  Discovery: '#14b8a6', Growth: '#a855f7', Launch: '#f59e0b', Sustain: '#22c55e',
+}
+function methodColor(method?: MetodicMethod): string {
+  const c = method?.categoryColor
+  if (c && c.startsWith('#')) return c
+  return (method?.category && CATEGORY_HEX[method.category]) || METODIC_CORAL
+}
+
+// Fetch + render an Iconify icon (e.g. "mdi:hand-coin"), the way Metodic does.
+function MethodIcon({ icon, color }: { icon?: string | null; color: string }) {
+  const [svg, setSvg] = useState<string | null>(null)
+  useEffect(() => {
+    let active = true
+    if (icon && icon.includes(':')) {
+      fetch(`https://api.iconify.design/${icon}.svg?width=40&height=40`)
+        .then((r) => (r.ok ? r.text() : null))
+        .then((t) => { if (active && t) setSvg(t.replace(/width="[^"]*"/, 'width="100%"').replace(/height="[^"]*"/, 'height="100%"')) })
+        .catch(() => {})
+    }
+    return () => { active = false }
+  }, [icon])
+  return (
+    <div
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg [&_svg]:h-6 [&_svg]:w-6"
+      style={{ backgroundColor: `${color}1a`, color }}
+    >
+      {svg ? <div dangerouslySetInnerHTML={{ __html: svg }} /> : <FileText className="h-5 w-5" />}
+    </div>
+  )
+}
+
+function SectionLabel({ icon: Icon, children }: { icon: any; children: ReactNode }) {
+  return (
+    <h4 className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-foreground">
+      <Icon className="h-3 w-3" />{children}
+    </h4>
+  )
+}
+
 function GroundedMethodCard({ method, proposed }: { method?: MetodicMethod; proposed?: ProposedMethod }) {
   const [open, setOpen] = useState(false)
   const title = method?.title || proposed?.title || 'Activity'
   const description = method?.description || proposed?.description || ''
   const duration = method?.durationLabel || ''
+  const color = methodColor(method)
+
   return (
-    <div className="rounded-lg border bg-card">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-start gap-3 p-3 text-left"
-      >
-        <div className="mt-0.5 text-muted-foreground">
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </div>
+    <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+      {/* category color bar (Metodic signature) */}
+      <div className="h-1.5 w-full" style={{ backgroundColor: proposed ? '#f59e0b' : color }} />
+      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-start gap-3 p-3 text-left">
+        <MethodIcon icon={method?.icon} color={proposed ? '#f59e0b' : color} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium">{title}</span>
-            {proposed && (
+            <span className="font-semibold">{title}</span>
+            {proposed ? (
               <Badge variant="outline" className="border-amber-300 text-amber-700 text-[10px]">Proposed — not yet in the library</Badge>
-            )}
-            {method?.category && (
-              <Badge variant="secondary" className="text-[10px]">{method.category}</Badge>
-            )}
+            ) : method?.category ? (
+              <Badge className="border-0 text-[10px] text-white" style={{ backgroundColor: color }}>{method.category}</Badge>
+            ) : null}
             {duration && (
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Clock className="h-3 w-3" />{duration}</span>
             )}
           </div>
           {description && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{description}</p>}
         </div>
+        <div className="mt-1 text-muted-foreground">
+          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </div>
       </button>
 
       {open && (
-        <div className="space-y-3 border-t px-4 pb-4 pt-3 text-sm">
+        <div className="space-y-4 border-t px-4 pb-4 pt-3 text-sm">
           {description && <p className="text-muted-foreground">{description}</p>}
           {method?.tasks?.length ? (
             <div>
-              <p className="mb-1 font-semibold">How to run it</p>
-              <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
-                {method.tasks.map((t, i) => <li key={i}>{t}</li>)}
+              <SectionLabel icon={FileText}>Steps</SectionLabel>
+              <ol className="space-y-1.5 text-muted-foreground">
+                {method.tasks.map((t, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="font-semibold" style={{ color }}>{i + 1}.</span>
+                    <span>{t}</span>
+                  </li>
+                ))}
               </ol>
             </div>
           ) : null}
-          <div className="grid gap-3 sm:grid-cols-3">
-            {method?.whenToUse && (
-              <div><p className="font-semibold text-foreground">When to use</p><p className="text-muted-foreground">{method.whenToUse}</p></div>
-            )}
+          <div className="grid gap-4 sm:grid-cols-3">
             {method?.whyUse && (
-              <div><p className="font-semibold text-foreground">Why it works</p><p className="text-muted-foreground">{method.whyUse}</p></div>
+              <div><SectionLabel icon={Lightbulb}>Why</SectionLabel><p className="text-muted-foreground">{method.whyUse}</p></div>
+            )}
+            {method?.whenToUse && (
+              <div><SectionLabel icon={Target}>When</SectionLabel><p className="text-muted-foreground">{method.whenToUse}</p></div>
             )}
             {method?.output && (
-              <div><p className="font-semibold text-foreground">Output</p><p className="text-muted-foreground">{method.output}</p></div>
+              <div><SectionLabel icon={Info}>Output</SectionLabel><p className="text-muted-foreground">{method.output}</p></div>
             )}
           </div>
+          {method?.note && (
+            <div className="rounded-md bg-amber-500/10 p-2">
+              <SectionLabel icon={AlertCircle}><span className="text-amber-600">Note</span></SectionLabel>
+              <p className="text-xs text-amber-700/90">{method.note}</p>
+            </div>
+          )}
           {method?.attributionName && (
             <p className="pt-1 text-xs text-muted-foreground">
-              Method from the Metodic library · {method.attributionUrl ? (
+              From {method.attributionUrl ? (
                 <a href={method.attributionUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">{method.attributionName}</a>
-              ) : method.attributionName}
+              ) : method.attributionName} · via the Metodic library
             </p>
           )}
         </div>
