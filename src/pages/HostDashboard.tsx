@@ -594,12 +594,19 @@ export default function HostDashboard() {
     }
   }
 
+  // The event_registrations.id column lost its server-side default during the
+  // Blink migration, so we generate one client-side too (32-char hex, matching
+  // the table's existing id format). A DB-default migration backs this up.
+  const newRegistrationId = () =>
+    (crypto?.randomUUID?.() || `reg_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`).replace(/-/g, '')
+
   // Manual participant add
   const handleAddParticipant = async () => {
     if (!newParticipant.firstName.trim() || !newParticipant.lastName.trim() || !addParticipantEventId) return
     setAddingParticipant(true)
     try {
       const created = await safeDbCall(() => db.eventRegistrations.create({
+        id: newRegistrationId(),
         eventId: addParticipantEventId,
         participantId: `manual_${Date.now()}`,
         firstName: newParticipant.firstName.trim(),
@@ -657,6 +664,7 @@ export default function HostDashboard() {
     for (const p of participants) {
       try {
         const created = await safeDbCall(() => db.eventRegistrations.create({
+          id: newRegistrationId(),
           eventId: addParticipantEventId,
           participantId: `manual_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
           firstName: p.firstName,
