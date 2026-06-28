@@ -5,6 +5,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Strip HTML markup to plain text for previews. Event descriptions can contain
+ * pasted rich text (<b>, <span style>, &quot;, …); rendered as text in a card
+ * those tags show literally. We parse and return just the text content.
+ */
+export function stripHtml(input?: string | null): string {
+  if (!input) return ''
+  if (!/[<&]/.test(input)) return input
+  // Turn block boundaries into spaces so adjacent lines don't run together
+  // (e.g. "Spaces<br>Join" → "Spaces Join").
+  const spaced = input.replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr|\/td)\b[^>]*>/gi, ' ')
+  try {
+    if (typeof DOMParser !== 'undefined') {
+      const doc = new DOMParser().parseFromString(spaced, 'text/html')
+      return (doc.body.textContent || '').replace(/\s+/g, ' ').trim()
+    }
+  } catch { /* fall through */ }
+  return spaced.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim()
+}
+
 // SDG helpers
 export function sdgNumberFromFocus(focus?: string | null): number | null {
   if (!focus) return null

@@ -39,6 +39,7 @@ import {
   Circle
 } from 'lucide-react'
 import { db, auth, storage, safeDbCall, supabase } from '../lib/supabase'
+import { stripHtml } from '../lib/utils'
 import { getFullUser } from '../lib/userProfile'
 import { getUserProfile, canAccessFeature } from '../lib/userStatus'
 import type { UserProfile } from '../lib/userStatus'
@@ -1198,7 +1199,7 @@ export default function HostDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{stripHtml(event.description)}</p>
 
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm">

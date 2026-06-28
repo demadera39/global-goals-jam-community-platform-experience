@@ -24,6 +24,7 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import { db, auth, notifications } from '../lib/supabase'
+import { stripHtml } from '../lib/utils'
 import { getFullUser } from '../lib/userProfile'
 
 interface User {
@@ -414,7 +415,7 @@ export default function LocationPage() {
                     <CardContent>
                       <div className="space-y-3">
                         <p className="text-sm text-muted-foreground line-clamp-2">
-                          {event.description}
+                          {stripHtml(event.description)}
                         </p>
                         
                         <div className="space-y-2">
@@ -517,7 +518,7 @@ export default function LocationPage() {
                     <CardContent>
                       <div className="space-y-3">
                         <p className="text-sm text-muted-foreground line-clamp-2">
-                          {event.description}
+                          {stripHtml(event.description)}
                         </p>
                         
                         <div className="flex items-center gap-2 text-sm">

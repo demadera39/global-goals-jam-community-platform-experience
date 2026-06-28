@@ -17,7 +17,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { db, auth } from '../lib/supabase'
-import { cn, sdgNumberFromFocus, sdgBg, sdgText, sdgBorder, sdgName } from '../lib/utils'
+import { cn, sdgNumberFromFocus, sdgBg, sdgText, sdgBorder, sdgName, stripHtml } from '../lib/utils'
 import { useToast } from '../hooks/use-toast'
 
 interface User {
@@ -419,7 +419,7 @@ export default function EventsPage() {
                 <CardContent>
                   <div className="space-y-3">
                     <p className="text-sm text-muted-foreground line-clamp-3">
-                      {event.description}
+                      {stripHtml(event.description)}
                     </p>
                     
                     <div className="space-y-2">
