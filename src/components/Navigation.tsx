@@ -4,6 +4,7 @@ import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu'
 import { Globe, Menu, X, User, LogOut, Settings, BookOpen, Shield } from 'lucide-react'
+import { LEARN_URL } from '../lib/learnUrl'
 import { getUserProfile, UserProfile, COURSE_STATUS } from '../lib/userStatus'
 import { appAuth } from '../lib/simpleAuth'
 import { clearAuthToken } from '../lib/auth'
@@ -97,12 +98,25 @@ export default function Navigation() {
   )
 
   const handleCertificationCourseClick = (e: React.MouseEvent) => {
-    // If user can access the course (admin, host, or enrolled+paid), go to dashboard
+    // The course itself now lives on the Learn platform. Users with access
+    // (admin, host, or enrolled+paid) go straight there; everyone else keeps
+    // the default link to the enrolment page on this site.
     if (canAccessCourse) {
       e.preventDefault()
-      navigate('/course/dashboard')
+      window.location.assign(LEARN_URL)
     }
-    // Otherwise, let the default link behavior work (goes to enrollment page)
+  }
+
+  const canSeeHostTools = Boolean(
+    (userProfile && (userProfile.courseStatus === COURSE_STATUS.ACTIVE || userProfile.courseStatus === COURSE_STATUS.COMPLETED)) ||
+    (user && (user.role === 'host' || user.role === 'admin'))
+  )
+
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    if (canSeeHostTools) return // default Link → /host-dashboard
+    e.preventDefault()
+    if (canAccessCourse) window.location.assign(LEARN_URL)
+    else navigate('/course/enroll')
   }
 
   const baseItems = [
@@ -116,12 +130,11 @@ export default function Navigation() {
     { name: 'Toolkit', href: '/toolkit' },
     { name: 'Certification course', href: '/course/enroll', onClick: handleCertificationCourseClick }
   ]
-  const canSeeHostTools = Boolean(
-    (userProfile && (userProfile.courseStatus === COURSE_STATUS.ACTIVE || userProfile.courseStatus === COURSE_STATUS.COMPLETED)) ||
-    (user && (user.role === 'host' || user.role === 'admin'))
-  )
   const navItems = [
     ...(baseItems ?? []),
+    // Signed-in users get a visible Dashboard entry: hosts/admins to the
+    // Host Dashboard, enrolled learners to the Learn platform.
+    ...(user ? [{ name: 'Dashboard', href: canSeeHostTools ? '/host-dashboard' : '/course/enroll', onClick: handleDashboardClick }] : []),
     // Community forum is hidden for now — it has no activity yet. Re-enable by
     // restoring this entry once the forum is seeded / in use.
     // ...(canSeeHostTools ? [{ name: 'Community', href: '/community' }] : [])
