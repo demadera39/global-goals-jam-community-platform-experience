@@ -1659,8 +1659,8 @@ export default function HostDashboard() {
                 <div className="text-center p-6 border rounded-xl">
                   <Award className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                   <h3 className="text-base font-semibold mb-1">Host Certificate</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Generate your own certificate as proof of hosting from your course dashboard.</p>
-                  <Button className="bg-primary-solid text-white hover:bg-primary/90" onClick={() => navigate('/course/dashboard')}>Open Course Dashboard</Button>
+                  <p className="text-sm text-muted-foreground mb-4">Generate your own certificate as proof of hosting.</p>
+                  <Button className="bg-primary-solid text-white hover:bg-primary/90" onClick={() => navigate('/course/certificate')}>Generate Host Certificate</Button>
                 </div>
               </CardContent>
             </Card>
@@ -1669,9 +1669,9 @@ export default function HostDashboard() {
           <TabsContent value="courses" className="space-y-6 pt-6">
             <Card>
               <CardContent className="py-8 text-center">
-                <h3 className="text-lg font-semibold mb-2">Host Certification Course</h3>
-                <p className="text-sm text-muted-foreground mb-4">Access your modules, progress, and certificate.</p>
-                <Button className="bg-primary-solid text-white hover:bg-primary/90" onClick={() => navigate('/course/dashboard')}>Go to Course</Button>
+                <h3 className="text-lg font-semibold mb-2">GGJ Host Programme</h3>
+                <p className="text-sm text-muted-foreground mb-4">Your modules, artefacts and Facilitator live on the Learn platform.</p>
+                <Button className="bg-primary-solid text-white hover:bg-primary/90" onClick={() => { window.location.assign(LEARN_URL) }}>Go to Course</Button>
               </CardContent>
             </Card>
           </TabsContent>
