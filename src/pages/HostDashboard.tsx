@@ -36,8 +36,9 @@ import {
   Clock,
   FileUp,
   UserPlus,
-  Circle
+  ArrowRight
 } from 'lucide-react'
+import { LEARN_URL } from '../lib/learnUrl'
 import { db, auth, storage, safeDbCall, supabase } from '../lib/supabase'
 import { stripHtml } from '../lib/utils'
 import { getFullUser } from '../lib/userProfile'
@@ -137,6 +138,10 @@ export default function HostDashboard() {
   // Certificate generation overlay state
   const [certGenerating, setCertGenerating] = useState(false)
   const [certStatus, setCertStatus] = useState('')
+
+  // Which management tab is open — controlled so the lifecycle rail can jump to a tab
+  const [activeTab, setActiveTab] = useState('events')
+  const tabsRef = useRef<HTMLDivElement | null>(null)
 
   // Form state
   const [eventForm, setEventForm] = useState({
@@ -734,7 +739,7 @@ export default function HostDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#F6FAF7] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
@@ -742,8 +747,8 @@ export default function HostDashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
+      <div className="min-h-screen bg-[#F6FAF7] flex items-center justify-center">
+        <Card variant="flat" className="max-w-md rounded-2xl border-[#dfe9e2] bg-white shadow-sm">
           <CardContent className="text-center py-12">
             <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
@@ -765,24 +770,228 @@ export default function HostDashboard() {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-background relative">
-      <FloatingFeedback context="host" userEmail={user?.email || ''} userName={user?.displayName || ''} />
+  // ─── Jam lifecycle derivation (presentation only) ─────────────────────────
+  // Recomposes the same events/registrations signals the old onboarding
+  // checklist used into a Plan → Publish → Run → Wrap up rail. No new fetches.
+  const parseDay = (value?: string) => {
+    if (!value) return null
+    const d = new Date(value)
+    return isNaN(d.getTime()) ? null : d
+  }
+  const jamEnded = (e: Event) => {
+    const end = parseDay(e.endDate || e.eventDate)
+    if (!end) return false
+    const cutoff = new Date(end)
+    cutoff.setHours(23, 59, 59, 999)
+    return cutoff.getTime() < Date.now()
+  }
+  const daysUntil = (value?: string) => {
+    const d = parseDay(value)
+    if (!d) return null
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const target = new Date(d); target.setHours(0, 0, 0, 0)
+    return Math.round((target.getTime() - today.getTime()) / 86400000)
+  }
 
-      {!hostEligible && (
-        <Card className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6 border-amber-200 bg-amber-50">
-          <CardContent className="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-              <div className="font-semibold">Preview mode — host tools locked</div>
-              <p className="text-sm text-muted-foreground">Host role required. Request host access to unlock creation, publishing and management tools.</p>
-            </div>
-            <div className="flex gap-2">
-              <Button className="bg-primary-solid text-white hover:bg-primary/90" onClick={() => navigate('/profile')}>Request Host Access</Button>
-              <Button variant="outline" onClick={() => navigate('/about')}>Learn more</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+  const draftEvents = events.filter(e => e.status === 'draft')
+  const liveEvents = events.filter(e => e.status === 'published' || e.status === 'ongoing')
+  const completedEvents = events.filter(e => e.status === 'completed')
+
+  // The jam the host is "on" right now: an ongoing one, else the soonest
+  // upcoming one, else the most recent live one, else the latest created.
+  const upcomingEvents = events
+    .filter(e => e.status !== 'completed' && e.status !== 'cancelled' && parseDay(e.eventDate) && !jamEnded(e))
+    .sort((a, b) => parseDay(a.eventDate)!.getTime() - parseDay(b.eventDate)!.getTime())
+  const focusEvent =
+    events.find(e => e.status === 'ongoing') ||
+    upcomingEvents[0] ||
+    liveEvents[0] ||
+    events[0] ||
+    null
+
+  // Stage completion — monotonic (each flag implies the previous), so the
+  // first "not done" stage is where the host's jam is right now.
+  const stageDone = [
+    events.length > 0,                                        // Plan: an event exists
+    liveEvents.length > 0 || completedEvents.length > 0,      // Publish: ever went public
+    completedEvents.length > 0 || liveEvents.some(jamEnded),  // Run: jam day happened
+    completedEvents.length > 0,                               // Wrap up: marked completed
+  ]
+  const doneCount = stageDone.filter(Boolean).length
+  const currentStage = stageDone.findIndex(d => !d) // -1 → all four done
+
+  const publishTarget = draftEvents[0] || null
+  const wrapTarget = liveEvents.find(jamEnded) || liveEvents[0] || null
+  const shareTarget = completedEvents[0] || focusEvent
+
+  const daysToJam = focusEvent ? daysUntil(focusEvent.eventDate) : null
+  const jamIsLive = !!focusEvent && (
+    focusEvent.status === 'ongoing' ||
+    (daysToJam !== null && daysToJam <= 0 && !jamEnded(focusEvent) && focusEvent.status !== 'draft' && focusEvent.status !== 'completed')
+  )
+  const jamDateLabel = focusEvent?.eventDate
+    ? (focusEvent.endDate && focusEvent.endDate !== focusEvent.eventDate
+        ? `${formatDate(focusEvent.eventDate)} — ${formatDate(focusEvent.endDate)}`
+        : formatDate(focusEvent.eventDate))
+    : null
+  const firstName = ((user.displayName || '').trim().split(/\s+/)[0]) || 'host'
+
+  const openTab = (tab: string) => {
+    setActiveTab(tab)
+    requestAnimationFrame(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+  const openCreateDialog = () => {
+    // The create/edit dialog lives inside the events tab, so surface that tab first.
+    setActiveTab('events')
+    resetForm()
+    setShowNewEventDialog(true)
+  }
+
+  // Header context line — "where is my jam right now?"
+  const dateChip = (label: string) => (
+    <span className="ml-2 inline-flex translate-y-[-1px] items-center rounded-full border border-[#dfe9e2] bg-white px-2.5 py-0.5 font-mono text-[11px] font-semibold tabular-nums text-[#00713a] align-middle whitespace-nowrap">
+      {label}
+    </span>
+  )
+  const jamContext = !focusEvent ? (
+    <>Your jam HQ — plan, publish, run and wrap up your Global Goals Jam, all from here.</>
+  ) : jamIsLive ? (
+    <>
+      <strong className="font-semibold text-[#14201a]">{focusEvent.title}</strong> is live in {focusEvent.location} — make it count.
+      {dateChip('happening now')}
+    </>
+  ) : daysToJam !== null && daysToJam > 0 && focusEvent.status !== 'completed' ? (
+    <>
+      Next jam: <strong className="font-semibold text-[#14201a]">{focusEvent.title}</strong>
+      {jamDateLabel ? <> · {jamDateLabel}</> : null}
+      {focusEvent.location ? <> · {focusEvent.location}</> : null}
+      {dateChip(`T−${daysToJam} day${daysToJam === 1 ? '' : 's'}`)}
+    </>
+  ) : (focusEvent.status === 'completed' || jamEnded(focusEvent)) ? (
+    <>
+      Your last jam, <strong className="font-semibold text-[#14201a]">{focusEvent.title}</strong>, has wrapped
+      {jamDateLabel ? <> — it ran {jamDateLabel}</> : null}. Time to share what happened.
+    </>
+  ) : (
+    <>
+      Shaping <strong className="font-semibold text-[#14201a]">{focusEvent.title}</strong>
+      {jamDateLabel ? <> · {jamDateLabel}</> : <> — set a date to get rolling</>}.
+    </>
+  )
+
+  // Shared rail styles — the "jam poster" language
+  const pillSolid = 'inline-flex items-center gap-1.5 rounded-full bg-[#00A651] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-[#008a44] transition-colors'
+  const pillQuiet = 'inline-flex items-center gap-1.5 rounded-full border border-[#dfe9e2] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#14201a] hover:border-[#00A651]/50 hover:text-[#00713a] transition-colors'
+  const railLink = 'inline-flex items-center gap-1 text-xs font-semibold text-[#00713a] underline decoration-[#00A651]/30 decoration-2 underline-offset-4 hover:decoration-[#00A651] transition-colors'
+  const tabTriggerClass = 'rounded-full border border-transparent px-4 py-1.5 text-sm font-semibold text-[#4c5a52] transition-colors hover:text-[#14201a] data-[state=active]:border-[#dfe9e2] data-[state=active]:bg-white data-[state=active]:text-[#00713a] data-[state=active]:shadow-sm'
+
+  const stages: { key: string; title: string; tagline: string; meta: React.ReactNode; actions: React.ReactNode }[] = [
+    {
+      key: 'plan',
+      title: 'Plan',
+      tagline: 'Shape your jam — pick the challenge, set the dates.',
+      meta: (
+        <><span className="font-mono tabular-nums">{events.length}</span> event{events.length === 1 ? '' : 's'} created</>
+      ),
+      actions: (
+        <>
+          {canCreateEvents && (
+            <button type="button" onClick={openCreateDialog} className={currentStage === 0 ? pillSolid : pillQuiet}>
+              <Plus className="h-3.5 w-3.5" /> {events.length === 0 ? 'Create your first event' : 'Create event'}
+            </button>
+          )}
+          <Link to="/toolkit" className={railLink}>Open the Jamkit</Link>
+          <a href={LEARN_URL} className={railLink}>Host Programme <ArrowRight className="h-3 w-3" /></a>
+        </>
+      ),
+    },
+    {
+      key: 'publish',
+      title: 'Publish',
+      tagline: 'Go public and gather your crew of jammers.',
+      meta: (
+        <><span className="font-mono tabular-nums">{registrations.length}</span> registered</>
+      ),
+      actions: (
+        <>
+          {publishTarget && canCreateEvents && (
+            <button type="button" onClick={() => publishEvent(publishTarget.id)} className={currentStage === 1 ? pillSolid : pillQuiet}>
+              Publish <span className="max-w-[9rem] truncate">“{publishTarget.title}”</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              if (!addParticipantEventId && focusEvent) setAddParticipantEventId(focusEvent.id)
+              openTab('participants')
+            }}
+            className={currentStage === 1 && (!publishTarget || !canCreateEvents) ? pillSolid : pillQuiet}
+          >
+            <UserPlus className="h-3.5 w-3.5" /> Add participants
+          </button>
+          {liveEvents[0] && (
+            <button type="button" onClick={() => shareEventLink(liveEvents[0].id)} className={railLink}>
+              Share link
+            </button>
+          )}
+        </>
+      ),
+    },
+    {
+      key: 'run',
+      title: 'Run',
+      tagline: 'Jam days — facilitate the sprints, capture the energy.',
+      meta: jamIsLive
+        ? <span className="font-semibold text-[#00713a]">Happening now</span>
+        : daysToJam !== null && daysToJam > 0 && focusEvent?.status !== 'completed'
+          ? <><span className="font-mono tabular-nums">{daysToJam}</span> day{daysToJam === 1 ? '' : 's'} to jam day</>
+          : jamDateLabel
+            ? <>{jamDateLabel}</>
+            : <>Date to be set</>,
+      actions: (
+        <>
+          {focusEvent && (
+            <button type="button" onClick={() => viewPublic(focusEvent.id)} className={currentStage === 2 ? pillSolid : pillQuiet}>
+              <Eye className="h-3.5 w-3.5" /> Event page
+            </button>
+          )}
+          <button type="button" onClick={() => openTab('media')} className={focusEvent ? pillQuiet : (currentStage === 2 ? pillSolid : pillQuiet)}>
+            <Upload className="h-3.5 w-3.5" /> Upload media
+          </button>
+        </>
+      ),
+    },
+    {
+      key: 'wrap',
+      title: 'Wrap up',
+      tagline: 'Close the loop — certificates, results, celebration.',
+      meta: (
+        <><span className="font-mono tabular-nums">{completedEvents.length}</span> completed</>
+      ),
+      actions: (
+        <>
+          {wrapTarget && canCreateEvents && (
+            <button type="button" onClick={() => completeEvent(wrapTarget.id)} className={currentStage === 3 ? pillSolid : pillQuiet}>
+              <CheckCircle className="h-3.5 w-3.5" /> Mark completed
+            </button>
+          )}
+          <button type="button" onClick={() => openTab('certificates')} className={currentStage === 3 && !(wrapTarget && canCreateEvents) ? pillSolid : pillQuiet}>
+            <Award className="h-3.5 w-3.5" /> Certificates
+          </button>
+          {shareTarget && (
+            <Link to={`/events/${shareTarget.id}/results`} className={railLink}>Share results</Link>
+          )}
+        </>
+      ),
+    },
+  ]
+  const stageHeadline = currentStage === -1
+    ? 'Jam wrapped — beautifully done.'
+    : ['Plan your jam.', 'Time to go public.', 'Jam days are coming.', 'Wrap up and share.'][currentStage]
+
+  return (
+    <div className="min-h-screen bg-[#F6FAF7] text-[#14201a] relative">
+      <FloatingFeedback context="host" userEmail={user?.email || ''} userName={user?.displayName || ''} />
 
       {certGenerating && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
@@ -794,174 +1003,157 @@ export default function HostDashboard() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <div>
-              <h1 className="text-3xl font-display font-bold text-foreground mb-2">Host Dashboard {!hostEligible && <Badge variant="secondary" className="ml-2">Preview</Badge>}</h1>
-              <p className="text-muted-foreground">Manage your Global Goals Jam events and engage with your community.</p>
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-12 sm:pt-16 pb-16">
+        {/* Header — eyebrow, display greeting, jam-date context */}
+        <header className="mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div className="max-w-2xl">
+              <p className="ggj-rise text-[11px] font-bold uppercase tracking-[0.3em] text-[#00713a]">
+                Host dashboard
+                {!hostEligible && <Badge variant="secondary" className="ml-2 align-middle tracking-normal">Preview</Badge>}
+              </p>
+              <h1
+                className="ggj-rise font-display font-extrabold tracking-tight text-[clamp(2.1rem,4.5vw,3rem)] leading-[1.05] mt-3 text-[#14201a] [text-wrap:balance]"
+                style={{ animationDelay: '60ms' }}
+              >
+                Welcome back, <span className="text-[#00A651]">{firstName}</span>.
+              </h1>
+              <p className="ggj-rise text-[#4c5a52] mt-3 leading-relaxed" style={{ animationDelay: '120ms' }}>
+                {jamContext}
+              </p>
             </div>
-            <DonateButton variant="pill-outline" size="default" className="self-start sm:self-auto" />
+            <DonateButton variant="pill-outline" size="default" className="self-start sm:self-auto sm:mb-1" />
           </div>
-        </div>
+        </header>
 
-        {/* Onboarding checklist — guides new hosts; hides itself once every step is done */}
-        {hostEligible && (() => {
-          const steps = [
-            { key: 'create', label: 'Create your first jam event', done: events.length > 0 },
-            { key: 'publish', label: 'Publish it so people can register', done: events.some(e => e.status === 'published') },
-            { key: 'participants', label: 'Add your participants', done: registrations.length > 0 },
-            { key: 'complete', label: 'Wrap up your jam & issue certificates', done: events.some(e => e.status === 'completed') },
-          ]
-          const doneCount = steps.filter(s => s.done).length
-          if (doneCount === steps.length) return null
-          const pct = Math.round((doneCount / steps.length) * 100)
-          return (
-            <Card className="mb-8 border-primary/20 bg-primary/5">
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold">Get your jam off the ground</h2>
-                    <p className="text-sm text-muted-foreground">A few quick steps to run your first Global Goals Jam.</p>
-                  </div>
-                  <div className="text-sm font-medium text-primary whitespace-nowrap">{doneCount} of {steps.length} done</div>
-                </div>
-                <Progress value={pct} className="h-2 mb-4" />
-                <ul className="space-y-2.5">
-                  {steps.map((s) => (
-                    <li key={s.key} className="flex items-center gap-3">
-                      {s.done
-                        ? <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                        : <Circle className="w-5 h-5 text-muted-foreground/40 flex-shrink-0" />}
-                      <span className={`text-sm ${s.done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{s.label}</span>
-                    </li>
-                  ))}
-                </ul>
-                {events.length === 0 && canCreateEvents && (
-                  <Button
-                    className="mt-5 bg-primary-solid text-white hover:bg-primary/90"
-                    onClick={() => { resetForm(); setShowNewEventDialog(true) }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> Create your first event
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })()}
-
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card variant="stat" className="bg-pastel-green">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Events</p>
-                  <p className="text-2xl font-display font-bold text-foreground">{events.length}</p>
-                </div>
-                <Calendar className="w-8 h-8 text-primary" />
+        {/* Preview mode — host tools locked */}
+        {!hostEligible && (
+          <div className="ggj-rise mb-10 rounded-2xl border border-[#dfe9e2] bg-white p-5 sm:p-6 shadow-sm" style={{ animationDelay: '160ms' }}>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-[#7d8a83]">
+                  <span className="h-2 w-2 rounded-full bg-[#FCC30B]" aria-hidden="true" /> Preview mode — host tools locked
+                </p>
+                <p className="text-sm text-[#4c5a52] mt-2">Host role required. Request host access to unlock creation, publishing and management tools.</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card variant="stat" className="bg-pastel-amber">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Participants</p>
-                  <p className="text-2xl font-display font-bold text-foreground">{registrations.length}</p>
-                </div>
-                <Users className="w-8 h-8 text-primary" />
+              <div className="flex flex-wrap gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => navigate('/profile')}
+                  className="inline-flex items-center rounded-full bg-[#00A651] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#008a44] transition-colors"
+                >
+                  Request Host Access
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/about')}
+                  className="inline-flex items-center rounded-full border border-[#dfe9e2] bg-white px-5 py-2.5 text-sm font-semibold text-[#14201a] hover:border-[#00A651]/50 hover:text-[#00713a] transition-colors"
+                >
+                  Learn more
+                </button>
               </div>
-            </CardContent>
-          </Card>
-          <Card variant="stat" className="bg-pastel-violet">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Published Events</p>
-                  <p className="text-2xl font-display font-bold text-foreground">{events.filter(e => e.status === 'published').length}</p>
-                </div>
-                <Check className="w-8 h-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card variant="stat" className="bg-pastel-sky">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Completed Events</p>
-                  <p className="text-2xl font-display font-bold text-foreground">{events.filter(e => e.status === 'completed').length}</p>
-                </div>
-                <Award className="w-8 h-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Access */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
-          <div className="grid md:grid-cols-3 gap-4">
-            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => { const a = document.createElement('a'); a.href = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJ_assets.zip'; a.download = ''; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <ImageIcon className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium">Brand Assets</h3>
-                    <p className="text-sm text-muted-foreground">Logos & visual elements</p>
-                  </div>
-                  <Download className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => window.open('https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/ggj_info_booklet.pdf', '_blank')}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium">Instruction Guide</h3>
-                    <p className="text-sm text-muted-foreground">Full jam overview</p>
-                  </div>
-                  <Eye className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-soft transition-shadow cursor-pointer" onClick={() => window.open('https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJimpactreport_compressed.pdf', '_blank')}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium">Impact Report</h3>
-                    <p className="text-sm text-muted-foreground">Results & outcomes</p>
-                  </div>
-                  <Eye className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
+            </div>
           </div>
+        )}
+
+        {/* Jam lifecycle rail — the dashboard's spine. Evolved from the old
+            onboarding checklist: same data signals, recomposed as four stages
+            that each surface their own actions. */}
+        {hostEligible && (
+          <section
+            aria-label="Jam lifecycle"
+            className="ggj-rise mb-10 overflow-hidden rounded-2xl border border-[#dfe9e2] bg-white shadow-sm"
+            style={{ animationDelay: '180ms' }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 sm:px-6 py-4">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a]">Jam lifecycle</p>
+                <h2 className="font-display font-extrabold tracking-tight text-xl mt-1 text-[#14201a]">{stageHeadline}</h2>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold tabular-nums text-[#7d8a83]">{doneCount}/4 stages</span>
+                <Progress value={(doneCount / 4) * 100} className="h-1.5 w-24 sm:w-32" />
+              </div>
+            </div>
+            <div className="grid gap-px border-t border-[#dfe9e2] bg-[#dfe9e2] sm:grid-cols-2 lg:grid-cols-4">
+              {stages.map((stage, i) => {
+                const done = stageDone[i]
+                const isCurrent = i === currentStage
+                return (
+                  <div key={stage.key} className="relative bg-white p-5">
+                    {isCurrent && <span className="absolute inset-x-0 top-0 h-[3px] bg-[#00A651]" aria-hidden="true" />}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full ${
+                            done
+                              ? 'bg-[#00A651] text-white'
+                              : isCurrent
+                                ? 'border-2 border-[#00A651] text-[#00713a]'
+                                : 'border border-[#dfe9e2] text-[#7d8a83]'
+                          }`}
+                          aria-hidden="true"
+                        >
+                          {done ? <Check className="h-3.5 w-3.5" /> : <span className="font-mono text-[11px] font-semibold tabular-nums">{i + 1}</span>}
+                        </span>
+                        <span className={`font-display text-base font-extrabold tracking-tight truncate ${done && !isCurrent ? 'text-[#7d8a83]' : 'text-[#14201a]'}`}>
+                          {stage.title}
+                        </span>
+                      </div>
+                      {isCurrent ? (
+                        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#00713a]">Now</span>
+                      ) : done ? (
+                        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9fada6]">Done</span>
+                      ) : null}
+                    </div>
+                    <p className="mt-2.5 text-xs leading-relaxed text-[#7d8a83]">{stage.tagline}</p>
+                    <p className="mt-2 text-xs text-[#4c5a52]">{stage.meta}</p>
+                    <div className="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-2">{stage.actions}</div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Stat rail — quiet hairline tiles, tabular numbers, SDG dot accents */}
+        <div
+          className="ggj-rise mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[#dfe9e2] bg-[#dfe9e2] lg:grid-cols-4"
+          style={{ animationDelay: '240ms' }}
+        >
+          {[
+            { label: 'Total events', value: events.length, dot: '#E5243B' },
+            { label: 'Participants', value: registrations.length, dot: '#26BDE2' },
+            { label: 'Published', value: events.filter(e => e.status === 'published').length, dot: '#FCC30B' },
+            { label: 'Completed', value: events.filter(e => e.status === 'completed').length, dot: '#3F7E44' },
+          ].map((s) => (
+            <div key={s.label} className="bg-white px-5 py-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[12px] text-[#7d8a83]">{s.label}</span>
+                <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: s.dot }} aria-hidden="true" />
+              </div>
+              <div className="mt-1 font-display text-2xl sm:text-3xl font-extrabold tabular-nums text-[#14201a]">{s.value}</div>
+            </div>
+          ))}
         </div>
 
-        <Tabs defaultValue="events" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 md:grid-cols-7">
-            <TabsTrigger value="events">My Events</TabsTrigger>
-            <TabsTrigger value="participants">Participants</TabsTrigger>
-            <TabsTrigger value="certificates">Certificates</TabsTrigger>
-            <TabsTrigger value="courses">My Courses</TabsTrigger>
-            <TabsTrigger value="promote">Promote</TabsTrigger>
-            <TabsTrigger value="media">Media</TabsTrigger>
-            <TabsTrigger value="assets">Assets</TabsTrigger>
+        {/* Management tabs — ordered along the lifecycle: plan/publish first,
+            run (media) and wrap-up (certificates) after */}
+        <div ref={tabsRef} className="scroll-mt-24">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="flex h-auto w-full flex-wrap items-center justify-start gap-1.5 rounded-none border-b border-[#dfe9e2] bg-transparent p-0 pb-3 text-[#4c5a52]">
+            <TabsTrigger value="events" className={tabTriggerClass}>My Events</TabsTrigger>
+            <TabsTrigger value="participants" className={tabTriggerClass}>Participants</TabsTrigger>
+            <TabsTrigger value="promote" className={tabTriggerClass}>Promote</TabsTrigger>
+            <TabsTrigger value="media" className={tabTriggerClass}>Media</TabsTrigger>
+            <TabsTrigger value="certificates" className={tabTriggerClass}>Certificates</TabsTrigger>
+            <TabsTrigger value="courses" className={tabTriggerClass}>My Courses</TabsTrigger>
+            <TabsTrigger value="assets" className={tabTriggerClass}>Assets</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="events" className="space-y-6">
+          <TabsContent value="events" className="space-y-6 pt-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-foreground">My Events</h2>
+              <h2 className="font-display text-2xl font-extrabold tracking-tight text-[#14201a]">My Events</h2>
               {canCreateEvents ? (
                 <Dialog open={showNewEventDialog} onOpenChange={setShowNewEventDialog}>
                   <DialogTrigger asChild>
@@ -1184,7 +1376,7 @@ export default function HostDashboard() {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => (
-                <Card key={event.id} className="hover:shadow-card transition-shadow">
+                <Card key={event.id} variant="flat" className="rounded-2xl border-[#dfe9e2] bg-white shadow-sm hover:shadow-card transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -1233,12 +1425,12 @@ export default function HostDashboard() {
                             <Share2 className="w-4 h-4 mr-1" /> Share
                           </Button>
                           {event.status === 'draft' && canCreateEvents && (
-                            <Button size="sm" onClick={() => publishEvent(event.id)} className="bg-primary text-primary-foreground hover:bg-primary/80">
+                            <Button size="sm" onClick={() => publishEvent(event.id)} className="bg-[#00A651] text-white hover:bg-[#008a44]">
                               Publish
                             </Button>
                           )}
                           {(event.status === 'published' || event.status === 'ongoing') && canCreateEvents && (
-                            <Button size="sm" onClick={() => completeEvent(event.id)} className="bg-violet-600 text-primary-foreground hover:bg-violet-700">
+                            <Button size="sm" onClick={() => completeEvent(event.id)} className="bg-[#14201a] text-white hover:bg-[#14201a]/85">
                               Complete
                             </Button>
                           )}
@@ -1275,9 +1467,9 @@ export default function HostDashboard() {
             )}
           </TabsContent>
 
-          <TabsContent value="participants" className="space-y-6">
+          <TabsContent value="participants" className="space-y-6 pt-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-foreground">Event Participants</h2>
+              <h2 className="font-display text-2xl font-extrabold tracking-tight text-[#14201a]">Event Participants</h2>
               <Button variant="outline" onClick={() => exportParticipantsCSV()}>
                 <Download className="w-4 h-4 mr-2" /> Export All CSV
               </Button>
@@ -1455,13 +1647,14 @@ export default function HostDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="certificates" className="space-y-6">
+          <TabsContent value="certificates" className="space-y-6 pt-6">
             <Card>
               <CardContent className="grid md:grid-cols-2 gap-6 py-8">
                 <div className="text-center p-6 border rounded-xl">
                   <Award className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                   <h3 className="text-base font-semibold mb-1">Participant Certificates</h3>
                   <p className="text-sm text-muted-foreground mb-4">Generate participation certificates for your event attendees from the Participants tab.</p>
+                  <Button variant="outline" onClick={() => openTab('participants')}>Open Participants</Button>
                 </div>
                 <div className="text-center p-6 border rounded-xl">
                   <Award className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
@@ -1473,7 +1666,7 @@ export default function HostDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="courses" className="space-y-6">
+          <TabsContent value="courses" className="space-y-6 pt-6">
             <Card>
               <CardContent className="py-8 text-center">
                 <h3 className="text-lg font-semibold mb-2">Host Certification Course</h3>
@@ -1483,7 +1676,7 @@ export default function HostDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="promote" className="space-y-6">
+          <TabsContent value="promote" className="space-y-6 pt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Promote Your Events</CardTitle>
@@ -1524,7 +1717,7 @@ export default function HostDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="media" className="space-y-6">
+          <TabsContent value="media" className="space-y-6 pt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Media Library</CardTitle>
@@ -1614,10 +1807,67 @@ export default function HostDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="assets" className="space-y-6">
+          <TabsContent value="assets" className="space-y-6 pt-6">
             <HostAssets />
           </TabsContent>
         </Tabs>
+        </div>
+
+        {/* Host resources — moved from the old "Quick Access" cards to a quiet
+            strip at the end; same three destinations and handlers */}
+        <section aria-label="Host resources" className="mt-14">
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a]">Host resources</p>
+          <div className="mt-3 grid gap-px overflow-hidden rounded-2xl border border-[#dfe9e2] bg-[#dfe9e2] sm:grid-cols-3">
+            <button
+              type="button"
+              className="group bg-white p-5 text-left transition-colors hover:bg-[#F6FAF7]"
+              onClick={() => { const a = document.createElement('a'); a.href = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJ_assets.zip'; a.download = ''; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#00A651]/10 text-[#00713a]">
+                  <ImageIcon className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-[#14201a]">Brand Assets</span>
+                  <span className="block text-xs text-[#7d8a83]">Logos &amp; visual elements</span>
+                </span>
+                <Download className="h-4 w-4 flex-shrink-0 text-[#7d8a83] transition-colors group-hover:text-[#00713a]" />
+              </div>
+            </button>
+            <button
+              type="button"
+              className="group bg-white p-5 text-left transition-colors hover:bg-[#F6FAF7]"
+              onClick={() => window.open('https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/ggj_info_booklet.pdf', '_blank')}
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#00A651]/10 text-[#00713a]">
+                  <FileText className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-[#14201a]">Instruction Guide</span>
+                  <span className="block text-xs text-[#7d8a83]">Full jam overview</span>
+                </span>
+                <Eye className="h-4 w-4 flex-shrink-0 text-[#7d8a83] transition-colors group-hover:text-[#00713a]" />
+              </div>
+            </button>
+            <button
+              type="button"
+              className="group bg-white p-5 text-left transition-colors hover:bg-[#F6FAF7]"
+              onClick={() => window.open('https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJimpactreport_compressed.pdf', '_blank')}
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#00A651]/10 text-[#00713a]">
+                  <BookOpen className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-[#14201a]">Impact Report</span>
+                  <span className="block text-xs text-[#7d8a83]">Results &amp; outcomes</span>
+                </span>
+                <Eye className="h-4 w-4 flex-shrink-0 text-[#7d8a83] transition-colors group-hover:text-[#00713a]" />
+              </div>
+            </button>
+          </div>
+        </section>
       </div>
     </div>
   )
