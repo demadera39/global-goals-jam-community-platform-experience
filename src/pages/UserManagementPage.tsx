@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Search, Mail, Key, Trash2, Shield, User, Edit, AlertCircle, CheckCircle, Clock, X, Send, Loader2, Award, LogIn } from 'lucide-react'
+import { Search, Mail, Key, Trash2, Edit, AlertCircle, CheckCircle, Clock, X, Award, LogIn } from 'lucide-react'
+import AdminShell, {
+  Pill,
+  type PillTone,
+  adminCardClass,
+  railTabsListClass,
+  railTabTriggerClass,
+  quietButtonClass,
+} from '@/components/admin/AdminShell'
 import { useToast } from '@/hooks/use-toast'
 import { db, auth, notifications, supabase } from '@/lib/supabase'
 import { config } from '@/lib/config'
@@ -405,19 +411,19 @@ export default function UserManagementPage() {
     user.location?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const getRoleBadgeVariant = (role: string) => {
+  const roleTone = (role: string): PillTone => {
     switch (role) {
-      case 'admin': return 'default'
-      case 'host': return 'secondary'
+      case 'admin': return 'ink'
+      case 'host': return 'green'
       default: return 'outline'
     }
   }
 
-  const getStatusBadgeVariant = (status: string) => {
+  const statusTone = (status: string): PillTone => {
     switch (status) {
-      case 'approved': return 'default'
-      case 'pending': return 'secondary'
-      case 'suspended': return 'destructive'
+      case 'approved': return 'green'
+      case 'pending': return 'amber'
+      case 'suspended': return 'red'
       default: return 'outline'
     }
   }
@@ -428,11 +434,11 @@ export default function UserManagementPage() {
 
   const renderCourseBadge = (userId: string) => {
     const info = enrollments[userId]
-    if (!info) return <Badge variant="outline">not enrolled</Badge>
-    if (info.status === 'completed') return <Badge variant="default">completed</Badge>
-    if (info.status === 'active') return <Badge variant="secondary">active</Badge>
-    if (info.status === 'pending') return <Badge variant="outline">pending</Badge>
-    return <Badge variant="outline">not enrolled</Badge>
+    if (!info) return <Pill tone="outline">not enrolled</Pill>
+    if (info.status === 'completed') return <Pill tone="green">completed</Pill>
+    if (info.status === 'active') return <Pill tone="grey">active</Pill>
+    if (info.status === 'pending') return <Pill tone="outline">pending</Pill>
+    return <Pill tone="outline">not enrolled</Pill>
   }
 
   const shouldShowInvite = (user: UserData) => {
@@ -750,92 +756,96 @@ export default function UserManagementPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading user data...</p>
+      <AdminShell title="User management" description="Manage users, reset passwords, and control access.">
+        <div className="flex items-center justify-center py-24">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#00A651] mx-auto"></div>
+            <p className="mt-4 text-sm text-[#7d8a83]">Loading user data…</p>
+          </div>
         </div>
-      </div>
+      </AdminShell>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">User Management</h1>
-          <p className="text-muted-foreground">Manage users, reset passwords, and control access</p>
-        </div>
-        <div className="flex items-center gap-2">
+    <AdminShell
+      title="User management"
+      description="Manage users, reset passwords, and control access."
+      actions={
+        <>
           {isImpersonating && (
-            <Button variant="secondary" onClick={handleReturnToAdmin}>
+            <button
+              type="button"
+              onClick={handleReturnToAdmin}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#14201a] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2a3a31]"
+            >
               Return to admin
-            </Button>
+            </button>
           )}
-          <Button variant="outline" onClick={handleSendTestEmail} disabled={isProcessing}>
-            <Mail className="h-4 w-4 mr-2" />
+          <button type="button" onClick={handleSendTestEmail} disabled={isProcessing} className={quietButtonClass}>
+            <Mail className="h-4 w-4" />
             Send test email
-          </Button>
-        </div>
-      </div>
-
+          </button>
+        </>
+      }
+    >
       <Tabs defaultValue="users" className="w-full">
-        <TabsList>
-          <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
-          <TabsTrigger value="resets">Password Resets ({passwordResets.length})</TabsTrigger>
+        <TabsList className={railTabsListClass}>
+          <TabsTrigger value="users" className={railTabTriggerClass}>
+            Users <span className="ml-1.5 font-mono text-xs tabular-nums text-[#7d8a83]">{users.length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="resets" className={railTabTriggerClass}>
+            Password resets <span className="ml-1.5 font-mono text-xs tabular-nums text-[#7d8a83]">{passwordResets.length}</span>
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="users" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Users</CardTitle>
-              <CardDescription>Manage user accounts and permissions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by email, name, or location..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+        <TabsContent value="users" className="mt-6">
+          <div className={`${adminCardClass} overflow-hidden`}>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#dfe9e2] px-6 py-4">
+              <div>
+                <h2 className="font-display text-lg font-extrabold text-[#14201a]">All users</h2>
+                <p className="mt-0.5 text-sm text-[#4c5a52]">Accounts, roles, course payments and access.</p>
               </div>
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7d8a83]" />
+                <Input
+                  placeholder="Search by email, name, or location…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-9 rounded-full border-[#dfe9e2] bg-white pl-10 text-sm"
+                />
+              </div>
+            </div>
 
+            <div className="px-2">
               <ScrollArea className="h-[600px]">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Course</TableHead>
-                      <TableHead>Paid</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                    <TableRow className="border-[#dfe9e2] hover:bg-transparent">
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">User</TableHead>
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Role</TableHead>
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Status</TableHead>
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Course</TableHead>
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Paid</TableHead>
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Location</TableHead>
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Joined</TableHead>
+                      <TableHead className="h-10 text-right text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
+                      <TableRow key={user.id} className="border-[#dfe9e2] hover:bg-[#F6FAF7]/70">
                         <TableCell>
                           <div>
-                            <div className="font-medium">{user.displayName}</div>
-                            <div className="text-sm text-muted-foreground">{user.email}</div>
+                            <div className="text-sm font-semibold text-[#14201a]">{user.displayName}</div>
+                            <div className="text-[13px] text-[#7d8a83]">{user.email}</div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getRoleBadgeVariant(user.role)}>
-                            {user.role}
-                          </Badge>
+                          <Pill tone={roleTone(user.role)}>{user.role}</Pill>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusBadgeVariant(user.status)}>
-                            {user.status}
-                          </Badge>
+                          <Pill tone={statusTone(user.status)}>{user.status}</Pill>
                         </TableCell>
                         <TableCell>
                           {renderCourseBadge(user.id)}
@@ -845,43 +855,43 @@ export default function UserManagementPage() {
                             const info = enrollments[user.id]
                             if (info?.hasRealPayment) {
                               return (
-                                <Badge
-                                  variant="green"
+                                <Pill
+                                  tone="green"
                                   title={`Real Mollie payment (${info.molliePaymentId})`}
                                 >
                                   paid
-                                </Badge>
+                                </Pill>
                               )
                             }
                             if (info?.isManualOverride) {
                               return (
-                                <Badge
-                                  variant="secondary"
+                                <Pill
+                                  tone="grey"
                                   title={`Marked paid manually (ref: ${info.molliePaymentId || '—'}). No real Mollie transaction recorded.`}
                                 >
                                   paid · manual
-                                </Badge>
+                                </Pill>
                               )
                             }
                             if (info?.needsPaymentReview) {
                               return (
-                                <Badge
-                                  variant="amber"
+                                <Pill
+                                  tone="amber"
                                   title={`Enrollment is ${info.status} but no payment recorded. Check Mollie — may be expired / abandoned checkout.`}
                                 >
                                   needs review
-                                </Badge>
+                                </Pill>
                               )
                             }
-                            return <span className="text-muted-foreground text-sm">no</span>
+                            return <span className="text-sm text-[#7d8a83]">no</span>
                           })()}
                         </TableCell>
-                        <TableCell>{user.location || '-'}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-[13px] text-[#4c5a52]">{user.location || '–'}</TableCell>
+                        <TableCell className="font-mono text-xs tabular-nums text-[#7d8a83]">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1">
                             <Button
                               size="icon"
                               variant="ghost"
@@ -901,7 +911,9 @@ export default function UserManagementPage() {
                                     ? 'Message — defaults to course invite'
                                     : 'Send a message'
                               }
-                              className={enrollments[user.id]?.needsPaymentReview ? 'text-amber-700 hover:text-amber-900' : ''}
+                              className={enrollments[user.id]?.needsPaymentReview
+                                ? 'h-8 w-8 rounded-full text-amber-600 hover:bg-amber-50 hover:text-amber-800'
+                                : 'h-8 w-8 rounded-full text-[#7d8a83] hover:bg-[#F6FAF7] hover:text-[#14201a]'}
                             >
                               <Mail className="h-4 w-4" />
                             </Button>
@@ -910,6 +922,7 @@ export default function UserManagementPage() {
                               variant="ghost"
                               onClick={() => handleDownloadCertificate(user)}
                               title={(user.role === 'host' || enrollments[user.id]?.status === 'completed') ? 'Download host certificate' : 'Download participant certificate'}
+                              className="h-8 w-8 rounded-full text-[#7d8a83] hover:bg-[#F6FAF7] hover:text-[#14201a]"
                             >
                               <Award className="h-4 w-4" />
                             </Button>
@@ -918,6 +931,7 @@ export default function UserManagementPage() {
                               variant="ghost"
                               onClick={() => handleImpersonate(user)}
                               title="Log in as this user"
+                              className="h-8 w-8 rounded-full text-[#7d8a83] hover:bg-[#F6FAF7] hover:text-[#14201a]"
                             >
                               <LogIn className="h-4 w-4" />
                             </Button>
@@ -926,6 +940,7 @@ export default function UserManagementPage() {
                               variant="ghost"
                               onClick={() => handleEditUser(user)}
                               title="Edit user"
+                              className="h-8 w-8 rounded-full text-[#7d8a83] hover:bg-[#F6FAF7] hover:text-[#14201a]"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -937,6 +952,7 @@ export default function UserManagementPage() {
                                 setShowPasswordDialog(true)
                               }}
                               title="Reset password"
+                              className="h-8 w-8 rounded-full text-[#7d8a83] hover:bg-[#F6FAF7] hover:text-[#14201a]"
                             >
                               <Key className="h-4 w-4" />
                             </Button>
@@ -948,7 +964,7 @@ export default function UserManagementPage() {
                                 setShowDeleteDialog(true)
                               }}
                               title="Delete user"
-                              className="text-destructive hover:text-destructive"
+                              className="h-8 w-8 rounded-full text-[#7d8a83] hover:bg-red-50 hover:text-red-600"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -959,53 +975,53 @@ export default function UserManagementPage() {
                   </TableBody>
                 </Table>
               </ScrollArea>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
-        <TabsContent value="resets" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Password Reset History</CardTitle>
-              <CardDescription>View recent password reset requests</CardDescription>
-            </CardHeader>
-            <CardContent>
+        <TabsContent value="resets" className="mt-6">
+          <div className={`${adminCardClass} overflow-hidden`}>
+            <div className="border-b border-[#dfe9e2] px-6 py-4">
+              <h2 className="font-display text-lg font-extrabold text-[#14201a]">Password reset history</h2>
+              <p className="mt-0.5 text-sm text-[#4c5a52]">Recent password reset requests and whether they were used.</p>
+            </div>
+            <div className="px-2">
               <ScrollArea className="h-[600px]">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Requested</TableHead>
-                      <TableHead>Expires</TableHead>
-                      <TableHead>Status</TableHead>
+                    <TableRow className="border-[#dfe9e2] hover:bg-transparent">
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Email</TableHead>
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Requested</TableHead>
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Expires</TableHead>
+                      <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {passwordResets.map((reset) => (
-                      <TableRow key={reset.id}>
-                        <TableCell className="font-medium">{reset.email}</TableCell>
-                        <TableCell>
+                      <TableRow key={reset.id} className="border-[#dfe9e2] hover:bg-[#F6FAF7]/70">
+                        <TableCell className="text-sm font-semibold text-[#14201a]">{reset.email}</TableCell>
+                        <TableCell className="font-mono text-xs tabular-nums text-[#7d8a83]">
                           {new Date(reset.createdAt).toLocaleString()}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="font-mono text-xs tabular-nums text-[#7d8a83]">
                           {new Date(reset.expiresAt).toLocaleString()}
                         </TableCell>
                         <TableCell>
                           {Number(reset.used) > 0 ? (
-                            <Badge variant="default">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Used
-                            </Badge>
+                            <Pill tone="green">
+                              <CheckCircle className="h-3 w-3" />
+                              used
+                            </Pill>
                           ) : isResetExpired(reset.expiresAt) ? (
-                            <Badge variant="secondary">
-                              <X className="h-3 w-3 mr-1" />
-                              Expired
-                            </Badge>
+                            <Pill tone="grey">
+                              <X className="h-3 w-3" />
+                              expired
+                            </Pill>
                           ) : (
-                            <Badge variant="outline">
-                              <Clock className="h-3 w-3 mr-1" />
-                              Active
-                            </Badge>
+                            <Pill tone="amber">
+                              <Clock className="h-3 w-3" />
+                              active
+                            </Pill>
                           )}
                         </TableCell>
                       </TableRow>
@@ -1013,8 +1029,8 @@ export default function UserManagementPage() {
                   </TableBody>
                 </Table>
               </ScrollArea>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -1237,7 +1253,7 @@ export default function UserManagementPage() {
         } : null}
         initialTemplate={messageTemplate}
       />
-    </div>
+    </AdminShell>
   )
 }
 

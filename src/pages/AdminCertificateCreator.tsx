@@ -1,17 +1,14 @@
-import React, { useState, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Button } from '../components/ui/button'
+import { useState, useRef } from 'react'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Textarea } from '../components/ui/textarea'
-import { Badge } from '../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { Award, Download, Loader2, ArrowLeft } from 'lucide-react'
+import { Award, Download, Loader2 } from 'lucide-react'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import { useNavigate } from 'react-router-dom'
 import CertificateTemplate from '../components/CertificateTemplate'
 import { toast } from 'sonner'
+import AdminShell, { Pill, adminCardClass, quietButtonClass, primaryButtonClass } from '../components/admin/AdminShell'
 
 type CertificateType = 'general' | 'host' | 'participant' | 'custom'
 
@@ -58,7 +55,6 @@ const CERTIFICATE_TYPES: { value: CertificateType; label: string; description: s
 ]
 
 export default function AdminCertificateCreator() {
-  const navigate = useNavigate()
   const certificateRef = useRef<HTMLDivElement>(null)
   const [generating, setGenerating] = useState(false)
   const [certificateData, setCertificateData] = useState<CertificateData>({
@@ -187,39 +183,19 @@ export default function AdminCertificateCreator() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6 flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/admin-dashboard')}
-              className="hover:bg-muted"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Certificate Creator</h1>
-              <p className="text-muted-foreground mt-1">Create and download custom certificates for your community</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
+    <AdminShell
+      title="Certificate creator"
+      description="Create and download custom certificates for your community."
+    >
+      <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Form Section */}
           <div className="lg:col-span-1 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5" />
-                  Certificate Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className={`${adminCardClass} p-6`}>
+              <h2 className="flex items-center gap-2 font-display text-lg font-extrabold text-[#14201a]">
+                <Award className="w-5 h-5 text-[#00A651]" />
+                Certificate details
+              </h2>
+              <div className="mt-5 space-y-4">
                 {/* Certificate Type */}
                 <div>
                   <Label htmlFor="type">Certificate Type *</Label>
@@ -336,7 +312,7 @@ export default function AdminCertificateCreator() {
                 {certificateData.certificateType === 'custom' && (
                   <div className="space-y-4 pt-4 border-t">
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-[10px]">TAILORED</Badge>
+                      <Pill tone="ink">tailored</Pill>
                       <p className="text-xs text-muted-foreground">These fields override the default title, header and body.</p>
                     </div>
 
@@ -397,62 +373,66 @@ export default function AdminCertificateCreator() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Action Buttons */}
-            <Card>
-              <CardContent className="p-6 space-y-3">
-                <Button
-                  onClick={generatePDF}
-                  disabled={generating || !certificateData.name.trim()}
-                  className="w-full bg-primary-solid text-white hover:bg-primary/90"
-                >
-                  {generating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 mr-2" />
-                      Download PDF
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={generateMultiple}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Batch Download (CSV)
-                </Button>
-              </CardContent>
-            </Card>
+            <div className={`${adminCardClass} p-6 space-y-3`}>
+              <button
+                type="button"
+                onClick={generatePDF}
+                disabled={generating || !certificateData.name.trim()}
+                className={`${primaryButtonClass} w-full`}
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Generating…
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Download PDF
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={generateMultiple}
+                className={`${quietButtonClass} w-full`}
+              >
+                Batch download (CSV)
+              </button>
+            </div>
 
             {/* Help Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Tips</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm space-y-2 text-muted-foreground">
-                <p>✓ Fill in Name, Year, and Date</p>
-                <p>✓ Date field is required and editable</p>
-                <p>✓ Preview updates in real-time</p>
-                <p>✓ PDF downloads with proper layout</p>
-                <p>✓ Use custom text for achievements</p>
-              </CardContent>
-            </Card>
+            <div className={`${adminCardClass} p-6`}>
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a]">Tips</p>
+              <ul className="mt-4 space-y-2 text-sm text-[#4c5a52]">
+                {[
+                  'Fill in Name, Year, and Date',
+                  'Date field is required and editable',
+                  'Preview updates in real-time',
+                  'PDF downloads with proper layout',
+                  'Use custom text for achievements',
+                ].map((tip) => (
+                  <li key={tip} className="flex items-start gap-2.5">
+                    <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#00A651]" aria-hidden="true" />
+                    <span className="leading-relaxed">{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
           {/* Preview Section */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Preview</CardTitle>
-                <p className="text-sm text-muted-foreground">Live preview of your certificate</p>
-              </CardHeader>
-              <CardContent className="flex items-center justify-center p-8 bg-muted/50 rounded-lg">
+            <div className={`${adminCardClass} overflow-hidden`}>
+              <div className="border-b border-[#dfe9e2] px-6 py-4">
+                <h2 className="font-display text-lg font-extrabold text-[#14201a]">Preview</h2>
+                <p className="mt-0.5 text-sm text-[#4c5a52]">Live preview of your certificate.</p>
+              </div>
+              <div className="flex items-center justify-center bg-[#F6FAF7] p-6 sm:p-8">
                 {certificateData.name && certificateData.year ? (
                   <div ref={certificateRef} className="w-full max-w-4xl">
                     <CertificateTemplate
@@ -473,16 +453,15 @@ export default function AdminCertificateCreator() {
                   </div>
                 ) : (
                   <div className="text-center py-16">
-                    <Award className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-foreground mb-2">No Preview Yet</h3>
-                    <p className="text-muted-foreground">Fill in the Name, Year, and Date to see your certificate preview</p>
+                    <Award className="w-10 h-10 text-[#7d8a83] mx-auto mb-4" />
+                    <h3 className="font-display text-lg font-extrabold text-[#14201a] mb-1">No preview yet</h3>
+                    <p className="text-sm text-[#7d8a83]">Fill in the Name, Year, and Date to see your certificate preview.</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
-        </div>
       </div>
-    </div>
+    </AdminShell>
   )
 }

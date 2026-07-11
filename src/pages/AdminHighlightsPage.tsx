@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import { Badge } from '../components/ui/badge'
 import { toast } from 'sonner'
 import {
   getAllHighlights,
@@ -22,8 +19,14 @@ import {
   ExternalLink,
   Sparkles,
 } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Label } from '../components/ui/label'
+import AdminShell, {
+  Pill,
+  adminCardClass,
+  quietButtonClass,
+  primaryButtonClass,
+} from '../components/admin/AdminShell'
 
 export default function AdminHighlightsPage() {
   const [highlights, setHighlights] = useState<JamHighlight[]>([])
@@ -122,209 +125,204 @@ export default function AdminHighlightsPage() {
     return true
   })
 
+  const filterPills: { key: 'all' | 'verified' | 'unverified'; label: string; count: number }[] = [
+    { key: 'all', label: 'All', count: highlights.length },
+    { key: 'verified', label: 'Verified', count: highlights.filter((h) => h.isVerified).length },
+    { key: 'unverified', label: 'Unverified', count: highlights.filter((h) => !h.isVerified).length },
+  ]
+
   return (
-    <div className="min-h-screen bg-background py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Manage Jam Highlights</h1>
-            <p className="text-muted-foreground mt-1">
-              Review, verify, and manage Global Goals Jam photos
-            </p>
+    <AdminShell
+      title="Highlights"
+      description="Review, verify and manage the jam photos shown across the site."
+      actions={
+        <>
+          <button type="button" onClick={() => setAddDialogOpen(true)} className={quietButtonClass}>
+            <Plus className="w-4 h-4" />
+            Add manually
+          </button>
+          <button type="button" onClick={handleScrape} disabled={scraping} className={primaryButtonClass}>
+            {scraping ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Finding photos…
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Find jam photos
+              </>
+            )}
+          </button>
+        </>
+      }
+    >
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Highlight Manually</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label>Image URL *</Label>
+              <Input
+                value={newImageUrl}
+                onChange={(e) => setNewImageUrl(e.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>City</Label>
+                <Input
+                  value={newCity}
+                  onChange={(e) => setNewCity(e.target.value)}
+                  placeholder="Amsterdam"
+                />
+              </div>
+              <div>
+                <Label>Country</Label>
+                <Input
+                  value={newCountry}
+                  onChange={(e) => setNewCountry(e.target.value)}
+                  placeholder="Netherlands"
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Year</Label>
+              <Input
+                type="number"
+                value={newYear}
+                onChange={(e) => setNewYear(e.target.value)}
+                placeholder="2024"
+                min="2016"
+                max="2030"
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Input
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="Global Goals Jam in..."
+              />
+            </div>
+            <button type="button" onClick={handleManualAdd} className={`${primaryButtonClass} w-full`}>
+              Add Highlight
+            </button>
           </div>
-          <div className="flex gap-2">
-            <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Manually
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Highlight Manually</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <div>
-                    <Label>Image URL *</Label>
-                    <Input
-                      value={newImageUrl}
-                      onChange={(e) => setNewImageUrl(e.target.value)}
-                      placeholder="https://..."
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>City</Label>
-                      <Input
-                        value={newCity}
-                        onChange={(e) => setNewCity(e.target.value)}
-                        placeholder="Amsterdam"
-                      />
-                    </div>
-                    <div>
-                      <Label>Country</Label>
-                      <Input
-                        value={newCountry}
-                        onChange={(e) => setNewCountry(e.target.value)}
-                        placeholder="Netherlands"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Year</Label>
-                    <Input
-                      type="number"
-                      value={newYear}
-                      onChange={(e) => setNewYear(e.target.value)}
-                      placeholder="2024"
-                      min="2016"
-                      max="2030"
-                    />
-                  </div>
-                  <div>
-                    <Label>Description</Label>
-                    <Input
-                      value={newDescription}
-                      onChange={(e) => setNewDescription(e.target.value)}
-                      placeholder="Global Goals Jam in..."
-                    />
-                  </div>
-                  <Button onClick={handleManualAdd} className="w-full">
-                    Add Highlight
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-            <Button onClick={handleScrape} disabled={scraping}>
-              {scraping ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Finding Photos...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Find Jam Photos
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
+        </DialogContent>
+      </Dialog>
 
-        {/* Filter tabs */}
-        <div className="flex gap-2 mb-6">
-          <Button
-            variant={filterVerified === 'all' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilterVerified('all')}
-          >
-            All ({highlights.length})
-          </Button>
-          <Button
-            variant={filterVerified === 'verified' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilterVerified('verified')}
-          >
-            Verified ({highlights.filter((h) => h.isVerified).length})
-          </Button>
-          <Button
-            variant={filterVerified === 'unverified' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilterVerified('unverified')}
-          >
-            Unverified ({highlights.filter((h) => !h.isVerified).length})
-          </Button>
-        </div>
+      {/* Filter pills */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {filterPills.map((f) => {
+          const active = filterVerified === f.key
+          return (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFilterVerified(f.key)}
+              aria-pressed={active}
+              className={
+                active
+                  ? 'inline-flex items-center gap-1.5 rounded-full border border-[#14201a] bg-[#14201a] px-3.5 py-1.5 text-[13px] font-semibold text-white'
+                  : 'inline-flex items-center gap-1.5 rounded-full border border-[#dfe9e2] bg-white px-3.5 py-1.5 text-[13px] font-semibold text-[#4c5a52] transition-colors hover:border-[#00A651]/50 hover:text-[#00713a]'
+              }
+            >
+              {f.label}
+              <span className={`font-mono text-xs tabular-nums ${active ? 'text-white/70' : 'text-[#7d8a83]'}`}>{f.count}</span>
+            </button>
+          )
+        })}
+      </div>
 
-        {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-64 rounded-lg bg-muted animate-pulse" />
-            ))}
-          </div>
-        ) : filteredHighlights.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <p className="text-muted-foreground">No highlights found</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredHighlights.map((highlight) => (
-              <Card key={highlight.id} className="overflow-hidden">
-                <div className="relative h-48 bg-black">
-                  <img
-                    src={highlight.imageUrl}
-                    alt={highlight.description || 'Jam highlight'}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                  {highlight.isVerified && (
-                    <Badge className="absolute top-2 right-2 bg-primary text-white">
-                      <Check className="w-3 h-3 mr-1" />
-                      Verified
-                    </Badge>
+      {loading ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-64 rounded-2xl border border-[#dfe9e2] bg-white animate-pulse" />
+          ))}
+        </div>
+      ) : filteredHighlights.length === 0 ? (
+        <div className={`${adminCardClass} p-12 text-center`}>
+          <p className="text-sm text-[#7d8a83]">No highlights found</p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredHighlights.map((highlight) => (
+            <div key={highlight.id} className={`${adminCardClass} overflow-hidden`}>
+              <div className="relative h-48 bg-[#14201a]">
+                <img
+                  src={highlight.imageUrl}
+                  alt={highlight.description || 'Jam highlight'}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                {highlight.isVerified && (
+                  <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#00A651] px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+                    <Check className="w-3 h-3" />
+                    verified
+                  </span>
+                )}
+              </div>
+              <div className="p-4">
+                {highlight.description && (
+                  <p className="line-clamp-2 text-sm font-semibold text-[#14201a]">
+                    {highlight.description}
+                  </p>
+                )}
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {highlight.city && (
+                    <Pill tone="grey">
+                      <MapPin className="w-3 h-3" />
+                      {highlight.city}
+                      {highlight.country && `, ${highlight.country}`}
+                    </Pill>
+                  )}
+                  {highlight.year && (
+                    <Pill tone="grey">
+                      <Calendar className="w-3 h-3" />
+                      {highlight.year}
+                    </Pill>
                   )}
                 </div>
-                <CardHeader className="pb-3">
-                  {highlight.description && (
-                    <p className="text-sm font-medium line-clamp-2">
-                      {highlight.description}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {highlight.city && (
-                      <Badge variant="secondary" className="text-xs">
-                        <MapPin className="w-3 h-3 mr-1" />
-                        {highlight.city}
-                        {highlight.country && `, ${highlight.country}`}
-                      </Badge>
-                    )}
-                    {highlight.year && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {highlight.year}
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0 flex gap-2">
+                <div className="mt-4 flex items-center gap-2 border-t border-[#dfe9e2] pt-3">
                   {!highlight.isVerified && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
+                    <button
+                      type="button"
                       onClick={() => handleVerify(highlight.id)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[#00A651]/40 bg-[#00A651]/5 px-3.5 py-1.5 text-[13px] font-semibold text-[#00713a] transition-colors hover:bg-[#00A651]/10"
                     >
-                      <Check className="w-4 h-4 mr-1" />
+                      <Check className="w-4 h-4" />
                       Verify
-                    </Button>
+                    </button>
                   )}
                   {highlight.sourceUrl && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      asChild
+                    <a
+                      href={highlight.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Open source"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#dfe9e2] bg-white text-[#7d8a83] transition-colors hover:border-[#00A651]/50 hover:text-[#00713a]"
                     >
-                      <a href={highlight.sourceUrl} target="_blank" rel="noreferrer">
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </Button>
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
                   )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
+                  <button
+                    type="button"
                     onClick={() => handleDelete(highlight.id)}
+                    title="Delete highlight"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#dfe9e2] bg-white text-[#7d8a83] transition-colors hover:border-red-300 hover:text-red-600"
                   >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </AdminShell>
   )
 }

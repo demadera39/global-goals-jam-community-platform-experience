@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Loader2, Mail, Key, CheckCircle2, ShieldAlert } from 'lucide-react'
+import { Mail, Key, CheckCircle2, RefreshCw, ShieldAlert } from 'lucide-react'
 import { db, auth } from '@/lib/supabase'
 import { getFullUser } from '@/lib/userProfile'
 import { config } from '@/lib/config'
+import AdminShell, {
+  Pill,
+  adminCardClass,
+  quietButtonClass,
+  primaryButtonClass,
+} from '@/components/admin/AdminShell'
 
 interface UserRow {
   id: string
@@ -179,122 +183,126 @@ The Global Goals Jam Team
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <AdminShell title="Passwords" description="Manage user passwords and send credentials via email.">
+        <div className="flex items-center justify-center py-24">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#00A651]"></div>
+        </div>
+      </AdminShell>
     )
   }
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-destructive" /> Access restricted</CardTitle>
-            <CardDescription>Only admins can manage user passwords.</CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="min-h-screen bg-[#F6FAF7] flex items-center justify-center px-5">
+        <div className={`${adminCardClass} max-w-md w-full p-8 text-center`}>
+          <ShieldAlert className="w-10 h-10 text-[#7d8a83] mx-auto" />
+          <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a]">GGJ Admin</p>
+          <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-[#14201a]">Access restricted</h2>
+          <p className="mt-2 text-sm leading-relaxed text-[#4c5a52]">Only admins can manage user passwords.</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Password Management</CardTitle>
-          <CardDescription>
-            Manage user passwords and send credentials via email
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <Button onClick={bulkGeneratePasswords} className="mr-2">
-              <Key className="h-4 w-4 mr-2" />
-              Bulk Generate Passwords
-            </Button>
-            <Button onClick={fetchUsers} variant="outline">
-              Refresh
-            </Button>
+    <AdminShell
+      title="Passwords"
+      description="Manage user passwords and send credentials via email."
+      actions={
+        <>
+          <button type="button" onClick={fetchUsers} className={quietButtonClass}>
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </button>
+          <button type="button" onClick={bulkGeneratePasswords} className={primaryButtonClass}>
+            <Key className="h-4 w-4" />
+            Bulk generate passwords
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-6">
+        {Object.keys(generatedPasswords).length > 0 && (
+          <div className={`${adminCardClass} overflow-hidden`}>
+            <div className="flex items-center justify-between gap-3 border-b border-[#dfe9e2] px-6 py-4">
+              <div>
+                <h2 className="font-display text-lg font-extrabold text-[#14201a]">Generated passwords</h2>
+                <p className="mt-0.5 text-sm text-[#4c5a52]">Copy these to send to users via email.</p>
+              </div>
+              <span className="h-1.5 w-6 rounded-full bg-[#00A651]/70" aria-hidden="true" />
+            </div>
+            <ul className="divide-y divide-[#dfe9e2]">
+              {Object.entries(generatedPasswords).map(([email, password]) => (
+                <li key={email} className="flex flex-wrap items-center justify-between gap-3 px-6 py-3.5">
+                  <div>
+                    <p className="text-sm font-semibold text-[#14201a]">{email}</p>
+                    <p className="mt-0.5 font-mono text-sm tabular-nums text-[#4c5a52]">{password}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyEmailTemplate(email, password)}
+                    className={copiedEmails.has(email) ? primaryButtonClass : quietButtonClass}
+                  >
+                    {copiedEmails.has(email) ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-4 w-4" />
+                        Copy email
+                      </>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
+        )}
 
-          {Object.keys(generatedPasswords).length > 0 && (
-            <Card className="mb-6 border-primary/20 bg-pastel-green">
-              <CardHeader>
-                <CardTitle className="text-primary/90">Generated Passwords</CardTitle>
-                <CardDescription>
-                  Copy these to send to users via email
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {Object.entries(generatedPasswords).map(([email, password]) => (
-                    <div key={email} className="flex items-center justify-between p-3 bg-card rounded-xl border">
-                      <div>
-                        <p className="font-medium">{email}</p>
-                        <p className="text-sm text-muted-foreground font-mono">{password}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant={copiedEmails.has(email) ? 'default' : 'outline'}
-                        onClick={() => copyEmailTemplate(email, password)}
-                      >
-                        {copiedEmails.has(email) ? (
-                          <>
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                            Copied
-                          </>
-                        ) : (
-                          <>
-                            <Mail className="h-4 w-4 mr-2" />
-                            Copy Email
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="overflow-x-auto">
+        <div className={`${adminCardClass} overflow-hidden`}>
+          <div className="border-b border-[#dfe9e2] px-6 py-4">
+            <h2 className="font-display text-lg font-extrabold text-[#14201a]">All accounts</h2>
+            <p className="mt-0.5 text-sm text-[#4c5a52]">
+              <span className="font-mono tabular-nums">{users.length}</span> accounts — set passwords individually or in bulk.
+            </p>
+          </div>
+          <div className="overflow-x-auto px-2">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Password</TableHead>
-                  <TableHead>Actions</TableHead>
+                <TableRow className="border-[#dfe9e2] hover:bg-transparent">
+                  <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Email</TableHead>
+                  <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Name</TableHead>
+                  <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Role</TableHead>
+                  <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Status</TableHead>
+                  <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Password</TableHead>
+                  <TableHead className="h-10 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.email}</TableCell>
-                    <TableCell>{user.displayName}</TableCell>
+                  <TableRow key={user.id} className="border-[#dfe9e2] hover:bg-[#F6FAF7]/70">
+                    <TableCell className="text-sm font-semibold text-[#14201a]">{user.email}</TableCell>
+                    <TableCell className="text-[13px] text-[#4c5a52]">{user.displayName}</TableCell>
                     <TableCell>
-                      <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>
+                      <Pill tone={user.role === 'admin' ? 'ink' : user.role === 'host' ? 'green' : 'outline'}>
                         {user.role}
-                      </Badge>
+                      </Pill>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.status === 'active' || user.status === 'approved' ? 'default' : 'outline'}>
+                      <Pill tone={user.status === 'active' || user.status === 'approved' ? 'green' : 'outline'}>
                         {user.status}
-                      </Badge>
+                      </Pill>
                     </TableCell>
                     <TableCell>
                       {user.hasPassword ? (
-                        <Badge variant="outline" className="bg-pastel-green">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Set
-                        </Badge>
+                        <Pill tone="green">
+                          <CheckCircle2 className="h-3 w-3" />
+                          set
+                        </Pill>
                       ) : (
-                        <Badge variant="outline" className="bg-pastel-amber">
-                          Not Set
-                        </Badge>
+                        <Pill tone="amber">not set</Pill>
                       )}
                     </TableCell>
                     <TableCell>
@@ -305,11 +313,12 @@ The Global Goals Jam Team
                             placeholder="Auto-generate"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-32"
+                            className="h-8 w-32 rounded-full border-[#dfe9e2] bg-white text-sm"
                           />
                           <Button
                             size="sm"
                             onClick={() => setUserPassword(user.id, user.email)}
+                            className="h-8 rounded-full bg-[#00A651] px-3.5 text-xs font-semibold text-white hover:bg-[#008a44]"
                           >
                             Set
                           </Button>
@@ -320,6 +329,7 @@ The Global Goals Jam Team
                               setSelectedUser(null)
                               setNewPassword('')
                             }}
+                            className="h-8 rounded-full border-[#dfe9e2] bg-white px-3.5 text-xs font-semibold text-[#4c5a52] hover:border-[#00A651]/50 hover:text-[#00713a]"
                           >
                             Cancel
                           </Button>
@@ -329,9 +339,10 @@ The Global Goals Jam Team
                           size="sm"
                           variant="outline"
                           onClick={() => setSelectedUser(user.id)}
+                          className="h-8 rounded-full border-[#dfe9e2] bg-white px-3.5 text-xs font-semibold text-[#4c5a52] hover:border-[#00A651]/50 hover:text-[#00713a]"
                         >
-                          <Key className="h-4 w-4 mr-1" />
-                          Set Password
+                          <Key className="mr-1 h-3.5 w-3.5" />
+                          Set password
                         </Button>
                       )}
                     </TableCell>
@@ -340,8 +351,8 @@ The Global Goals Jam Team
               </TableBody>
             </Table>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </AdminShell>
   )
 }

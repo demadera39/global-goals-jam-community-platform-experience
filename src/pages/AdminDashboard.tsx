@@ -1,54 +1,27 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
-import { Button } from '../components/ui/button'
-import { Badge } from '../components/ui/badge'
-import { Progress } from '../components/ui/progress'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Switch } from '../components/ui/switch'
-import { 
-  Users, 
-  Calendar, 
-  MessageSquare, 
-  Gift, 
-  GraduationCap, 
-  Settings, 
-  BarChart3, 
-  MapPin, 
-  FileText, 
-  Mail,
+import {
+  MessageSquare,
   Shield,
-  Key,
   CheckCircle,
   XCircle,
-  Clock,
-  TrendingUp,
   Eye,
-  Edit,
-  Trash2,
-  Plus,
-  Search,
-  Download,
-  Upload,
-  AlertCircle,
+  MapPin,
+  Mail,
   Globe,
-  User,
   UserCheck,
-  BookOpen,
-  Award,
-  Star,
-  Heart,
   Sparkles,
   Image as ImageIcon,
   Video,
+  FileText,
   ExternalLink,
-  Database,
-  Bell,
-  Zap,
-  Filter
+  Trash2,
+  ArrowRight,
 } from 'lucide-react'
 import SupportersAdmin from '../components/SupportersAdmin'
 import CourseManagement from '../components/CourseManagement'
@@ -57,6 +30,15 @@ import { getFullUser } from '../lib/userProfile'
 import { config } from '../lib/config'
 import toast from 'react-hot-toast'
 import { invalidateEventsCache } from '../hooks/usePublishedEvents'
+import AdminShell, {
+  Pill,
+  type PillTone,
+  adminCardClass,
+  railTabsListClass,
+  railTabTriggerClass,
+  quietButtonClass,
+  primaryButtonClass,
+} from '../components/admin/AdminShell'
 
 interface User {
   id: string
@@ -129,16 +111,16 @@ export default function AdminDashboard() {
     try {
       const user = await getFullUser()
       setCurrentUser(user)
-      
+
       if (!user) {
         // Require authentication for admin dashboard; redirect to custom sign-in
         window.location.href = `/sign-in?redirect=${encodeURIComponent(window.location.href)}`
         return
       }
-      
+
       const allow = Array.isArray(config.admins?.emails) ? config.admins.emails.map((e: string) => e.toLowerCase()) : []
       const isAllowlisted = user.email ? allow.includes(user.email.toLowerCase()) : false
-      
+
       if (!isAllowlisted && user.role !== 'admin') {
         toast.error('Access denied - Admin privileges required')
         return
@@ -170,7 +152,7 @@ export default function AdminDashboard() {
         reviewedBy: currentUser?.id,
         reviewedAt: new Date().toISOString()
       })
-      
+
       const application = hostApplications.find(app => app.id === applicationId)
       if (application?.userId) {
         await db.users.update(application.userId, {
@@ -178,7 +160,7 @@ export default function AdminDashboard() {
           status: 'approved'
         })
       }
-      
+
       toast.success('Host application approved')
       loadAdminData()
     } catch (error) {
@@ -230,21 +212,32 @@ export default function AdminDashboard() {
     })
   }
 
-  const getStatusBadgeVariant = (status: string) => {
+  const statusTone = (status: string): PillTone => {
     switch (status) {
       case 'approved':
       case 'published':
       case 'completed':
-        return 'default'
+        return 'green'
       case 'pending':
-        return 'secondary'
+        return 'amber'
       case 'rejected':
       case 'cancelled':
-        return 'destructive'
+        return 'red'
       case 'draft':
         return 'outline'
       default:
-        return 'secondary'
+        return 'grey'
+    }
+  }
+
+  const roleTone = (role: string): PillTone => {
+    switch (role) {
+      case 'admin':
+        return 'ink'
+      case 'host':
+        return 'green'
+      default:
+        return 'outline'
     }
   }
 
@@ -264,661 +257,508 @@ export default function AdminDashboard() {
     }).length
   }
 
+  const statRail = [
+    { value: stats.totalUsers, label: 'Users', sub: `+${stats.recentSignups} this week` },
+    { value: stats.totalHosts, label: 'Hosts', sub: 'host accounts' },
+    { value: stats.totalEvents, label: 'Events', sub: `${stats.publishedEvents} published` },
+    { value: stats.pendingApplications, label: 'Applications', sub: 'awaiting review' },
+    { value: stats.totalMedia, label: 'Media files', sub: 'uploaded content' },
+  ]
+
+  // Operator tool grid — routed admin tools + in-dashboard sections
+  const tools: { dot: string; title: string; blurb: string; to?: string; tab?: string; count?: number }[] = [
+    { dot: '#26BDE2', title: 'Users', blurb: 'Accounts, roles, course payments and impersonation.', to: '/admin/users' },
+    { dot: '#FCC30B', title: 'Passwords', blurb: 'Set or bulk-generate sign-in credentials.', to: '/admin/passwords' },
+    { dot: '#A21942', title: 'Certificates', blurb: 'Compose and download custom certificates.', to: '/admin/certificate-creator' },
+    { dot: '#FD6925', title: 'Cert access', blurb: 'Repair certificate access for completed learners.', to: '/admin/certificate-fix' },
+    { dot: '#DD1367', title: 'Highlights', blurb: 'Verify and curate jam photos for the site.', to: '/admin/highlights' },
+    { dot: '#0A97D9', title: 'Carousel', blurb: 'Manage homepage carousel imagery.', to: '/admin/carousel' },
+    { dot: '#4C9F38', title: 'Events', blurb: 'Publish, draft and update every jam.', tab: 'events' },
+    { dot: '#E5243B', title: 'Applications', blurb: 'Review pending host applications.', tab: 'applications', count: stats.pendingApplications },
+    { dot: '#19486A', title: 'Course', blurb: 'Manage course content and enrollment.', tab: 'course' },
+    { dot: '#56C02B', title: 'Supporters', blurb: 'Sponsor and partner logos on the site.', tab: 'supporters' },
+  ]
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-[#F6FAF7] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00A651] mx-auto"></div>
+          <p className="mt-4 text-sm text-[#7d8a83]">Loading admin data…</p>
+        </div>
       </div>
     )
   }
 
   if (!currentUser || (currentUser.role !== 'admin' && !(Array.isArray(config.admins?.emails) && currentUser.email && config.admins.emails.map((e: string) => e.toLowerCase()).includes(currentUser.email.toLowerCase())))) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="text-center py-12">
-            <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-            <p className="text-muted-foreground mb-4">
-              You need admin privileges to access this dashboard.
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <Button onClick={() => window.history.back()}>Go Back</Button>
-              <Button variant="outline" onClick={() => { window.location.href = `/sign-in?redirect=${encodeURIComponent(window.location.href)}` }}>Sign In</Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-[#F6FAF7] flex items-center justify-center px-5">
+        <div className={`${adminCardClass} max-w-md w-full p-8 text-center`}>
+          <Shield className="w-10 h-10 text-[#7d8a83] mx-auto" />
+          <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a]">GGJ Admin</p>
+          <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-[#14201a]">Access denied</h2>
+          <p className="mt-2 text-sm leading-relaxed text-[#4c5a52]">
+            You need admin privileges to access this dashboard.
+          </p>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <button className={primaryButtonClass} onClick={() => window.history.back()}>Go back</button>
+            <button className={quietButtonClass} onClick={() => { window.location.href = `/sign-in?redirect=${encodeURIComponent(window.location.href)}` }}>Sign in</button>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-display font-bold text-foreground">Admin Dashboard</h1>
-              <p className="text-muted-foreground mt-1">
-                Global Goals Jam Platform Administration
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Badge variant="outline" className="text-primary">
-                Admin Access
-              </Badge>
-              <Button variant="outline" asChild>
-                <Link to="/">
-                  <Globe className="w-4 h-4 mr-2" />
-                  View Website
-                </Link>
-              </Button>
-            </div>
+    <AdminShell
+      title="Operations overview"
+      description="Global Goals Jam platform administration — everything the community runs on, in one place."
+      actions={
+        <Link to="/" className={quietButtonClass}>
+          <Globe className="w-4 h-4" />
+          View website
+        </Link>
+      }
+    >
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <TabsList className={railTabsListClass}>
+          <TabsTrigger value="overview" className={railTabTriggerClass}>Overview</TabsTrigger>
+          <TabsTrigger value="users" className={railTabTriggerClass}>Users</TabsTrigger>
+          <TabsTrigger value="events" className={railTabTriggerClass}>Events</TabsTrigger>
+          <TabsTrigger value="applications" className={railTabTriggerClass}>
+            Applications
+            {stats.pendingApplications > 0 && (
+              <span className="ml-1.5 font-mono text-xs tabular-nums text-[#00713a]">{stats.pendingApplications}</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="media" className={railTabTriggerClass}>Media</TabsTrigger>
+          <TabsTrigger value="highlights" className={railTabTriggerClass}>Highlights</TabsTrigger>
+          <TabsTrigger value="course" className={railTabTriggerClass}>Course</TabsTrigger>
+          <TabsTrigger value="supporters" className={railTabTriggerClass}>Supporters</TabsTrigger>
+          <TabsTrigger value="community" className={railTabTriggerClass}>Community</TabsTrigger>
+          <TabsTrigger value="settings" className={railTabTriggerClass}>Settings</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-10">
+          {/* Stat rail — tabular numbers on hairline dividers */}
+          <dl className="grid grid-cols-2 border-y border-[#dfe9e2] sm:grid-cols-3 lg:grid-cols-5 sm:divide-x sm:divide-[#dfe9e2]">
+            {statRail.map((s, i) => (
+              <div key={s.label} className={`py-5 ${i === 0 ? 'pr-4 sm:pr-6' : 'px-4 sm:px-6'}`}>
+                <dd className="font-display text-3xl font-extrabold tabular-nums text-[#14201a]">{s.value}</dd>
+                <dt className="mt-1 text-[13px] font-semibold text-[#14201a]">{s.label}</dt>
+                <p className="mt-0.5 text-[12px] leading-snug text-[#7d8a83]">{s.sub}</p>
+              </div>
+            ))}
+          </dl>
+
+          <div className="grid gap-8 lg:grid-cols-3 lg:gap-6">
+            {/* Tool grid */}
+            <section className="lg:col-span-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a]">Tools</p>
+              <div className="mt-4 grid gap-px overflow-hidden rounded-2xl border border-[#dfe9e2] bg-[#dfe9e2] sm:grid-cols-2">
+                {tools.map((tool) => {
+                  const inner = (
+                    <>
+                      <span className="flex items-center justify-between">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: tool.dot }} aria-hidden="true" />
+                        <ArrowRight className="h-4 w-4 text-[#7d8a83] transition-transform group-hover:translate-x-1 group-hover:text-[#00713a]" />
+                      </span>
+                      <span className="mt-3 flex items-center gap-2 font-display text-base font-extrabold text-[#14201a]">
+                        {tool.title}
+                        {typeof tool.count === 'number' && tool.count > 0 && (
+                          <Pill tone="amber">{tool.count} pending</Pill>
+                        )}
+                      </span>
+                      <span className="mt-1 block text-[13px] leading-relaxed text-[#4c5a52]">{tool.blurb}</span>
+                    </>
+                  )
+                  return tool.to ? (
+                    <Link key={tool.title} to={tool.to} className="group bg-white p-5 transition-colors hover:bg-[#F6FAF7]">
+                      {inner}
+                    </Link>
+                  ) : (
+                    <button
+                      key={tool.title}
+                      type="button"
+                      onClick={() => setActiveTab(tool.tab!)}
+                      className="group bg-white p-5 text-left transition-colors hover:bg-[#F6FAF7]"
+                    >
+                      {inner}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+
+            {/* Recent activity */}
+            <section>
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a]">Latest events</p>
+              <div className={`${adminCardClass} mt-4 overflow-hidden`}>
+                {events.length === 0 ? (
+                  <p className="p-6 text-center text-sm text-[#7d8a83]">No events yet.</p>
+                ) : (
+                  <ul className="divide-y divide-[#dfe9e2]">
+                    {events.slice(0, 6).map(event => (
+                      <li key={event.id} className="flex items-start justify-between gap-3 px-5 py-3.5">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-[#14201a]">{event.title}</p>
+                          <p className="mt-0.5 font-mono text-xs tabular-nums text-[#7d8a83]">{formatDate(event.createdAt)}</p>
+                        </div>
+                        <Pill tone={statusTone(event.status)}>{event.status}</Pill>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="border-t border-[#dfe9e2] px-5 py-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('events')}
+                    className="inline-flex items-center text-sm font-semibold text-[#00713a] transition-colors hover:text-[#008a44]"
+                  >
+                    Manage all events <ArrowRight className="ml-1.5 h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </section>
           </div>
-        </div>
-      </div>
+        </TabsContent>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-10 w-full">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="events" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Events
-            </TabsTrigger>
-            <TabsTrigger value="applications" className="flex items-center gap-2">
-              <UserCheck className="w-4 h-4" />
-              Applications
-            </TabsTrigger>
-            <TabsTrigger value="media" className="flex items-center gap-2">
-              <ImageIcon className="w-4 h-4" />
-              Media
-            </TabsTrigger>
-            <TabsTrigger value="highlights" className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              Highlights
-            </TabsTrigger>
-            <TabsTrigger value="course" className="flex items-center gap-2">
-              <GraduationCap className="w-4 h-4" />
-              Course
-            </TabsTrigger>
-            <TabsTrigger value="supporters" className="flex items-center gap-2">
-              <Heart className="w-4 h-4" />
-              Supporters
-            </TabsTrigger>
-            <TabsTrigger value="community" className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              Community
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card variant="stat" className="bg-pastel-green">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-display font-bold text-foreground">{stats.totalUsers}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.recentSignups} new this week
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card variant="stat" className="bg-pastel-amber">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Hosts</CardTitle>
-                  <Shield className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-display font-bold text-foreground">{stats.totalHosts}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.pendingApplications} pending approval
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card variant="stat" className="bg-pastel-violet">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Events</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-display font-bold text-foreground">{stats.totalEvents}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.publishedEvents} published
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card variant="stat" className="bg-pastel-sky">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Media Files</CardTitle>
-                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-display font-bold text-foreground">{stats.totalMedia}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Uploaded content
-                  </p>
-                </CardContent>
-              </Card>
+        <TabsContent value="users">
+          <div className={`${adminCardClass} overflow-hidden`}>
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#dfe9e2] px-6 py-5">
+              <div>
+                <h2 className="font-display text-lg font-extrabold text-[#14201a]">Latest sign-ups</h2>
+                <p className="mt-0.5 text-sm text-[#4c5a52]">The ten newest accounts on the platform.</p>
+              </div>
+              <Link to="/admin/users" className="inline-flex items-center text-sm font-semibold text-[#00713a] transition-colors hover:text-[#008a44]">
+                Open user management <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Link>
             </div>
-
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" onClick={() => setActiveTab('applications')}>
-                      <UserCheck className="w-4 h-4 mr-2" />
-                      Review Applications ({stats.pendingApplications})
-                    </Button>
-                    <Button variant="outline" onClick={() => setActiveTab('events')}>
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Manage Events
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link to="/admin/users">
-                        <Users className="w-4 h-4 mr-2" />
-                        User Management
-                      </Link>
-                    </Button>
-                    <Button variant="outline" onClick={() => setActiveTab('supporters')}>
-                      <Heart className="w-4 h-4 mr-2" />
-                      Update Supporters
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link to="/admin/certificate-creator">
-                        <Award className="w-4 h-4 mr-2" />
-                        Create Certificate
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Latest system activity and updates
-                    </p>
-                    <div className="space-y-2">
-                      {events.slice(0, 5).map(event => (
-                        <div key={event.id} className="flex items-center gap-3">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <div className="flex-1">
-                            <p className="text-sm">{event.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatDate(event.createdAt)}
-                            </p>
-                          </div>
-                          <Badge variant={getStatusBadgeVariant(event.status)}>
-                            {event.status}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Manage all platform users, roles, and permissions
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <Input placeholder="Search users..." className="max-w-sm" />
-                    <Select>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Filter by role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Roles</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="host">Host</SelectItem>
-                        <SelectItem value="participant">Participant</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    {users.slice(0, 10).map(user => (
-                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-xl">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                              <User className="w-5 h-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-medium">{user.displayName || user.email}</p>
-                              <p className="text-sm text-muted-foreground">{user.email}</p>
-                              {user.location && (
-                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <MapPin className="w-3 h-3" />
-                                  {user.location}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <Badge variant={getStatusBadgeVariant(user.role)}>
-                              {user.role}
-                            </Badge>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {formatDate(user.createdAt)}
-                            </p>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="events" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Management</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Manage all Global Goals Jam events and their status
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <Input 
-                      placeholder="Search events..." 
-                      className="max-w-sm" 
-                      value={eventSearch}
-                      onChange={(e) => setEventSearch(e.target.value)}
-                    />
-                    <Select value={eventStatusFilter} onValueChange={setEventStatusFilter}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                        <SelectItem value="ongoing">Ongoing</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    {events
-                      .filter(e => {
-                        const matchesSearch = eventSearch.trim() === '' ||
-                          e.title.toLowerCase().includes(eventSearch.toLowerCase()) ||
-                          (e.location || '').toLowerCase().includes(eventSearch.toLowerCase()) ||
-                          (e.hostName || '').toLowerCase().includes(eventSearch.toLowerCase())
-                        const matchesStatus = eventStatusFilter === 'all' || e.status === eventStatusFilter
-                        return matchesSearch && matchesStatus
-                      })
-                      .map(event => (
-                      <div key={event.id} className="flex items-center justify-between p-4 border rounded-xl">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <Calendar className="w-5 h-5 text-primary" />
-                            <div>
-                              <p className="font-medium">{event.title}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {event.location} • {formatDate(event.eventDate)}
-                              </p>
-                              {event.hostName && (
-                                <p className="text-xs text-muted-foreground">
-                                  Host: {event.hostName}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <Badge variant={getStatusBadgeVariant(event.status)}>
-                              {event.status}
-                            </Badge>
-                            {event.sdgFocus && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                SDG: {event.sdgFocus}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">Visible</span>
-                              <Switch
-                                checked={event.status === 'published'}
-                                onCheckedChange={(val) => toggleEventVisibility(event.id, Boolean(val))}
-                              />
-                            </div>
-                            <Button variant="outline" size="sm" asChild>
-                              <Link to={`/events/${event.id}`}>
-                                <Eye className="w-4 h-4" />
-                              </Link>
-                            </Button>
-                            <Select onValueChange={(value) => updateEventStatus(event.id, value)}>
-                              <SelectTrigger className="w-32">
-                                <SelectValue placeholder="Actions" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="published">Publish</SelectItem>
-                                <SelectItem value="draft">Set to Draft</SelectItem>
-                                <SelectItem value="completed">Mark Complete</SelectItem>
-                                <SelectItem value="cancelled">Cancel</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {events.length === 0 && (
-                      <div className="text-center py-8 text-sm text-muted-foreground">No events yet.</div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="applications" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Host Applications</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Review and approve host applications
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {hostApplications.length === 0 ? (
-                    <div className="text-center py-8">
-                      <UserCheck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No applications pending</h3>
-                      <p className="text-muted-foreground">
-                        Host applications will appear here for review
+            <ul className="divide-y divide-[#dfe9e2]">
+              {users.slice(0, 10).map(user => (
+                <li key={user.id} className="flex items-center justify-between gap-4 px-6 py-3.5">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00A651]/10 font-display text-sm font-extrabold text-[#00713a]">
+                      {(user.displayName || user.email || '?').charAt(0).toUpperCase()}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-[#14201a]">{user.displayName || user.email}</p>
+                      <p className="truncate text-[13px] text-[#7d8a83]">
+                        {user.email}
+                        {user.location && (
+                          <span className="ml-2 inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{user.location}</span>
+                        )}
                       </p>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {hostApplications.filter(app => app.status === 'pending').map(application => (
-                        <div key={application.id} className="p-6 border rounded-xl space-y-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h3 className="font-semibold">{application.email}</h3>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <MapPin className="w-4 h-4" />
-                                {application.location}
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Applied: {formatDate(application.createdAt)}
-                              </p>
-                            </div>
-                            <Badge variant={getStatusBadgeVariant(application.status)}>
-                              {application.status}
-                            </Badge>
-                          </div>
-                          
-                          <div>
-                            <Label className="text-sm font-medium">Motivation</Label>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {application.motivation}
-                            </p>
-                          </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3 text-right">
+                    <Pill tone={roleTone(user.role)}>{user.role}</Pill>
+                    <span className="hidden font-mono text-xs tabular-nums text-[#7d8a83] sm:block">{formatDate(user.createdAt)}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </TabsContent>
 
-                          <div className="flex gap-3">
-                            <Button 
-                              onClick={() => approveHostApplication(application.id)}
-                              className="bg-primary hover:bg-primary/80"
-                            >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Approve
-                            </Button>
-                            <Button 
-                              onClick={() => rejectHostApplication(application.id)}
-                              variant="destructive"
-                            >
-                              <XCircle className="w-4 h-4 mr-2" />
-                              Reject
-                            </Button>
-                            <Button variant="outline">
-                              <Mail className="w-4 h-4 mr-2" />
-                              Contact
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+        <TabsContent value="events">
+          <div className={`${adminCardClass} overflow-hidden`}>
+            <div className="border-b border-[#dfe9e2] px-6 py-5">
+              <h2 className="font-display text-lg font-extrabold text-[#14201a]">Event management</h2>
+              <p className="mt-0.5 text-sm text-[#4c5a52]">Publish, draft and update every Global Goals Jam event.</p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Input
+                  placeholder="Search events…"
+                  className="h-9 max-w-sm rounded-full border-[#dfe9e2] bg-white text-sm"
+                  value={eventSearch}
+                  onChange={(e) => setEventSearch(e.target.value)}
+                />
+                <Select value={eventStatusFilter} onValueChange={setEventStatusFilter}>
+                  <SelectTrigger className="h-9 w-44 rounded-full border-[#dfe9e2] bg-white text-sm">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="ongoing">Ongoing</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <ul className="divide-y divide-[#dfe9e2]">
+              {events
+                .filter(e => {
+                  const matchesSearch = eventSearch.trim() === '' ||
+                    e.title.toLowerCase().includes(eventSearch.toLowerCase()) ||
+                    (e.location || '').toLowerCase().includes(eventSearch.toLowerCase()) ||
+                    (e.hostName || '').toLowerCase().includes(eventSearch.toLowerCase())
+                  const matchesStatus = eventStatusFilter === 'all' || e.status === eventStatusFilter
+                  return matchesSearch && matchesStatus
+                })
+                .map(event => (
+                <li key={event.id} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[#14201a]">{event.title}</p>
+                    <p className="mt-0.5 text-[13px] text-[#4c5a52]">
+                      {event.location} · <span className="font-mono text-xs tabular-nums text-[#7d8a83]">{formatDate(event.eventDate)}</span>
+                    </p>
+                    {event.hostName && (
+                      <p className="text-[12px] text-[#7d8a83]">Host: {event.hostName}</p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <div className="text-right">
+                      <Pill tone={statusTone(event.status)}>{event.status}</Pill>
+                      {event.sdgFocus && (
+                        <p className="mt-1 text-[11px] text-[#7d8a83]">SDG: {event.sdgFocus}</p>
+                      )}
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="media" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Media Management</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Manage uploaded media files and assets
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <Input placeholder="Search media..." className="max-w-sm" />
-                    <Select>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Filter by type" />
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[#7d8a83]">Visible</span>
+                      <Switch
+                        checked={event.status === 'published'}
+                        onCheckedChange={(val) => toggleEventVisibility(event.id, Boolean(val))}
+                      />
+                    </div>
+                    <Link
+                      to={`/events/${event.id}`}
+                      title="View event"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#dfe9e2] bg-white text-[#7d8a83] transition-colors hover:border-[#00A651]/50 hover:text-[#00713a]"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                    <Select onValueChange={(value) => updateEventStatus(event.id, value)}>
+                      <SelectTrigger className="h-8 w-32 rounded-full border-[#dfe9e2] bg-white text-xs">
+                        <SelectValue placeholder="Actions" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="image">Images</SelectItem>
-                        <SelectItem value="video">Videos</SelectItem>
-                        <SelectItem value="document">Documents</SelectItem>
+                        <SelectItem value="published">Publish</SelectItem>
+                        <SelectItem value="draft">Set to Draft</SelectItem>
+                        <SelectItem value="completed">Mark Complete</SelectItem>
+                        <SelectItem value="cancelled">Cancel</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                </li>
+              ))}
+              {events.length === 0 && (
+                <li className="px-6 py-10 text-center text-sm text-[#7d8a83]">No events yet.</li>
+              )}
+            </ul>
+          </div>
+        </TabsContent>
 
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {media.slice(0, 9).map(file => (
-                      <Card key={file.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3 mb-3">
-                            {file.fileType.startsWith('image/') ? (
-                              <ImageIcon className="w-8 h-8 text-sky-500" />
-                            ) : file.fileType.startsWith('video/') ? (
-                              <Video className="w-8 h-8 text-primary" />
-                            ) : (
-                              <FileText className="w-8 h-8 text-muted-foreground" />
-                            )}
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{file.title}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {file.fileType}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          {file.description && (
-                            <p className="text-xs text-muted-foreground mb-3">
-                              {file.description}
-                            </p>
-                          )}
-                          
-                          <div className="flex justify-between items-center">
-                            <p className="text-xs text-muted-foreground">
-                              {formatDate(file.createdAt)}
-                            </p>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" asChild>
-                                <a href={file.fileUrl} target="_blank" rel="noopener noreferrer">
-                                  <ExternalLink className="w-3 h-3" />
-                                </a>
-                              </Button>
-                              <Button size="sm" variant="destructive">
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="highlights" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Jam Highlights Management</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Manage the photo carousel showcasing Global Goals Jam moments from around the world
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Highlights Gallery</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Review, verify, and manage scraped jam photos
-                  </p>
-                  <div className="flex gap-3">
-                    <Button asChild>
-                      <Link to="/admin/highlights">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Open Highlights Manager
-                      </Link>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link to="/admin/carousel">
-                        <ImageIcon className="w-4 h-4 mr-2" />
-                        Carousel Images
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="course">
-            <CourseManagement />
-          </TabsContent>
-
-          <TabsContent value="supporters">
-            <SupportersAdmin />
-          </TabsContent>
-
-          <TabsContent value="community" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Community Management</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Manage forum posts, discussions, and community features
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Community Features</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Forum management and community moderation tools
-                  </p>
-                  <Button variant="outline" asChild>
-                    <Link to="/community">
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      View Community
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Site Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Site Title</Label>
-                    <Input value="Global Goals Jam" />
-                  </div>
-                  <div>
-                    <Label>Site Description</Label>
-                    <Input value="Community platform for hosting Global Goals Jam events" />
-                  </div>
-                  <Button>Save Changes</Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Integration Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span>Email Notifications</span>
-                      <Badge variant="default">Active</Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Stripe Payments</span>
-                      <Badge variant="default">Connected</Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Analytics</span>
-                      <Badge variant="secondary">Setup Required</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        <TabsContent value="applications">
+          <div className={`${adminCardClass} overflow-hidden`}>
+            <div className="border-b border-[#dfe9e2] px-6 py-5">
+              <h2 className="font-display text-lg font-extrabold text-[#14201a]">Host applications</h2>
+              <p className="mt-0.5 text-sm text-[#4c5a52]">Review and approve people who want to host a jam.</p>
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+            {hostApplications.filter(app => app.status === 'pending').length === 0 ? (
+              <div className="px-6 py-14 text-center">
+                <UserCheck className="mx-auto h-10 w-10 text-[#7d8a83]" />
+                <h3 className="mt-4 font-display text-lg font-extrabold text-[#14201a]">No applications pending</h3>
+                <p className="mt-1 text-sm text-[#7d8a83]">Host applications will appear here for review.</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-[#dfe9e2]">
+                {hostApplications.filter(app => app.status === 'pending').map(application => (
+                  <li key={application.id} className="space-y-4 px-6 py-5">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-[#14201a]">{application.email}</h3>
+                        <p className="mt-1 flex items-center gap-1.5 text-[13px] text-[#4c5a52]">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {application.location}
+                        </p>
+                        <p className="mt-1 font-mono text-xs tabular-nums text-[#7d8a83]">
+                          Applied {formatDate(application.createdAt)}
+                        </p>
+                      </div>
+                      <Pill tone={statusTone(application.status)}>{application.status}</Pill>
+                    </div>
+
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#7d8a83]">Motivation</p>
+                      <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-[#4c5a52]">
+                        {application.motivation}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => approveHostApplication(application.id)}
+                        className={primaryButtonClass}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => rejectHostApplication(application.id)}
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:border-red-400 hover:bg-red-50"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Reject
+                      </button>
+                      <a href={`mailto:${application.email}`} className={quietButtonClass}>
+                        <Mail className="h-4 w-4" />
+                        Contact
+                      </a>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="media">
+          <div className="space-y-4">
+            <div>
+              <h2 className="font-display text-lg font-extrabold text-[#14201a]">Media library</h2>
+              <p className="mt-0.5 text-sm text-[#4c5a52]">The latest uploaded media files and assets.</p>
+            </div>
+            {media.length === 0 ? (
+              <div className={`${adminCardClass} px-6 py-14 text-center`}>
+                <ImageIcon className="mx-auto h-10 w-10 text-[#7d8a83]" />
+                <p className="mt-4 text-sm text-[#7d8a83]">No media uploaded yet.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {media.slice(0, 9).map(file => (
+                  <div key={file.id} className={`${adminCardClass} p-5`}>
+                    <div className="flex items-center gap-3">
+                      {file.fileType.startsWith('image/') ? (
+                        <ImageIcon className="h-7 w-7 text-[#26BDE2]" />
+                      ) : file.fileType.startsWith('video/') ? (
+                        <Video className="h-7 w-7 text-[#00A651]" />
+                      ) : (
+                        <FileText className="h-7 w-7 text-[#7d8a83]" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-[#14201a]">{file.title}</p>
+                        <p className="truncate font-mono text-xs text-[#7d8a83]">{file.fileType}</p>
+                      </div>
+                    </div>
+
+                    {file.description && (
+                      <p className="mt-3 line-clamp-2 text-[13px] leading-relaxed text-[#4c5a52]">{file.description}</p>
+                    )}
+
+                    <div className="mt-4 flex items-center justify-between border-t border-[#dfe9e2] pt-3">
+                      <p className="font-mono text-xs tabular-nums text-[#7d8a83]">{formatDate(file.createdAt)}</p>
+                      <div className="flex gap-1.5">
+                        <a
+                          href={file.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Open file"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#dfe9e2] bg-white text-[#7d8a83] transition-colors hover:border-[#00A651]/50 hover:text-[#00713a]"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                        <button
+                          type="button"
+                          title="Delete file"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#dfe9e2] bg-white text-[#7d8a83] transition-colors hover:border-red-300 hover:text-red-600"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="highlights">
+          <div className={`${adminCardClass} px-6 py-14 text-center`}>
+            <Sparkles className="mx-auto h-10 w-10 text-[#00A651]" />
+            <h2 className="mt-4 font-display text-lg font-extrabold text-[#14201a]">Highlights gallery</h2>
+            <p className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-[#4c5a52]">
+              Review, verify and manage the jam photos shown across the site.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Link to="/admin/highlights" className={primaryButtonClass}>
+                Open highlights manager <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link to="/admin/carousel" className={quietButtonClass}>
+                <ImageIcon className="h-4 w-4" />
+                Carousel images
+              </Link>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="course">
+          <CourseManagement />
+        </TabsContent>
+
+        <TabsContent value="supporters">
+          <SupportersAdmin />
+        </TabsContent>
+
+        <TabsContent value="community">
+          <div className={`${adminCardClass} px-6 py-14 text-center`}>
+            <MessageSquare className="mx-auto h-10 w-10 text-[#7d8a83]" />
+            <h2 className="mt-4 font-display text-lg font-extrabold text-[#14201a]">Community features</h2>
+            <p className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-[#4c5a52]">
+              Forum management and community moderation tools.
+            </p>
+            <div className="mt-6">
+              <Link to="/community" className={quietButtonClass}>
+                <ExternalLink className="h-4 w-4" />
+                View community
+              </Link>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className={`${adminCardClass} p-6`}>
+              <h2 className="font-display text-lg font-extrabold text-[#14201a]">Site settings</h2>
+              <div className="mt-5 space-y-4">
+                <div>
+                  <Label className="text-[13px] font-semibold text-[#14201a]">Site Title</Label>
+                  <Input className="mt-1.5 rounded-xl border-[#dfe9e2] bg-white" value="Global Goals Jam" readOnly />
+                </div>
+                <div>
+                  <Label className="text-[13px] font-semibold text-[#14201a]">Site Description</Label>
+                  <Input className="mt-1.5 rounded-xl border-[#dfe9e2] bg-white" value="Community platform for hosting Global Goals Jam events" readOnly />
+                </div>
+                <button type="button" className={primaryButtonClass}>Save changes</button>
+              </div>
+            </div>
+
+            <div className={`${adminCardClass} p-6`}>
+              <h2 className="font-display text-lg font-extrabold text-[#14201a]">Integrations</h2>
+              <ul className="mt-5 divide-y divide-[#dfe9e2]">
+                <li className="flex items-center justify-between py-3">
+                  <span className="text-sm text-[#4c5a52]">Email notifications</span>
+                  <Pill tone="green">active</Pill>
+                </li>
+                <li className="flex items-center justify-between py-3">
+                  <span className="text-sm text-[#4c5a52]">Mollie payments</span>
+                  <Pill tone="green">connected</Pill>
+                </li>
+                <li className="flex items-center justify-between py-3">
+                  <span className="text-sm text-[#4c5a52]">Analytics</span>
+                  <Pill tone="amber">setup required</Pill>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </AdminShell>
   )
 }

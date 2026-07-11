@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { Upload, Trash2, RefreshCw, Image as ImageIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { listImagesInFolder, deleteFileFromStorage } from '@/lib/storage'
+import AdminShell, { adminCardClass, quietButtonClass, primaryButtonClass } from '@/components/admin/AdminShell'
 
 interface CarouselImage {
   name: string
@@ -138,147 +136,129 @@ export default function AdminCarouselPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Manage Carousel Images</h1>
-            <p className="text-muted-foreground mt-1">
-              Upload and manage photos displayed in the homepage carousel
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={loadImages}
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button asChild disabled={uploading}>
-              <label className="cursor-pointer">
-                <Upload className="w-4 h-4 mr-2" />
-                {uploading ? 'Uploading...' : 'Upload Images'}
-                <Input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                />
-              </label>
-            </Button>
-          </div>
+    <AdminShell
+      title="Carousel"
+      description="Upload and manage photos displayed in the homepage carousel."
+      actions={
+        <>
+          <button type="button" onClick={loadImages} disabled={loading} className={quietButtonClass}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <label className={`${primaryButtonClass} cursor-pointer ${uploading ? 'pointer-events-none opacity-50' : ''}`}>
+            <Upload className="w-4 h-4" />
+            {uploading ? 'Uploading…' : 'Upload images'}
+            <Input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleFileUpload}
+              disabled={uploading}
+            />
+          </label>
+        </>
+      }
+    >
+      {bucketError && (
+        <div className="mb-6 rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
+          <h2 className="font-display text-lg font-extrabold text-red-700">Storage configuration error</h2>
+          <p className="mt-2 text-sm text-red-700">{bucketError}</p>
+          <p className="mt-4 text-sm font-semibold text-[#14201a]">To fix this issue:</p>
+          <ol className="mt-1 list-inside list-decimal space-y-1 text-sm text-[#4c5a52]">
+            <li>Go to your Supabase project dashboard</li>
+            <li>Navigate to Storage section</li>
+            <li>Create a new bucket named "jams"</li>
+            <li>Set it to public access</li>
+            <li>Refresh this page</li>
+          </ol>
         </div>
+      )}
 
-        {bucketError && (
-          <Card className="mb-6 border-destructive">
-            <CardHeader>
-              <CardTitle className="text-lg text-destructive">Storage Configuration Error</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-sm text-destructive">{bucketError}</p>
-              <p className="text-sm text-muted-foreground mt-4">
-                To fix this issue:
-              </p>
-              <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1">
-                <li>Go to your Supabase project dashboard</li>
-                <li>Navigate to Storage section</li>
-                <li>Create a new bucket named "jams"</li>
-                <li>Set it to public access</li>
-                <li>Refresh this page</li>
-              </ol>
-            </CardContent>
-          </Card>
-        )}
+      <div className={`${adminCardClass} mb-6 p-6`}>
+        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a]">Upload guidelines</p>
+        <ul className="mt-4 grid gap-x-8 gap-y-2 text-sm text-[#4c5a52] sm:grid-cols-2">
+          {[
+            'Upload high-quality photos from Global Goals Jam events',
+            'Recommended size: 1200x800px or larger',
+            'Accepted formats: JPG, PNG, WebP',
+            'Maximum file size: 10MB per image',
+            'Images will appear in the homepage carousel automatically',
+          ].map((tip) => (
+            <li key={tip} className="flex items-start gap-2.5">
+              <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#00A651]" aria-hidden="true" />
+              <span className="leading-relaxed">{tip}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Upload Instructions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>• Upload high-quality photos from Global Goals Jam events</p>
-            <p>• Recommended size: 1200x800px or larger</p>
-            <p>• Accepted formats: JPG, PNG, WebP</p>
-            <p>• Maximum file size: 10MB per image</p>
-            <p>• Images will appear in the homepage carousel automatically</p>
-          </CardContent>
-        </Card>
-
-        {loading ? (
+      {loading ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-64 rounded-2xl border border-[#dfe9e2] bg-white animate-pulse" />
+          ))}
+        </div>
+      ) : images.length === 0 ? (
+        <div className={`${adminCardClass} p-12 text-center`}>
+          <ImageIcon className="mx-auto mb-4 h-10 w-10 text-[#7d8a83]" />
+          <p className="mb-5 text-sm text-[#7d8a83]">No carousel images yet</p>
+          <label className={`${primaryButtonClass} cursor-pointer`}>
+            <Upload className="w-4 h-4" />
+            Upload your first image
+            <Input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+          </label>
+        </div>
+      ) : (
+        <>
+          <div className="mb-4 text-sm text-[#7d8a83]">
+            <span className="font-mono tabular-nums">{images.length}</span> image{images.length !== 1 ? 's' : ''} in carousel
+          </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-64 rounded-lg bg-muted animate-pulse" />
+            {images.map((image) => (
+              <div key={image.path} className={`${adminCardClass} overflow-hidden`}>
+                <div className="relative h-48 bg-[#14201a]">
+                  <img
+                    src={image.url}
+                    alt={image.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="p-4">
+                  <p className="truncate font-mono text-xs text-[#4c5a52]" title={image.name}>
+                    {image.name}
+                  </p>
+                  <div className="mt-3 flex items-center gap-2 border-t border-[#dfe9e2] pt-3">
+                    <a
+                      href={image.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex flex-1 items-center justify-center rounded-full border border-[#dfe9e2] bg-white px-3.5 py-1.5 text-[13px] font-semibold text-[#4c5a52] transition-colors hover:border-[#00A651]/50 hover:text-[#00713a]"
+                    >
+                      View full size
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(image.path, image.name)}
+                      title="Delete image"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#dfe9e2] bg-white text-[#7d8a83] transition-colors hover:border-red-300 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-        ) : images.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <ImageIcon className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground mb-4">No carousel images yet</p>
-              <Button asChild>
-                <label className="cursor-pointer">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Your First Image
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleFileUpload}
-                  />
-                </label>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            <div className="mb-4 text-sm text-muted-foreground">
-              {images.length} image{images.length !== 1 ? 's' : ''} in carousel
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {images.map((image) => (
-                <Card key={image.path} className="overflow-hidden">
-                  <div className="relative h-48 bg-black">
-                    <img
-                      src={image.url}
-                      alt={image.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                  <CardHeader className="pb-3">
-                    <p className="text-sm font-medium truncate" title={image.name}>
-                      {image.name}
-                    </p>
-                  </CardHeader>
-                  <CardContent className="pt-0 flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      asChild
-                    >
-                      <a href={image.url} target="_blank" rel="noopener noreferrer">
-                        View Full Size
-                      </a>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDelete(image.path, image.name)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+        </>
+      )}
+    </AdminShell>
   )
 }
