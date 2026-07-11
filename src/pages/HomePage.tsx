@@ -1,8 +1,6 @@
 import HeroSection from '../components/HeroSection'
-import WIDDAnnouncement from '../components/WIDDAnnouncement'
 import SponsorBanner from '../components/SponsorBanner'
 import SponsorSection from '../components/SponsorSection'
-import FloatingAnnouncement from '../components/FloatingAnnouncement'
 import JamDiversityCarousel from '../components/JamDiversityCarousel'
 import Footer from '../components/Footer'
 import { Link } from 'react-router-dom'
@@ -53,11 +51,7 @@ const THEME_FOCUS = [
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#F6FAF7] text-[#14201a] overflow-x-clip">
-      <FloatingAnnouncement />
       <HeroSection />
-
-      {/* WIDD 2026 Partnership Announcement — the page's one dark band */}
-      <WIDDAnnouncement />
 
       {/* What is a Global Goals Jam? */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
