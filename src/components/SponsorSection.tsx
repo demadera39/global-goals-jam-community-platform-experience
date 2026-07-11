@@ -133,18 +133,19 @@ const SponsorSection = () => {
   const visibleRegular = showAll ? regularSponsors : regularSponsors.slice(0, 6)
 
   return (
-    <section className="py-12 bg-muted/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold mb-2">Sponsored and supported by</h2>
-          <p className="text-muted-foreground">
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a] mb-3">Supporters</p>
+          <h2 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Sponsored and supported by</h2>
+          <p className="text-[#4c5a52]">
             Thank you to our community of supporters making Global Goals Jam possible.
           </p>
         </div>
 
         {majorSponsors.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-center mb-6">Major Sponsors</h3>
+            <h3 className="font-display text-lg font-bold text-center mb-6">Major Sponsors</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
               {majorSponsors.map((sponsor) => (
                 <Card key={sponsor.id} className="text-center p-4 w-full max-w-md mx-auto">

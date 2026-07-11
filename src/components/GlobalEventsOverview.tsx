@@ -3,8 +3,7 @@ import { useMemo, useEffect, useState } from 'react'
 import { usePublishedEvents } from '@/hooks/usePublishedEvents'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { ArrowRight, MapPin, Users, Globe, Calendar, Zap } from 'lucide-react'
+import { ArrowRight, MapPin, Globe, Calendar, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface EventStats {
@@ -109,9 +108,9 @@ export default function GlobalEventsOverview() {
 
   if (loading) {
     return (
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-96 rounded-xl border bg-card animate-pulse" />
+      <section className="border-y border-[#dfe9e2] bg-white/70 py-16">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <div className="h-96 rounded-2xl border border-[#dfe9e2] bg-white animate-pulse" />
         </div>
       </section>
     )
@@ -119,12 +118,12 @@ export default function GlobalEventsOverview() {
 
   if (stats.totalEvents === 0) {
     return (
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-xl border bg-card p-8 text-center">
-            <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No events scheduled yet</h3>
-            <p className="text-muted-foreground">Check back soon for upcoming Global Goals Jam events.</p>
+      <section className="border-y border-[#dfe9e2] bg-white/70 py-16">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <div className="rounded-2xl border border-[#dfe9e2] bg-white p-8 text-center">
+            <Globe className="w-12 h-12 text-[#7d8a83] mx-auto mb-4" />
+            <h3 className="font-display font-extrabold text-xl mb-2">No events scheduled yet</h3>
+            <p className="text-[#4c5a52]">Check back soon for upcoming Global Goals Jam events.</p>
           </div>
         </div>
       </section>
@@ -132,107 +131,50 @@ export default function GlobalEventsOverview() {
   }
 
   return (
-    <section className="py-20 bg-section-alt">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="border-y border-[#dfe9e2] bg-white/70">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
         {/* Header */}
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-1">Global Impact</p>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
-              Creating <span className="text-primary-solid">Global Impact</span> Together
+        <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a]">Global impact</p>
+            <h2 className="font-display font-extrabold tracking-tight text-3xl sm:text-4xl mt-3 [text-wrap:balance]">
+              Creating <span className="text-[#00A651]">global impact</span> together.
             </h2>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-[#7d8a83] mt-3">
               Empowering approximately 55 events and 2,750 changemakers annually worldwide
             </p>
           </div>
-          <Button asChild variant="ghost" className="hidden sm:inline-flex text-primary hover:text-primary/80">
-            <Link to="/events">
-              View all events <ArrowRight className="w-4 h-4 ml-2" />
-            </Link>
-          </Button>
+          <Link
+            to="/events"
+            className="hidden sm:inline-flex items-center text-sm font-semibold text-[#00713a] underline decoration-2 decoration-[#00A651]/30 underline-offset-4 hover:decoration-[#00A651] transition-colors"
+          >
+            View all events <ArrowRight className="w-4 h-4 ml-1.5" />
+          </Link>
         </div>
 
-        {/* Global Impact Stats */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card variant="stat" className="overflow-hidden bg-pastel-green">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-primary/80 dark:text-green-300 mb-1">Global Events</p>
-                  <p className={cn(
-                    "font-display text-4xl font-extrabold text-primary/90 dark:text-green-200 transition-all duration-1000",
-                    animateNumbers ? "opacity-100 scale-100" : "opacity-0 scale-95"
-                  )}>
-                    ~55
-                  </p>
-                  <p className="text-xs text-primary dark:text-green-400 mt-2">
-                    Events per year
-                  </p>
-                </div>
-                <Calendar className="w-8 h-8 text-primary/40" />
+        {/* Global Impact Stats — quiet stat rail */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#dfe9e2] rounded-2xl overflow-hidden border border-[#dfe9e2] mb-10">
+          {[
+            { label: 'Global Events', value: '~55', caption: 'Events per year', dot: '#00A651', delay: '' },
+            { label: 'Countries', value: '20+', caption: 'Countries reached', dot: '#FCC30B', delay: 'delay-100' },
+            { label: 'Changemakers', value: '~2,750', caption: 'Changemakers yearly', dot: '#DD1367', delay: 'delay-200' },
+            { label: 'Cities', value: '50+', caption: 'Cities engaged', dot: '#26BDE2', delay: 'delay-300' },
+          ].map((s) => (
+            <div key={s.label} className="bg-white p-6">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-[#4c5a52]">{s.label}</p>
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.dot }} aria-hidden="true" />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card variant="stat" className="overflow-hidden bg-pastel-amber">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-amber-700 dark:text-amber-300 mb-1">Countries</p>
-                  <p className={cn(
-                    "font-display text-4xl font-extrabold text-amber-800 dark:text-amber-200 transition-all duration-1000 delay-100",
-                    animateNumbers ? "opacity-100 scale-100" : "opacity-0 scale-95"
-                  )}>
-                    20+
-                  </p>
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                    Countries reached
-                  </p>
-                </div>
-                <Globe className="w-8 h-8 text-amber-500/40" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card variant="stat" className="overflow-hidden bg-pastel-rose">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-rose-700 dark:text-rose-300 mb-1">Changemakers</p>
-                  <p className={cn(
-                    "font-display text-4xl font-extrabold text-rose-800 dark:text-rose-200 transition-all duration-1000 delay-200",
-                    animateNumbers ? "opacity-100 scale-100" : "opacity-0 scale-95"
-                  )}>
-                    ~2,750
-                  </p>
-                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-2">
-                    Changemakers yearly
-                  </p>
-                </div>
-                <Users className="w-8 h-8 text-rose-500/40" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card variant="stat" className="overflow-hidden bg-pastel-violet">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-violet-700 dark:text-violet-300 mb-1">Cities</p>
-                  <p className={cn(
-                    "font-display text-4xl font-extrabold text-violet-800 dark:text-violet-200 transition-all duration-1000 delay-300",
-                    animateNumbers ? "opacity-100 scale-100" : "opacity-0 scale-95"
-                  )}>
-                    50+
-                  </p>
-                  <p className="text-xs text-violet-600 dark:text-violet-400 mt-2">
-                    Cities engaged
-                  </p>
-                </div>
-                <MapPin className="w-8 h-8 text-violet-500/40" />
-              </div>
-            </CardContent>
-          </Card>
+              <p className={cn(
+                'font-display text-4xl font-extrabold tabular-nums text-[#14201a] mt-3 transition-all duration-1000',
+                s.delay,
+                animateNumbers ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+              )}>
+                {s.value}
+              </p>
+              <p className="text-xs text-[#7d8a83] mt-2">{s.caption}</p>
+            </div>
+          ))}
         </div>
 
         {/* Upcoming Jams — only rendered when there are upcoming jams.
@@ -242,15 +184,15 @@ export default function GlobalEventsOverview() {
         {upcomingFeatured.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
-              <Zap className="w-5 h-5 text-primary" />
-              <h3 className="text-xl font-semibold">Upcoming Jams</h3>
+              <Zap className="w-5 h-5 text-[#00A651]" />
+              <h3 className="font-display font-extrabold text-xl">Upcoming Jams</h3>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {upcomingFeatured.map((event) => {
                 const eventDate = new Date(event.eventDate)
                 return (
                   <Link key={event.id} to={`/events/${event.id}`} className="group">
-                    <Card className="h-full overflow-hidden transition-all group-hover:shadow-xl group-hover:-translate-y-1">
+                    <Card className="h-full overflow-hidden rounded-2xl border-[#dfe9e2] shadow-sm transition-all group-hover:shadow-xl group-hover:-translate-y-1.5">
                       <div className="h-32 relative">
                         {event.coverImage ? (
                           <img
@@ -260,20 +202,22 @@ export default function GlobalEventsOverview() {
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/5" />
+                          <div className="h-full w-full bg-gradient-to-br from-[#00A651]/20 to-[#00A651]/5" />
                         )}
                         <div className="absolute top-2 right-2">
-                          <Badge variant="default" className="bg-card/90 text-foreground">Upcoming</Badge>
+                          <Badge variant="default" className="bg-white/90 text-[#00713a] hover:bg-white/90">Upcoming</Badge>
                         </div>
                       </div>
                       <CardContent className="pt-4 pb-4">
-                        <h4 className="font-semibold text-base line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                        <h4 className="font-display font-bold text-base line-clamp-2 mb-2 group-hover:text-[#00713a] transition-colors">
                           {event.title}
                         </h4>
-                        <div className="space-y-1.5 text-sm text-muted-foreground">
+                        <div className="space-y-1.5 text-sm text-[#4c5a52]">
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
-                            <span>{eventDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            <span className="font-mono text-[13px] tabular-nums">
+                              {eventDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
                           </div>
                           {event.location && (
                             <div className="flex items-center gap-2">
@@ -292,14 +236,15 @@ export default function GlobalEventsOverview() {
         )}
 
         {/* View All CTA */}
-        <div className="text-center pt-6 border-t">
-          <Button asChild size="lg" className="bg-primary-solid text-white hover:bg-primary/90">
-            <Link to="/events">
-              <Globe className="w-5 h-5 mr-2" />
-              Explore all events
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Link>
-          </Button>
+        <div className="text-center pt-8 border-t border-[#dfe9e2]">
+          <Link
+            to="/events"
+            className="inline-flex items-center rounded-full bg-[#00A651] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#00A651]/25 hover:bg-[#008a44] transition-colors"
+          >
+            <Globe className="w-5 h-5 mr-2" />
+            Explore all events
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Link>
         </div>
       </div>
     </section>

@@ -128,41 +128,39 @@ export default function Navigation() {
   ]
 
   return (
-    <nav aria-label="Main navigation" className="bg-white/80 dark:bg-background/80 backdrop-blur-lg border-b border-border/50 sticky top-0 z-50">
-      {/* SDG Color Strip */}
-      <div className="flex w-full h-[3px]" aria-hidden="true">
-        {Array.from({ length: 17 }, (_, i) => (
-          <div key={i} className={`flex-1 bg-sdg-${i + 1}`} />
-        ))}
-      </div>
+    <nav aria-label="Main navigation" className="bg-white/85 backdrop-blur-lg border-b border-[#dfe9e2] sticky top-0 z-50">
+      {/* SDG rainbow hairline — the page's top edge */}
+      <div className="ggj-rainbow h-1.5 w-full" aria-hidden="true" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-[4.5rem]">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2.5 group">
+        <div className="flex justify-between items-center gap-3 h-16">
+          {/* Logo — single-line lockup, never wraps */}
+          <Link to="/" className="flex shrink-0 items-center gap-2.5 group">
             <img
               src={logoSrc}
               alt="Global Goals Jam"
-              className="w-8 h-10 object-contain transition-transform group-hover:scale-105"
+              className="h-9 w-auto object-contain transition-transform group-hover:scale-105"
               decoding="async"
               onError={(e) => {
                 const img = e.currentTarget as HTMLImageElement
                 if (!img.src.endsWith('/ggj-logo.svg')) img.src = '/ggj-logo.svg'
               }}
             />
-            <span className="text-lg font-display font-bold text-foreground tracking-tight">Global Goals Jam</span>
+            <span className="whitespace-nowrap font-display font-extrabold tracking-tight text-[17px] leading-none text-[#14201a]">
+              Global Goals Jam
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden lg:flex items-center gap-0.5 xl:gap-1">
             {(navItems || []).map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
                 onClick={item.onClick}
-                className={`text-sm px-3 py-2 rounded-lg transition-colors duration-200 ${
+                className={`whitespace-nowrap text-[13px] xl:text-sm px-2.5 xl:px-3 py-1.5 rounded-full transition-colors duration-200 ${
                   location.pathname === item.href
-                    ? 'text-primary font-medium bg-primary/5'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    ? 'text-[#00713a] font-semibold bg-[#00A651]/10'
+                    : 'text-[#4c5a52] hover:text-[#14201a] hover:bg-[#14201a]/5'
                 }`}
               >
                 {item.name}
@@ -171,7 +169,7 @@ export default function Navigation() {
           </div>
 
           {/* User Actions */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex shrink-0 items-center gap-2">
             {loading ? (
               <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
             ) : user ? (
@@ -252,22 +250,29 @@ export default function Navigation() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="flex items-center space-x-2">
-                <Button variant="ghost" asChild>
-                  <Link to="/sign-in">Sign in</Link>
-                </Button>
-                <Button variant="pill" asChild>
-                  <Link to="/sign-in">Get Started</Link>
-                </Button>
+              <div className="flex items-center gap-1.5">
+                <Link
+                  to="/sign-in"
+                  className="whitespace-nowrap text-[13px] xl:text-sm font-medium text-[#4c5a52] hover:text-[#00713a] px-2.5 py-1.5 rounded-full transition-colors"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  to="/sign-in"
+                  className="whitespace-nowrap rounded-full bg-[#00A651] px-4 xl:px-5 py-2 text-[13px] xl:text-sm font-semibold text-white shadow-sm hover:bg-[#008a44] transition-colors"
+                >
+                  Get Started
+                </Link>
               </div>
             )}
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <Button
               variant="ghost"
               size="sm"
+              className="rounded-full text-[#14201a] hover:bg-[#14201a]/5 hover:text-[#14201a]"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
@@ -279,16 +284,16 @@ export default function Navigation() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-3 pt-3 pb-4 space-y-1 rounded-xl shadow-card bg-card border border-border/50 mt-1 mx-2 mb-2">
+          <div className="lg:hidden">
+            <div className="px-3 pt-3 pb-4 space-y-1 rounded-xl shadow-card bg-white border border-[#dfe9e2] mt-1 mx-2 mb-2">
               {(navItems || []).map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
                   className={`block px-3 py-2.5 text-base rounded-lg transition-colors duration-200 ${
                     location.pathname === item.href
-                      ? 'text-primary font-semibold bg-primary/5'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      ? 'text-[#00713a] font-semibold bg-[#00A651]/10'
+                      : 'text-[#4c5a52] hover:text-[#14201a] hover:bg-[#14201a]/5'
                   }`}
                   onClick={(e) => {
                     item.onClick?.(e)

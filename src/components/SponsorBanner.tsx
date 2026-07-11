@@ -8,13 +8,13 @@ export default function SponsorBanner({ className }: SponsorBannerProps) {
   return (
     <section
       className={cn(
-        'relative overflow-hidden rounded-xl border border-border/40 bg-muted/30',
+        'relative overflow-hidden rounded-2xl border border-[#dfe9e2] bg-white',
         'px-6 py-4 sm:px-8',
         className
       )}
       aria-label="Metodic sponsorship banner"
     >
-      <div className="relative max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-5">
+      <div className="relative flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-5">
         {/* Left: Logo + label */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <img
@@ -22,13 +22,13 @@ export default function SponsorBanner({ className }: SponsorBannerProps) {
             alt="Metodic logo"
             className="h-6 w-auto object-contain"
           />
-          <span className="hidden sm:inline text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70 font-medium">
+          <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-[0.22em] text-[#7d8a83]">
             Toolkit Sponsor
           </span>
         </div>
 
         {/* Center: Copy — single line on desktop */}
-        <p className="text-sm text-muted-foreground text-center leading-snug">
+        <p className="text-sm text-[#4c5a52] text-center leading-snug">
           Design engaging workshops in minutes — powered by science-backed AI
         </p>
 
@@ -37,7 +37,7 @@ export default function SponsorBanner({ className }: SponsorBannerProps) {
           href="https://metodic.io"
           target="_blank"
           rel="noreferrer"
-          className="flex-shrink-0 inline-flex items-center px-4 py-1.5 rounded-full text-xs font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
+          className="flex-shrink-0 inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold bg-[#14201a] text-white hover:bg-[#00713a] transition-colors"
         >
           metodic.io &rarr;
         </a>

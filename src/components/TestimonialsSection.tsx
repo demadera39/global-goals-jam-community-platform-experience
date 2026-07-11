@@ -65,13 +65,13 @@ export default function TestimonialsSection({
   const displayed = (pool || []).slice(startIndex, startIndex + count)
 
   return (
-    <section className="py-20 bg-section-warm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="border-y border-[#dfe9e2] bg-white/70">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
         {showHeader && (
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-2">Testimonials</p>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight mb-4">What hosts and partners say</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a] mb-3">Testimonials</p>
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 [text-wrap:balance]">What hosts and partners say</h2>
+            <p className="text-lg text-[#4c5a52] max-w-2xl mx-auto mb-6">
               Voices from our global community of changemakers, innovators, and impact leaders
             </p>
             {pdfUrl && (
@@ -79,7 +79,7 @@ export default function TestimonialsSection({
                 href={pdfUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
+                className="inline-flex items-center text-sm font-semibold text-[#00713a] underline decoration-2 decoration-[#00A651]/30 underline-offset-4 hover:decoration-[#00A651] transition-colors"
               >
                 Read the full impact report →
               </a>
