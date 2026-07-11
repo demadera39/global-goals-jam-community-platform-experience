@@ -65,9 +65,9 @@ function App() {
             } />
             <Route path="/location/:location" element={<LocationPage />} />
             <Route path="/community" element={
-              <ProtectedRoute 
-                allowedRoles={['host', 'admin']}
-                redirectMessage="You need to be a host to access the community forum."
+              <ProtectedRoute
+                allowedRoles={['participant', 'host', 'admin']}
+                redirectMessage="Sign in to join the community."
               >
                 <CommunityPage />
               </ProtectedRoute>

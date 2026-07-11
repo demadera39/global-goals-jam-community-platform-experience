@@ -1,601 +1,575 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useState, useEffect } from 'react'
-import { Button } from '../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Input } from '../components/ui/input'
-import { Textarea } from '../components/ui/textarea'
-import { Badge } from '../components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
-import { Label } from '../components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { 
-  MessageSquare, 
-  Users, 
-  Plus, 
-  Search,
-  Pin,
-  Lock,
-  MessageCircle,
-  Clock,
-  User,
-  Crown,
-  Shield,
-  Loader2,
-  Send
-} from 'lucide-react'
-import { db, auth } from '../lib/supabase'
+import { Loader2, Lock, Search } from 'lucide-react'
+import { db, supabase, safeDbCall } from '../lib/supabase'
+import { appAuth } from '../lib/simpleAuth'
+import type { AppUser } from '../lib/simpleAuth'
+import { getUserProfile } from '../lib/userStatus'
+import { usePublishedEvents } from '../hooks/usePublishedEvents'
+import SpacesSidebar from '../components/community/SpacesSidebar'
+import Composer from '../components/community/Composer'
+import RightRail from '../components/community/RightRail'
+import ThreadView from '../components/community/ThreadView'
+import { ActivityCardView, ThreadCard } from '../components/community/FeedCards'
+import {
+  buildActivityCards,
+  deriveTitle,
+  readChecklist,
+  toDate,
+  writeChecklist,
+} from '../components/community/communityData'
+import type {
+  Author,
+  ChecklistState,
+  CommunityEvent,
+  FeedItem,
+  MediaRow,
+  Post,
+  Space,
+  Thread,
+} from '../components/community/communityData'
 
-interface User {
-  id: string
-  email: string
-  displayName?: string
-  role: string
-}
+/**
+ * Community — the network hub.
+ *
+ * A Circle-style three-column layout wrapped around the platform's real
+ * activity: the centre feed interleaves member threads with activity cards
+ * computed at render time from events, results and media. No cron jobs, no
+ * stored bot posts — the feed stays alive because the platform is.
+ */
 
-interface ForumCategory {
-  id: string
-  name: string
-  description: string
-  isHostOnly: boolean
-  sortOrder: number
-  createdAt: string
-}
-
-interface ForumThread {
-  id: string
-  categoryId: string
-  title: string
-  authorId: string
-  isPinned: boolean
-  isLocked: boolean
-  replyCount: number
-  lastReplyAt?: string
-  createdAt: string
-}
-
-interface ForumPost {
-  id: string
-  threadId: string
-  authorId: string
-  content: string
-  isFirstPost: boolean
-  createdAt: string
-  updatedAt: string
+/** Mirrors ProtectedRoute's fallback chain: appAuth first, then legacy `user` key. */
+function storedUser(): AppUser | null {
+  const fromAppAuth = appAuth.get()
+  if (fromAppAuth?.id) return fromAppAuth
+  try {
+    const raw = localStorage.getItem('user')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed?.id) return parsed
+    }
+  } catch {
+    /* ignore */
+  }
+  return null
 }
 
 export default function CommunityPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [categories, setCategories] = useState<ForumCategory[]>([])
-  const [threads, setThreads] = useState<ForumThread[]>([])
-  const [posts, setPosts] = useState<ForumPost[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>('')
-  const [selectedThread, setSelectedThread] = useState<ForumThread | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [showNewThreadDialog, setShowNewThreadDialog] = useState(false)
-  const [newThreadTitle, setNewThreadTitle] = useState('')
-  const [newThreadContent, setNewThreadContent] = useState('')
-  const [newThreadCategory, setNewThreadCategory] = useState<string>('')
-  const [newReplyContent, setNewReplyContent] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const navigate = useNavigate()
+  const { events } = usePublishedEvents({ maxAgeMs: 60_000 })
+  const communityEvents = events as CommunityEvent[]
 
+  const [user, setUser] = useState<AppUser | null>(() => storedUser())
+  const [role, setRole] = useState<string>(() => storedUser()?.role || 'participant')
+
+  const [loading, setLoading] = useState(true)
+  const [spaces, setSpaces] = useState<Space[]>([])
+  const [threads, setThreads] = useState<Thread[]>([])
+  const [snippets, setSnippets] = useState<Record<string, string>>({})
+  const [authors, setAuthors] = useState<Record<string, Author>>({})
+  const [media, setMedia] = useState<MediaRow[]>([])
+  const [hostsCount, setHostsCount] = useState<number | null>(null)
+
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string>('all')
+  const [selectedThread, setSelectedThread] = useState<Thread | null>(null)
+  const [threadPosts, setThreadPosts] = useState<Post[]>([])
+  const [loadingPosts, setLoadingPosts] = useState(false)
+
+  const [posting, setPosting] = useState(false)
+  const [replying, setReplying] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [checklist, setChecklist] = useState<ChecklistState>(() => readChecklist())
+  const [composerFocusSignal, setComposerFocusSignal] = useState(0)
+
+  const isHost = role === 'host' || role === 'admin'
+
+  // -------------------------------------------------------------------------
+  // Auth: track the app session and resolve the role from the profile.
+  // -------------------------------------------------------------------------
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((state) => {
-      setUser(state.user)
-      setLoading(state.isLoading)
-    })
+    const sync = () => {
+      const u = storedUser()
+      setUser(u)
+      if (u?.role) setRole(u.role)
+      if (u?.id) {
+        getUserProfile(u.id)
+          .then((profile) => {
+            if (profile?.role) setRole(profile.role)
+          })
+          .catch(() => {})
+      }
+    }
+    const unsubscribe = appAuth.onChange(sync)
+    sync()
     return unsubscribe
   }, [])
 
-  useEffect(() => {
-    loadCategories()
+  // -------------------------------------------------------------------------
+  // Data loading
+  // -------------------------------------------------------------------------
+  const mergeAuthors = useCallback(async (ids: string[]) => {
+    const unique = Array.from(new Set(ids.filter(Boolean))).slice(0, 200)
+    if (!unique.length) return
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, display_name, role, profile_image')
+        .in('id', unique)
+      if (error || !data) return
+      const map: Record<string, Author> = {}
+      for (const u of data) {
+        map[u.id] = {
+          id: u.id,
+          displayName: u.display_name ?? undefined,
+          role: u.role ?? undefined,
+          profileImage: u.profile_image ?? undefined,
+        }
+      }
+      setAuthors((prev) => ({ ...prev, ...map }))
+    } catch {
+      /* author names are progressive enhancement */
+    }
   }, [])
 
-  useEffect(() => {
-    if (selectedCategory) {
-      loadThreads(selectedCategory)
-    }
-  }, [selectedCategory])
-
-  useEffect(() => {
-    if (selectedThread) {
-      loadPosts(selectedThread.id)
-    }
-  }, [selectedThread])
-
-  useEffect(() => {
-    if (showNewThreadDialog) {
-      const defaultCat = selectedCategory || categories[0]?.id || ''
-      setNewThreadCategory(defaultCat)
-    }
-  }, [showNewThreadDialog, selectedCategory, categories])
-
-  const loadCategories = async () => {
+  const loadCommunity = useCallback(async () => {
     try {
-      const allCategories = await db.forumCategories.list({
-        orderBy: { sortOrder: 'asc' }
-      })
-      setCategories(allCategories)
-      if (allCategories.length > 0) {
-        setSelectedCategory(allCategories[0].id)
+      const [spaceRows, threadRows, firstPostRows, mediaRows] = await Promise.all([
+        safeDbCall(() => db.forumCategories.list({ orderBy: { sortOrder: 'asc' } })) as Promise<Space[]>,
+        safeDbCall(() =>
+          db.forumThreads.list({ orderBy: { createdAt: 'desc' }, limit: 300 })
+        ) as Promise<Thread[]>,
+        safeDbCall(() =>
+          db.forumPosts.list({ where: { isFirstPost: true }, orderBy: { createdAt: 'desc' }, limit: 300 })
+        ) as Promise<Post[]>,
+        (safeDbCall(() => db.media.list({ orderBy: { createdAt: 'desc' }, limit: 24 })) as Promise<MediaRow[]>).catch(
+          () => [] as MediaRow[]
+        ),
+      ])
+
+      setSpaces(spaceRows)
+      setThreads(threadRows)
+      setMedia(mediaRows)
+
+      const snippetMap: Record<string, string> = {}
+      for (const post of firstPostRows) {
+        if (post.threadId && !snippetMap[post.threadId]) snippetMap[post.threadId] = post.content
       }
+      setSnippets(snippetMap)
+
+      void mergeAuthors(threadRows.map((t) => t.authorId))
     } catch (error) {
-      console.error('Failed to load categories:', error)
-    }
-  }
-
-  const loadThreads = async (categoryId: string) => {
-    try {
-      const categoryThreads = await db.forumThreads.list({
-        where: { categoryId },
-        orderBy: { isPinned: 'desc', lastReplyAt: 'desc' },
-        limit: 50
-      })
-      setThreads(categoryThreads)
-      setSelectedThread(null)
-    } catch (error) {
-      console.error('Failed to load threads:', error)
-    }
-  }
-
-  const loadPosts = async (threadId: string) => {
-    try {
-      const threadPosts = await db.forumPosts.list({
-        where: { threadId },
-        orderBy: { createdAt: 'asc' }
-      })
-      setPosts(threadPosts)
-    } catch (error) {
-      console.error('Failed to load posts:', error)
-    }
-  }
-
-  const createThread = async () => {
-    if (!user || !newThreadTitle.trim() || !newThreadContent.trim()) return
-
-    setSubmitting(true)
-    try {
-      // Validate category before creating thread to avoid FK constraint failures
-      const categoryToUse = newThreadCategory || selectedCategory || categories[0]?.id
-      if (!categoryToUse || !categories.find(c => c.id === categoryToUse)) {
-        throw new Error('Please choose a valid category before creating a thread.')
-      }
-
-      // Create thread
-      const thread = await db.forumThreads.create({
-        categoryId: categoryToUse,
-        title: newThreadTitle.trim(),
-        authorId: user.id,
-        isPinned: false,
-        isLocked: false,
-        replyCount: 0
-      })
-
-      // Create first post
-      await db.forumPosts.create({
-        threadId: thread.id,
-        authorId: user.id,
-        content: newThreadContent.trim(),
-        isFirstPost: true
-      })
-
-      // Refresh threads
-      loadThreads(selectedCategory)
-      
-      // Reset form
-      setNewThreadTitle('')
-      setNewThreadContent('')
-      setNewThreadCategory('')
-      setShowNewThreadDialog(false)
-    } catch (error) {
-      console.error('Failed to create thread:', error)
-      const message = (error as any)?.message || 'Failed to create thread. Please try again.'
-      toast.error(message)
+      console.error('Failed to load community:', error)
+      toast.error('Could not load the community feed. Please try again.')
     } finally {
-      setSubmitting(false)
+      setLoading(false)
     }
-  }
+  }, [mergeAuthors])
 
-  const createReply = async () => {
-    if (!user || !selectedThread || !newReplyContent.trim()) return
+  useEffect(() => {
+    loadCommunity()
+  }, [loadCommunity])
 
-    setSubmitting(true)
-    try {
-      // Create reply
-      await db.forumPosts.create({
-        threadId: selectedThread.id,
-        authorId: user.id,
-        content: newReplyContent.trim(),
-        isFirstPost: false
+  useEffect(() => {
+    // Hosts count for the right rail — readable by design (users_select is public).
+    supabase
+      .from('users')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'host')
+      .then(({ count, error }) => {
+        if (!error && typeof count === 'number') setHostsCount(count)
       })
+  }, [])
 
-      // Update thread reply count and last reply time
-      await db.forumThreads.update(selectedThread.id, {
-        replyCount: selectedThread.replyCount + 1,
-        lastReplyAt: new Date().toISOString()
-      })
+  // -------------------------------------------------------------------------
+  // Derived data
+  // -------------------------------------------------------------------------
+  const spaceById = useMemo(() => {
+    const map: Record<string, Space> = {}
+    for (const s of spaces) map[s.id] = s
+    return map
+  }, [spaces])
 
-      // Refresh posts and threads
-      loadPosts(selectedThread.id)
-      loadThreads(selectedCategory)
-      
-      // Reset form
-      setNewReplyContent('')
-    } catch (error) {
-      console.error('Failed to create reply:', error)
-      toast.error('Failed to create reply. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  const threadCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const t of threads) counts[t.categoryId] = (counts[t.categoryId] ?? 0) + 1
+    return counts
+  }, [threads])
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-
-    if (diffInHours < 1) {
-      return 'Just now'
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)} hours ago`
-    } else if (diffInHours < 168) {
-      return `${Math.floor(diffInHours / 24)} days ago`
-    } else {
-      return date.toLocaleDateString()
-    }
-  }
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return <Crown className="w-4 h-4 text-yellow-500" />
-      case 'host':
-        return <Shield className="w-4 h-4 text-sky-500" />
-      default:
-        return <User className="w-4 h-4 text-muted-foreground" />
-    }
-  }
-
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Admin'
-      case 'host':
-        return 'Host'
-      default:
-        return 'Participant'
-    }
-  }
-
-  const filteredThreads = threads.filter(thread =>
-    thread.title.toLowerCase().includes(searchTerm.toLowerCase())
+  /** Threads the current viewer may see (host-only spaces stay host-only). */
+  const visibleThreads = useMemo(
+    () =>
+      threads.filter((t) => {
+        const space = spaceById[t.categoryId]
+        if (!space) return true
+        return isHost || !space.isHostOnly
+      }),
+    [threads, spaceById, isHost]
   )
 
+  const activityCards = useMemo(
+    () => buildActivityCards(communityEvents, media),
+    [communityEvents, media]
+  )
+
+  const selectedSpace = selectedSpaceId === 'all' ? undefined : spaceById[selectedSpaceId]
+  const spaceIsLockedForViewer = !!selectedSpace?.isHostOnly && !isHost
+
+  const feedItems: FeedItem[] = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+    const matchesThread = (t: Thread) =>
+      !term ||
+      t.title.toLowerCase().includes(term) ||
+      (snippets[t.id] ?? '').toLowerCase().includes(term)
+
+    let items: FeedItem[]
+    if (selectedSpaceId === 'all') {
+      items = [
+        ...visibleThreads.filter(matchesThread).map<FeedItem>((t) => ({
+          type: 'thread',
+          date: toDate(t.lastReplyAt || t.createdAt) ?? new Date(0),
+          thread: t,
+        })),
+        ...activityCards
+          .filter((c) => !term || c.headline.toLowerCase().includes(term))
+          .map<FeedItem>((c) => ({ type: 'activity', date: c.date, card: c })),
+      ]
+      items.sort((a, b) => b.date.getTime() - a.date.getTime())
+    } else {
+      const spaceThreads = spaceIsLockedForViewer
+        ? []
+        : threads.filter((t) => t.categoryId === selectedSpaceId && matchesThread(t))
+      items = spaceThreads.map<FeedItem>((t) => ({
+        type: 'thread',
+        date: toDate(t.lastReplyAt || t.createdAt) ?? new Date(0),
+        thread: t,
+      }))
+      // Pinned threads float to the top inside a space.
+      items.sort((a, b) => {
+        const pinA = a.type === 'thread' && a.thread.isPinned ? 1 : 0
+        const pinB = b.type === 'thread' && b.thread.isPinned ? 1 : 0
+        if (pinA !== pinB) return pinB - pinA
+        return b.date.getTime() - a.date.getTime()
+      })
+    }
+    return items.slice(0, 60)
+  }, [selectedSpaceId, visibleThreads, threads, activityCards, searchTerm, snippets, spaceIsLockedForViewer])
+
+  // -------------------------------------------------------------------------
+  // Actions
+  // -------------------------------------------------------------------------
+  const updateChecklist = useCallback((patch: Partial<ChecklistState>) => {
+    setChecklist((prev) => {
+      const next = { ...prev, ...patch }
+      writeChecklist(next)
+      return next
+    })
+  }, [])
+
+  const openThread = useCallback(
+    async (thread: Thread) => {
+      setSelectedThread(thread)
+      setThreadPosts([])
+      setLoadingPosts(true)
+      try {
+        const posts = (await safeDbCall(() =>
+          db.forumPosts.list({ where: { threadId: thread.id }, orderBy: { createdAt: 'asc' } })
+        )) as Post[]
+        setThreadPosts(posts)
+        void mergeAuthors(posts.map((p) => p.authorId))
+      } catch (error) {
+        console.error('Failed to load posts:', error)
+        toast.error('Could not load this thread.')
+      } finally {
+        setLoadingPosts(false)
+      }
+    },
+    [mergeAuthors]
+  )
+
+  const handlePost = useCallback(
+    async (content: string, spaceId: string): Promise<boolean> => {
+      if (!user?.id) {
+        toast.error('Please sign in to post.')
+        return false
+      }
+      const space = spaceById[spaceId]
+      if (!space) {
+        toast.error('Please choose a space first.')
+        return false
+      }
+      if (space.isHostOnly && !isHost) {
+        toast.error(`${space.name} is a host-only space.`)
+        return false
+      }
+      setPosting(true)
+      try {
+        const thread = (await safeDbCall(() =>
+          db.forumThreads.create({
+            categoryId: spaceId,
+            title: deriveTitle(content),
+            authorId: user.id,
+            isPinned: false,
+            isLocked: false,
+            replyCount: 0,
+          })
+        )) as Thread
+        await safeDbCall(() =>
+          db.forumPosts.create({
+            threadId: thread.id,
+            authorId: user.id,
+            content,
+            isFirstPost: true,
+          })
+        )
+        toast.success(`Posted to ${space.name}`)
+        updateChecklist({ post: true, ...(spaceId === 'introductions' ? { intro: true } : {}) })
+        await loadCommunity()
+        return true
+      } catch (error) {
+        console.error('Failed to create thread:', error)
+        toast.error((error as { message?: string })?.message || 'Failed to post. Please try again.')
+        return false
+      } finally {
+        setPosting(false)
+      }
+    },
+    [user, spaceById, isHost, loadCommunity, updateChecklist]
+  )
+
+  const handleReply = useCallback(
+    async (content: string): Promise<boolean> => {
+      if (!user?.id || !selectedThread) return false
+      setReplying(true)
+      try {
+        await safeDbCall(() =>
+          db.forumPosts.create({
+            threadId: selectedThread.id,
+            authorId: user.id,
+            content,
+            isFirstPost: false,
+          })
+        )
+        const updated = {
+          replyCount: (selectedThread.replyCount ?? 0) + 1,
+          lastReplyAt: new Date().toISOString(),
+        }
+        await safeDbCall(() => db.forumThreads.update(selectedThread.id, updated)).catch(() => {})
+        setSelectedThread({ ...selectedThread, ...updated })
+        await openThread({ ...selectedThread, ...updated })
+        void loadCommunity()
+        return true
+      } catch (error) {
+        console.error('Failed to reply:', error)
+        toast.error('Failed to post your reply. Please try again.')
+        return false
+      } finally {
+        setReplying(false)
+      }
+    },
+    [user, selectedThread, openThread, loadCommunity]
+  )
+
+  const handleChecklistAction = useCallback(
+    (item: keyof ChecklistState) => {
+      if (item === 'follow') {
+        updateChecklist({ follow: true })
+        navigate('/events')
+        return
+      }
+      // intro + post focus the composer; they complete when a real post lands.
+      setSelectedThread(null)
+      if (item === 'intro' && spaceById['introductions']) setSelectedSpaceId('introductions')
+      setComposerFocusSignal((n) => n + 1)
+    },
+    [navigate, spaceById, updateChecklist]
+  )
+
+  const selectSpace = useCallback((id: string) => {
+    setSelectedSpaceId(id)
+    setSelectedThread(null)
+    setSearchTerm('')
+  }, [])
+
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-[#F6FAF7]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#00A651]" aria-label="Loading community" />
       </div>
     )
   }
 
+  const displayName = user?.displayName || user?.email || 'Member'
+
   return (
-    <div className="min-h-screen bg-background sdg-theme-16">
-      {/* Hero Section */}
-      <section className="relative py-20 hero-pattern">
-        <div className="absolute inset-0 bg-gradient-to-br from-background/80 to-background/60" aria-hidden="true" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">Connect & Share</p>
-          <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
-            <Users className="w-4 h-4 mr-2" />
-            Global Community
-          </Badge>
-
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
-            Community <span className="text-primary-solid">Forum</span>
+    <div className="min-h-screen bg-[#F6FAF7] text-[#14201a]">
+      {/* Compact header band */}
+      <header className="border-b border-[#dfe9e2] bg-white/70">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#00713a]">The network</p>
+          <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Community
           </h1>
-
-          <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-            Connect with hosts and participants worldwide. Share experiences, ask questions,
-            and collaborate on solutions for the Global Goals.
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#4c5a52] sm:text-[15px]">
+            One feed for the whole jam network — what members share, plus what is happening
+            across jams, hosts and results worldwide.
           </p>
         </div>
-      </section>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Categories Sidebar */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Categories</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {categories.map((category) => (
-                  <Button
-                    key={category.id}
-                    variant={selectedCategory === category.id ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setSelectedCategory(category.id)}
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[230px_minmax(0,1fr)_280px]">
+          {/* LEFT: spaces */}
+          <aside className="sticky top-24 hidden lg:block">
+            <SpacesSidebar
+              spaces={spaces}
+              threadCounts={threadCounts}
+              selectedId={selectedSpaceId}
+              onSelect={selectSpace}
+            />
+          </aside>
+
+          {/* CENTER: composer + feed / thread view */}
+          <main className="min-w-0 space-y-4">
+            <div className="lg:hidden">
+              <SpacesSidebar
+                spaces={spaces}
+                threadCounts={threadCounts}
+                selectedId={selectedSpaceId}
+                onSelect={selectSpace}
+                variant="chips"
+              />
+            </div>
+
+            {selectedThread ? (
+              <ThreadView
+                thread={selectedThread}
+                space={spaceById[selectedThread.categoryId]}
+                posts={threadPosts}
+                authors={authors}
+                loadingPosts={loadingPosts}
+                submitting={replying}
+                onBack={() => setSelectedThread(null)}
+                onReply={handleReply}
+              />
+            ) : spaceIsLockedForViewer ? (
+              <>
+                <SpaceHeading space={selectedSpace} />
+                <div className="rounded-2xl border border-[#dfe9e2] bg-white p-8 text-center">
+                  <Lock className="mx-auto mb-3 h-8 w-8 text-[#7d8a83]" aria-hidden="true" />
+                  <h3 className="font-display text-lg font-extrabold">A space for jam hosts</h3>
+                  <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-[#4c5a52]">
+                    {selectedSpace?.name} is reserved for certified hosts planning their jams.
+                    Become a host to unlock it.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/course/enroll')}
+                    className="mt-4 inline-flex items-center rounded-full bg-[#00A651] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#008a44]"
                   >
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    {category.name}
-                    {category.isHostOnly && (
-                      <Lock className="w-3 h-3 ml-auto" />
-                    )}
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {!selectedThread ? (
-              /* Thread List */
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-                  <div>
-                    <h2 className="text-2xl font-bold font-display text-foreground">
-                      {categories.find(c => c.id === selectedCategory)?.name}
-                    </h2>
-                    <p className="text-muted-foreground">
-                      {categories.find(c => c.id === selectedCategory)?.description}
-                    </p>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <div className="relative">
-                      <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Search threads..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 w-64"
-                      />
-                    </div>
-                    
-                    {user && (
-                      <Dialog open={showNewThreadDialog} onOpenChange={setShowNewThreadDialog}>
-                        <DialogTrigger asChild>
-                          <Button className="bg-primary-solid text-white hover:bg-primary/90">
-                            <Plus className="w-4 h-4 mr-2" />
-                            New Thread
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Create New Thread</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="title">Thread Title</Label>
-                              <Input
-                                id="title"
-                                value={newThreadTitle}
-                                onChange={(e) => setNewThreadTitle(e.target.value)}
-                                placeholder="Enter thread title..."
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="content">Content</Label>
-                              <Textarea
-                                id="content"
-                                value={newThreadContent}
-                                onChange={(e) => setNewThreadContent(e.target.value)}
-                                placeholder="Write your post content..."
-                                className="min-h-[120px]"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="category">Category</Label>
-                              <Select value={newThreadCategory} onValueChange={(val) => setNewThreadCategory(val)}>
-                                <SelectTrigger id="category" className="w-full">
-                                  <SelectValue placeholder="Choose a category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {categories.map((cat) => (
-                                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="flex gap-2 justify-end">
-                              <Button variant="outline" onClick={() => setShowNewThreadDialog(false)}>
-                                Cancel
-                              </Button>
-                              <Button 
-                                onClick={createThread}
-                                disabled={submitting || !newThreadTitle.trim() || !newThreadContent.trim() || !newThreadCategory}
-                                className="bg-primary-solid text-white hover:bg-primary/90"
-                              >
-                                {submitting ? (
-                                  <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Creating...
-                                  </>
-                                ) : (
-                                  'Create Thread'
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    )}
-                  </div>
+                    Explore the host course
+                  </button>
                 </div>
-
-                <div className="space-y-4">
-                  {filteredThreads.map((thread) => (
-                    <Card
-                      key={thread.id}
-                      className="shadow-soft hover:shadow-card-hover transition-shadow cursor-pointer"
-                      onClick={() => setSelectedThread(thread)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              {thread.isPinned && (
-                                <Pin className="w-4 h-4 text-primary" />
-                              )}
-                              {thread.isLocked && (
-                                <Lock className="w-4 h-4 text-muted-foreground" />
-                              )}
-                              <h3 className="font-semibold text-foreground hover:text-primary">
-                                {thread.title}
-                              </h3>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <MessageCircle className="w-4 h-4" />
-                                {thread.replyCount} replies
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                {formatDate(thread.lastReplyAt || thread.createdAt)}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-
-                  {filteredThreads.length === 0 && (
-                    <Card>
-                      <CardContent className="text-center py-12">
-                        <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">No threads found</h3>
-                        <p className="text-muted-foreground mb-4">
-                          {searchTerm 
-                            ? 'Try adjusting your search terms.'
-                            : 'Be the first to start a discussion in this category!'}
-                        </p>
-                        {user && !searchTerm && (
-                          <Button 
-                            onClick={() => setShowNewThreadDialog(true)}
-                            className="bg-primary-solid text-white hover:bg-primary/90"
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Start Discussion
-                          </Button>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </div>
+              </>
             ) : (
-              /* Thread View */
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <Button variant="outline" onClick={() => setSelectedThread(null)}>
-                    ← Back to Threads
-                  </Button>
-                  <div>
-                    <h2 className="text-2xl font-bold font-display text-foreground">{selectedThread.title}</h2>
-                    <p className="text-muted-foreground">
-                      {selectedThread.replyCount} replies • Created {formatDate(selectedThread.createdAt)}
+              <>
+                {user && (
+                  <Composer
+                    spaces={spaces}
+                    selectedSpaceId={selectedSpaceId}
+                    isHost={isHost}
+                    posting={posting}
+                    displayName={displayName}
+                    onPost={handlePost}
+                    focusSignal={composerFocusSignal}
+                  />
+                )}
+
+                {/* Feed heading + search */}
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <SpaceHeading space={selectedSpace} />
+                  <label className="relative block">
+                    <Search
+                      className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#7d8a83]"
+                      aria-hidden="true"
+                    />
+                    <input
+                      type="search"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Search the feed…"
+                      className="w-48 rounded-full border border-[#dfe9e2] bg-white py-1.5 pl-8 pr-3 text-[13px] text-[#14201a] placeholder:text-[#7d8a83] focus:border-[#00A651]/50 focus:outline-none sm:w-56"
+                      aria-label="Search the feed"
+                    />
+                  </label>
+                </div>
+
+                {/* Unified feed */}
+                {feedItems.length === 0 ? (
+                  <div className="rounded-2xl border border-[#dfe9e2] bg-white p-8 text-center">
+                    <p className="font-display text-lg font-extrabold">
+                      {searchTerm ? 'Nothing matches that search' : 'Quiet in here — for now'}
+                    </p>
+                    <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-[#4c5a52]">
+                      {searchTerm
+                        ? 'Try different words, or clear the search to see the full feed.'
+                        : 'Be the first to say hello. Your post kicks off this space.'}
                     </p>
                   </div>
-                </div>
-
-                <div className="space-y-4">
-                  {posts.map((post, index) => (
-                    <Card key={post.id}>
-                      <CardContent className="p-6">
-                        <div className="flex gap-4">
-                          <div className="flex-shrink-0">
-                            <div className="w-10 h-10 bg-primary-solid/10 rounded-full flex items-center justify-center">
-                              {getRoleIcon('participant')}
-                            </div>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="font-semibold">User</span>
-                              <Badge variant="outline" className="text-xs">
-                                {getRoleLabel('participant')}
-                              </Badge>
-                              {post.isFirstPost && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Original Post
-                                </Badge>
-                              )}
-                              <span className="text-sm text-muted-foreground">
-                                {formatDate(post.createdAt)}
-                              </span>
-                            </div>
-                            <div className="prose max-w-none">
-                              <p className="text-foreground whitespace-pre-wrap">{post.content}</p>
-                            </div>
-                          </div>
+                ) : (
+                  <div className="space-y-3">
+                    {feedItems.map((item, i) =>
+                      item.type === 'thread' ? (
+                        <div key={item.thread.id} className="ggj-rise" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}>
+                          <ThreadCard
+                            thread={item.thread}
+                            space={spaceById[item.thread.categoryId]}
+                            author={authors[item.thread.authorId]}
+                            snippet={snippets[item.thread.id]}
+                            onOpen={openThread}
+                          />
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Reply Form */}
-                {user && !selectedThread.isLocked && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Reply to Thread</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <Textarea
-                          value={newReplyContent}
-                          onChange={(e) => setNewReplyContent(e.target.value)}
-                          placeholder="Write your reply..."
-                          className="min-h-[120px]"
-                        />
-                        <div className="flex justify-end">
-                          <Button 
-                            onClick={createReply}
-                            disabled={submitting || !newReplyContent.trim()}
-                            className="bg-primary-solid text-white hover:bg-primary/90"
-                          >
-                            {submitting ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Posting...
-                              </>
-                            ) : (
-                              <>
-                                <Send className="w-4 h-4 mr-2" />
-                                Post Reply
-                              </>
-                            )}
-                          </Button>
+                      ) : (
+                        <div key={item.card.key} className="ggj-rise" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}>
+                          <ActivityCardView card={item.card} />
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      )
+                    )}
+                  </div>
                 )}
-
-                {!user && (
-                  <Card>
-                    <CardContent className="text-center py-8">
-                      <p className="text-muted-foreground mb-4">
-                        Continue with Email to participate in the discussion
-                      </p>
-                      <Button onClick={() => {
-                        const redirectUrl = window.location.href
-                        window.location.href = `/sign-in?redirect=${encodeURIComponent(redirectUrl)}`
-                      }}>
-                        Continue with Email
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+              </>
             )}
-          </div>
+          </main>
+
+          {/* RIGHT: rail */}
+          <aside className="lg:sticky lg:top-24">
+            <RightRail
+              events={communityEvents}
+              hostsCount={hostsCount}
+              checklist={checklist}
+              onChecklistAction={handleChecklistAction}
+            />
+          </aside>
         </div>
       </div>
+    </div>
+  )
+}
+
+function SpaceHeading({ space }: { space?: Space }) {
+  return (
+    <div className="min-w-0">
+      <h2 className="font-display text-lg font-extrabold tracking-tight">
+        {space ? space.name : 'All activity'}
+      </h2>
+      <p className="mt-0.5 text-[13px] text-[#7d8a83]">
+        {space
+          ? space.description || 'Conversations in this space.'
+          : 'Member posts, interleaved with live activity from the jam network.'}
+      </p>
     </div>
   )
 }

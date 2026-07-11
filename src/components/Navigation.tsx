@@ -135,9 +135,9 @@ export default function Navigation() {
     // Signed-in users get a visible Dashboard entry: hosts/admins to the
     // Host Dashboard, enrolled learners to the Learn platform.
     ...(user ? [{ name: 'Dashboard', href: canSeeHostTools ? '/host-dashboard' : '/course/enroll', onClick: handleDashboardClick }] : []),
-    // Community forum is hidden for now — it has no activity yet. Re-enable by
-    // restoring this entry once the forum is seeded / in use.
-    // ...(canSeeHostTools ? [{ name: 'Community', href: '/community' }] : [])
+    // Community is the network hub: open to every signed-in user. The feed
+    // mixes member posts with activity computed from live platform data.
+    ...(user ? [{ name: 'Community', href: '/community' }] : [])
   ]
 
   return (
