@@ -62,6 +62,31 @@ async function buildMollieMetadataIndex(maxPages = 8): Promise<Record<string, an
   return index
 }
 
+// Scan Stripe Checkout Sessions (the pre-Mollie processor) and index them by
+// metadata.enrollment_id and, secondarily, by customer email. Lets us confirm
+// legacy Stripe payments for enrollments that never stored their session id.
+async function buildStripeIndex(maxPages = 15): Promise<{ byEnrollment: Record<string, any>; byEmail: Record<string, any[]> }> {
+  const byEnrollment: Record<string, any> = {}
+  const byEmail: Record<string, any[]> = {}
+  const key = STRIPE()
+  if (!key) return { byEnrollment, byEmail }
+  let url = 'https://api.stripe.com/v1/checkout/sessions?limit=100'
+  for (let page = 0; page < maxPages; page++) {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${key}` } })
+    if (!res.ok) break
+    const data: any = await res.json()
+    for (const s of data?.data || []) {
+      const enrId = s?.metadata?.enrollment_id || s?.client_reference_id
+      if (enrId && !byEnrollment[enrId]) byEnrollment[enrId] = s
+      const email = (s?.customer_details?.email || s?.customer_email || '').toLowerCase()
+      if (email && s?.payment_status === 'paid') (byEmail[email] ||= []).push(s)
+    }
+    if (!data?.has_more || !data?.data?.length) break
+    url = `https://api.stripe.com/v1/checkout/sessions?limit=100&starting_after=${data.data[data.data.length - 1].id}`
+  }
+  return { byEnrollment, byEmail }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -86,9 +111,25 @@ Deno.serve(async (req) => {
 
     if (error) return json({ error: error.message }, 500)
 
+    // Look up emails for these users (for email-based legacy/manual matching).
+    const userIds = [...new Set((rows || []).map(r => r.user_id).filter(Boolean))]
+    const emailByUser: Record<string, string> = {}
+    if (userIds.length) {
+      const { data: us } = await supabase.from('users').select('id, email').in('id', userIds)
+      for (const u of us || []) if (u.email) emailByUser[u.id] = String(u.email).toLowerCase()
+    }
+    // Users who ALREADY have access — so an email-matched paid session that was
+    // already applied elsewhere isn't double-counted onto a pending row.
+    const { data: settled } = await supabase
+      .from('course_enrollments').select('user_id').in('status', ['active', 'completed'])
+    const usersWithAccess = new Set((settled || []).map(s => s.user_id).filter(Boolean))
+
     // Only scan Mollie if some row actually needs it (no id / mollie id).
     const needsMollieScan = (rows || []).some(r => !r.mollie_payment_id || /^(tr_|ord_)/.test(r.mollie_payment_id || ''))
     const mollieIndex = needsMollieScan ? await buildMollieMetadataIndex() : {}
+    // Scan Stripe for id-less rows (legacy pre-Mollie payments not stored on the row).
+    const needsStripeScan = (rows || []).some(r => !r.mollie_payment_id)
+    const stripeIndex = needsStripeScan ? await buildStripeIndex() : { byEnrollment: {}, byEmail: {} }
 
     const report: any[] = []
     let activated = 0
@@ -129,18 +170,46 @@ Deno.serve(async (req) => {
           confirmedPaymentId = p.id
         }
       } else {
-        // No stored id — look it up in the Mollie metadata index.
-        processor = 'mollie?'
-        const p: any = mollieIndex[r.id]
-        if (p) {
+        // No stored id — search the metadata indexes: Mollie first, then the
+        // legacy Stripe sessions, matching on metadata.enrollment_id.
+        processor = 'none?'
+        const mp: any = mollieIndex[r.id]
+        const sp: any = stripeIndex.byEnrollment[r.id]
+        if (mp) {
           processor = 'mollie'
-          processorStatus = p.status || 'unknown'
-          amount = p?.amount?.value ? parseFloat(p.amount.value) : null
-          metaEnrollmentId = p?.metadata?.enrollment_id || null
-          paid = p.status === 'paid'
-          confirmedPaymentId = p.id
+          processorStatus = mp.status || 'unknown'
+          amount = mp?.amount?.value ? parseFloat(mp.amount.value) : null
+          metaEnrollmentId = mp?.metadata?.enrollment_id || null
+          paid = mp.status === 'paid'
+          confirmedPaymentId = mp.id
+        } else if (sp) {
+          processor = 'stripe'
+          processorStatus = sp.payment_status || sp.status || 'unknown'
+          amount = typeof sp.amount_total === 'number' ? sp.amount_total / 100 : null
+          metaEnrollmentId = sp?.metadata?.enrollment_id || sp?.client_reference_id || null
+          paid = sp.payment_status === 'paid'
+          confirmedPaymentId = sp.id
         } else {
           processorStatus = 'no_payment_found'
+        }
+      }
+
+      // Secondary signal (report-only, never auto-activates): a PAID Stripe
+      // session under this user's email that we couldn't tie to this exact
+      // enrollment by metadata. Surfaces legacy/manual payments for review,
+      // unless the user already has access elsewhere.
+      let emailMatch: any = null
+      if (!(paid && metaEnrollmentId === r.id)) {
+        const email = r.user_id ? emailByUser[r.user_id] : undefined
+        const hits = email ? (stripeIndex.byEmail[email] || []) : []
+        const realHit = hits.find(h => typeof h.amount_total === 'number' && h.amount_total > 0)
+        if (realHit && !usersWithAccess.has(r.user_id)) {
+          emailMatch = {
+            email,
+            sessionId: realHit.id,
+            amount: realHit.amount_total / 100,
+            metadataEnrollmentId: realHit?.metadata?.enrollment_id || realHit?.client_reference_id || null,
+          }
         }
       }
 
@@ -174,6 +243,7 @@ Deno.serve(async (req) => {
       report.push({
         enrollmentId: r.id,
         userId: r.user_id,
+        email: r.user_id ? emailByUser[r.user_id] : undefined,
         processor,
         processorStatus,
         paid,
@@ -181,17 +251,20 @@ Deno.serve(async (req) => {
         amount,
         isRealMoney,
         confirmedPaymentId,
+        emailMatch, // report-only signal for legacy/manual review
         action: willActivate ? 'ACTIVATED' : (eligible ? 'WOULD_ACTIVATE' : (paid && !isRealMoney ? 'zero_amount_skipped' : 'left_pending')),
       })
     }
 
     const paidRealMoney = report.filter(x => x.paid && x.mapsToThisEnrollment && x.isRealMoney).length
     const paidZeroAmount = report.filter(x => x.paid && !x.isRealMoney).length
+    const needsReview = report.filter(x => x.emailMatch).length
     return json({
       dryRun,
       totalStuck: report.length,
       confirmedPaidRealMoney: paidRealMoney,
       confirmedPaidZeroAmount: paidZeroAmount,
+      needsReviewEmailMatch: needsReview,
       activated,
       stripeKeyPresent: !!STRIPE(),
       mollieKeyPresent: !!MOLLIE(),
