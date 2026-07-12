@@ -227,11 +227,11 @@ export default function CourseCertificate() {
       }
 
       // Also listen to auth state changes
-      unsubscribe = auth.onAuthStateChanged((state) => {
-        setUser(state.user);
-        setLoading(state.isLoading);
-        if (state.user) {
-          loadCertificateData(state.user.id);
+      unsubscribe = auth.onAuthStateChanged((u) => {
+        setUser(u);
+        setLoading(false);
+        if (u) {
+          loadCertificateData(u.id);
         }
       });
     };

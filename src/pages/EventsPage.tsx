@@ -79,17 +79,13 @@ export default function EventsPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((state) => {
-      setUser(state.user)
-      setLoading(state.isLoading)
+    // onAuthStateChanged passes the user (or null), not a {user,isLoading}
+    // wrapper — always resolve loading so this public page never hangs.
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u)
+      setLoading(false)
     })
-    // Failsafe: the events list is public, so never let the page hang on the
-    // auth spinner if auth init stalls. Force render after 3s regardless.
-    const failsafe = setTimeout(() => setLoading(false), 3000)
-    return () => {
-      unsubscribe()
-      clearTimeout(failsafe)
-    }
+    return unsubscribe
   }, [])
 
   const loadEvents = useCallback(async (retryCount = 0) => {

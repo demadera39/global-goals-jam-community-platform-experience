@@ -132,12 +132,12 @@ export default function CourseDashboard() {
       }
     };
 
-    const unsubscribe = auth.onAuthStateChanged((state) => {
-      setUser(state.user);
-      setLoading(state.isLoading);
-      
-      if (state.user) {
-        loadCourseData(state.user.id);
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u);
+      setLoading(false);
+
+      if (u) {
+        loadCourseData(u.id);
       }
     });
     return unsubscribe;

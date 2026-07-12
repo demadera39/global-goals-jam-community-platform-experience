@@ -14,9 +14,9 @@ export default function CourseRegistrationPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((state) => {
-      setUser(state.user)
-      setLoading(state.isLoading)
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u)
+      setLoading(false)
     })
     return unsubscribe
   }, [])

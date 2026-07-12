@@ -92,18 +92,22 @@ export default function EventDetailsPage() {
   const [headerImage, setHeaderImage] = useState<string | null>(null)
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (state) => {
-      setLoading(state.isLoading)
-      if (state.user) {
+    // onAuthStateChanged passes the user object (or null) — NOT a
+    // {user, isLoading} wrapper. Reading state.isLoading threw for
+    // logged-out visitors (state === null), so loading never cleared and
+    // public event pages hung on a spinner. Always resolve loading here.
+    const unsubscribe = auth.onAuthStateChanged(async (u) => {
+      if (u) {
         try {
           const full = await getFullUser()
           setUser(full as any)
         } catch {
-          setUser(state.user as any)
+          setUser(u as any)
         }
       } else {
         setUser(null)
       }
+      setLoading(false)
     })
     return unsubscribe
   }, [])
