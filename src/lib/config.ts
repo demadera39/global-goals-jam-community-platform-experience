@@ -14,6 +14,7 @@ export const config = {
   // Edge Functions
   functions: {
     confirmCourseEnrollmentUrl: `${supabaseUrl}/functions/v1/confirm-course-enrollment`,
+    verifyCoursePaymentUrl: `${supabaseUrl}/functions/v1/verify-course-payment`,
     createCourseCheckoutUrl: `${supabaseUrl}/functions/v1/create-mollie-course-checkout`,
     impersonateUserUrl: `${supabaseUrl}/functions/v1/impersonate-user`,
     createDonationSessionUrl: `${supabaseUrl}/functions/v1/create-mollie-donation`,

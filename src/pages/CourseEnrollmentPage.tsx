@@ -21,16 +21,23 @@ export default function CourseEnrollmentPage() {
   const [searchParams] = useSearchParams()
   const [isPolling, setIsPolling] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  // Start in the "confirming" state when we land back from the payment page so
+  // there's no flash of the resume card before the verify poll kicks in.
+  const [verifying, setVerifying] = useState(searchParams.get('success') === '1')
   const pollRef = useRef<number | null>(null)
   const pollTimeoutRef = useRef<number | null>(null)
   const pollingIntervalRef = useRef<number | null>()
+  const verifyPollRef = useRef<number | null>(null)
 
-  // Stripe return and UI gating flags
-  const hasStripeReturn = searchParams.get('success') === '1' && !!searchParams.get('session_id')
-  // Show processing only when Stripe redirected back with a session_id.
-  // This avoids showing a spinner if checkout never opened.
-  const showProcessing = hasStripeReturn && (!enrollment || enrollment.status === 'pending')
-  const showResumeCard = !showProcessing && !!enrollment && enrollment.status === 'pending'
+  // While we confirm the payment (active verify poll or legacy Stripe poll),
+  // show a calm "confirming" state — the system checks payment itself; the user
+  // is never asked to verify anything by hand. This clears on its own once the
+  // poll resolves (activated → dashboard) or gives up (→ resume card), so a
+  // stalled/failed payment can never trap the user on a spinner.
+  const showConfirming = verifying || isPolling
+  // A genuinely unfinished enrollment that we're NOT actively confirming → the
+  // only action is to (re)start checkout. No manual "I already paid" button.
+  const showResumeCard = !showConfirming && !!enrollment && enrollment.status === 'pending'
 
   // Define stopEnrollmentPolling before using it
   const stopEnrollmentPolling = useCallback(() => {
@@ -48,6 +55,44 @@ export default function CourseEnrollmentPage() {
     }
     setIsPolling(false)
   }, [setIsPolling])
+
+  // Ask the server to confirm the payment directly with Mollie and activate
+  // the enrollment if paid (idempotent). Returns true once active.
+  const verifyMolliePayment = useCallback(async (enrollmentId: string): Promise<boolean> => {
+    try {
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+      const resp = await fetch(config.functions.verifyCoursePaymentUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
+        body: JSON.stringify({ enrollmentId }),
+      })
+      const data = await resp.json().catch(() => null)
+      if (data?.paid && (data.status === 'active' || data.status === 'completed')) {
+        toast.success('Payment confirmed — you’re in!')
+        navigate('/course/dashboard?enrolled=1')
+        return true
+      }
+      return false
+    } catch {
+      return false
+    }
+  }, [navigate])
+
+  // Poll the verifier for a short window after a return from payment (Mollie
+  // can take a few seconds to settle), then stop quietly.
+  const startVerifyPolling = useCallback((enrollmentId: string) => {
+    if (verifyPollRef.current) return
+    setVerifying(true)
+    let tries = 0
+    const tick = async () => {
+      tries++
+      const done = await verifyMolliePayment(enrollmentId)
+      if (done) { setVerifying(false); verifyPollRef.current = null; return }
+      if (tries >= 15) { setVerifying(false); verifyPollRef.current = null; return } // ~45s
+      verifyPollRef.current = window.setTimeout(tick, 3000)
+    }
+    tick()
+  }, [verifyMolliePayment])
 
   // Polling: refetch a single enrollment by id until status becomes active/completed or timeout
   const startEnrollmentPolling = useCallback((enrollmentId: string) => {
@@ -123,8 +168,8 @@ export default function CourseEnrollmentPage() {
                 return
               }
               if (data?.status === 'pending') {
-                const shouldPoll = searchParams.get('success') === '1' && !!searchParams.get('session_id')
-                if (shouldPoll) startEnrollmentPolling(data.id)
+                if (searchParams.get('success') === '1') startVerifyPolling(data.id)
+                else verifyMolliePayment(data.id)
               }
               setCheckingEnrollment(false)
               return
@@ -144,10 +189,12 @@ export default function CourseEnrollmentPage() {
             return
           }
 
-          // If enrollment is pending, start polling for updates (webhook / manual update)
+          // Pending → confirm the payment ourselves. On a return from the
+          // payment page, actively poll Mollie for a short window; otherwise do
+          // one silent check to catch a missed webhook. No manual step.
           if (enrollments[0].status === 'pending') {
-            const shouldPoll = searchParams.get('success') === '1' && !!searchParams.get('session_id')
-            if (shouldPoll) startEnrollmentPolling(enrollments[0].id)
+            if (searchParams.get('success') === '1') startVerifyPolling(enrollments[0].id)
+            else verifyMolliePayment(enrollments[0].id)
           }
         }
       } catch (error) {
@@ -194,8 +241,9 @@ export default function CourseEnrollmentPage() {
       window.clearTimeout(safety)
       unsubscribe()
       stopEnrollmentPolling()
+      if (verifyPollRef.current) { window.clearTimeout(verifyPollRef.current); verifyPollRef.current = null }
     }
-  }, [navigate, stopEnrollmentPolling, startEnrollmentPolling])
+  }, [navigate, stopEnrollmentPolling, startEnrollmentPolling, startVerifyPolling, verifyMolliePayment])
 
   const confirmEnrollmentNow = async () => {
     try {
@@ -289,7 +337,7 @@ export default function CourseEnrollmentPage() {
       const successUrl = `${baseUrl}/course/enroll?success=1&enr_id=${record.id}`
       const cancelUrl = `${baseUrl}/course/enroll?canceled=1`
 
-      const checkoutData = await callSupabaseFunction<{ url?: string; error?: string }>('create-mollie-course-checkout', {
+      const checkoutData = await callSupabaseFunction<{ url?: string; paymentId?: string; error?: string }>('create-mollie-course-checkout', {
         enrollmentId: record.id,
         userId: user.id,
         email: user.email || '',
@@ -298,6 +346,12 @@ export default function CourseEnrollmentPage() {
         amount: 3999
       })
       const checkoutUrl = checkoutData.url
+      // Persist the Mollie payment id now so we can confirm the payment
+      // ourselves the moment the user returns — no manual step, even if the
+      // webhook is delayed.
+      if (checkoutData.paymentId && record?.id) {
+        void safeDbCall(() => db.courseEnrollments.update(record.id, { molliePaymentId: checkoutData.paymentId }))
+      }
       if (checkoutUrl) {
         const win = window.open(checkoutUrl, '_blank')
         if (!win || win.closed || typeof win.closed === 'undefined') {
@@ -361,17 +415,30 @@ export default function CourseEnrollmentPage() {
     }
   }, [loading, checkingEnrollment, user, searchParams, enrollment])
 
-  // If returning from Stripe success, try to confirm immediately
+  // Returning from the payment page → confirm automatically.
   useEffect(() => {
-    if (!loading) {
-      const success = searchParams.get('success') === '1'
-      const sid = searchParams.get('session_id')
-      if (success && sid) {
-        // Call confirmation immediately; userId is optional server-side
-        confirmEnrollmentNow()
-      }
+    if (loading) return
+    const success = searchParams.get('success') === '1'
+    const sid = searchParams.get('session_id')
+    if (success && sid) {
+      // Legacy Stripe return.
+      confirmEnrollmentNow()
+    } else if (success) {
+      // Mollie return: verify the payment directly against Mollie and activate.
+      const enrId = searchParams.get('enr_id')
+      if (enrId) startVerifyPolling(enrId)
     }
-  }, [loading, searchParams])
+  }, [loading, searchParams, startVerifyPolling])
+
+  // Safety net: never leave the user stranded on the "confirming" spinner. If a
+  // verify poll somehow never starts (e.g. no enrollment found for a success
+  // return), force the confirming state to clear after a bounded window so the
+  // resume card can take over.
+  useEffect(() => {
+    if (!verifying) return
+    const t = window.setTimeout(() => setVerifying(false), 50000)
+    return () => window.clearTimeout(t)
+  }, [verifying])
 
   if (loading || checkingEnrollment) {
     return (
@@ -384,32 +451,26 @@ export default function CourseEnrollmentPage() {
     )
   }
 
-  // Only show processing if we are polling or we actually have a session_id from Stripe success
-  if (showProcessing) {
+  // Returning from payment (or actively verifying) → calm, hands-off state.
+  // The system confirms the payment with Mollie itself; the user is never asked
+  // to verify anything by hand.
+  if (showConfirming) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader>
-            <CardTitle>Confirming your enrollment</CardTitle>
-            <CardDescription>We’re checking Stripe for your payment confirmation…</CardDescription>
+            <CardTitle>Confirming your payment</CardTitle>
+            <CardDescription>Hang tight — we’re activating your access.</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <div className="flex flex-col items-center gap-4 py-2">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground text-center">
-              This usually takes a few seconds. If you just completed checkout in the other tab, click “Verify Now”. We’ll also update automatically.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full mt-2">
-              <Button onClick={confirmEnrollmentNow} disabled={confirming} className="w-full">
-                {confirming ? 'Verifying…' : 'Verify Now'}
-              </Button>
-              <Button variant="outline" onClick={handleStartCheckout} className="w-full">
-                Open Checkout Again
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              If verification fails, we’ll keep checking for a couple of minutes. You can safely close this tab — you’ll also receive a receipt email from Stripe.
-            </p>
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+              <p className="text-sm text-muted-foreground text-center">
+                This usually takes just a few seconds. You’ll be taken to your course dashboard automatically as soon as your payment is confirmed — no action needed.
+              </p>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                You can safely keep this tab open. A receipt will also be emailed to you.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -430,12 +491,9 @@ export default function CourseEnrollmentPage() {
             <div className="flex flex-col items-center gap-4 py-2 w-full">
               <div className="w-full flex flex-col gap-2">
                 <Button onClick={handleStartCheckout} className="w-full">Start Checkout</Button>
-                <Button variant="outline" onClick={confirmEnrollmentNow} disabled={confirming} className="w-full">
-                  {confirming ? 'Checking…' : 'I already paid — Verify'}
-                </Button>
               </div>
               <p className="text-xs text-muted-foreground text-center mt-2">
-                We’ll verify your payment and activate your dashboard immediately after checkout.
+                As soon as you pay, we confirm it automatically and open your dashboard — there’s nothing else you need to do.
               </p>
             </div>
           </CardContent>
