@@ -190,6 +190,7 @@ export default function EventDetailsPage() {
           setHostDisplayName('Local Host')
         }
       }
+      setHostCertified(await isCertifiedHost(event.hostId))
     }
     loadHostInfo()
   }, [event])
@@ -221,7 +222,7 @@ export default function EventDetailsPage() {
     try {
       // 1) Ensure a participant profile exists
       try {
-        const existingProfile = await safeDbCall(() => (db as any).users.list({ where: { id: user.id }, limit: 1 }))
+        const existingProfile = await safeDbCall<any[]>(() => (db as any).users.list({ where: { id: user.id }, limit: 1 }))
         if (!existingProfile?.[0]) {
           await safeDbCall(() => (db as any).users.create({
             id: user.id,

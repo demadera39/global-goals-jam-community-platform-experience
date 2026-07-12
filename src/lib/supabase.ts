@@ -98,7 +98,7 @@ function createTableHelper(tableName: string, columnCase: 'snake' | 'camel' = 'c
     : (rows: any[]) => rows || []
 
   return {
-    async list(options?: ListOptions) {
+    async list<T = any>(options?: ListOptions): Promise<T[]> {
       let query = supabase.from(tableName).select('*')
 
       if (options?.where) {
@@ -133,7 +133,7 @@ function createTableHelper(tableName: string, columnCase: 'snake' | 'camel' = 'c
       return fromDbRows(data || [])
     },
 
-    async create(record: Record<string, any>) {
+    async create<T = any>(record: Record<string, any>): Promise<T> {
       const { data, error } = await supabase
         .from(tableName)
         .insert(toDbRecord(record))
@@ -143,7 +143,7 @@ function createTableHelper(tableName: string, columnCase: 'snake' | 'camel' = 'c
       return fromDbRow(data)
     },
 
-    async update(id: string, updates: Record<string, any>) {
+    async update<T = any>(id: string, updates: Record<string, any>): Promise<T> {
       const { data, error } = await supabase
         .from(tableName)
         .update(toDbRecord(updates))

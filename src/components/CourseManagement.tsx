@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -6,7 +6,7 @@ import { Badge } from './ui/badge'
 import { db } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import { Edit, Eye } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 interface Module {
   id: string
@@ -21,7 +21,6 @@ export default function CourseManagement() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Module | null>(null)
   const [saving, setSaving] = useState(false)
-  const navigate = useNavigate()
 
   useEffect(() => {
     loadModules()

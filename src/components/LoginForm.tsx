@@ -37,7 +37,9 @@ export default function LoginForm({ redirectUrl }: { redirectUrl?: string }) {
     
     try {
       // Call our auth function for login
-      const result = await login(email, password)
+      // Widen locally with an optional `error` field — the return type is
+      // defined in src/lib/auth.ts and does not declare `error` (type-only cast).
+      const result = (await login(email, password)) as Awaited<ReturnType<typeof login>> & { error?: string }
 
       if (result && result.success && result.token) {
         // Set the auth token and wait for confirmation

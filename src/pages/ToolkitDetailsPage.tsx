@@ -52,7 +52,7 @@ export default function ToolkitDetailsPage() {
   const [related, setRelated] = useState<Toolkit[]>([])
   const [user, setUser] = useState<{ id: string; role: string } | null>(null)
   const [isCertified, setIsCertified] = useState(false)
-  const [authChecked, setAuthChecked] = useState(false)
+  const [, setAuthChecked] = useState(false)
   useEffect(() => {
     const load = async () => {
       if (!id) return

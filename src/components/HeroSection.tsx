@@ -1,5 +1,5 @@
 import { ArrowRight, Download } from 'lucide-react'
-import { LEARN_URL } from '../lib/learnUrl'
+import { LEARN_URL, goToLearn } from '../lib/learnUrl'
 
 /**
  * Homepage hero — "the jam poster" design language.
@@ -65,6 +65,7 @@ export default function HeroSection() {
           >
             <a
               href={LEARN_URL}
+              onClick={(e) => { e.preventDefault(); goToLearn() }}
               className="group inline-flex items-center rounded-full bg-[#00A651] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#00A651]/25 hover:bg-[#008a44] transition-colors"
             >
               Start your host journey

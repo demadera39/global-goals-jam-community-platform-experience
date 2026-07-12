@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
-import { HelpCircle, Loader2 } from 'lucide-react'
+import { HelpCircle } from 'lucide-react'
 
 export default function FAQPage() {
-  const [loading, setLoading] = useState(false)
-
   const sections = [
     {
       title: 'How to host your own Global Goals Jam',

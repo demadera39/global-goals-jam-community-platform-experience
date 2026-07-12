@@ -8,7 +8,7 @@ import { getFullUser } from '@/lib/userProfile'
 export default function AuthContinue() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
 
   useEffect(() => {
     const run = async () => {

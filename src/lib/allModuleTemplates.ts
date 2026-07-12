@@ -1472,7 +1472,7 @@ export const moduleTemplates = {
 };
 
 export function getTemplate(templateId: string) {
-  return moduleTemplates[templateId] || null;
+  return moduleTemplates[templateId as keyof typeof moduleTemplates] || null;
 }
 
 export function getAllTemplateIds() {

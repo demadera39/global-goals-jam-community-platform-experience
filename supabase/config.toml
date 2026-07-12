@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.create-mollie-donation]
 verify_jwt = false
+
+[functions.learn-sso]
+verify_jwt = true

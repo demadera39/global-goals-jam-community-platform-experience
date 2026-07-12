@@ -17,9 +17,9 @@ import AdminShell, {
   quietButtonClass,
 } from '@/components/admin/AdminShell'
 import { useToast } from '@/hooks/use-toast'
-import { db, auth, notifications, supabase } from '@/lib/supabase'
+import { db, auth, supabase } from '@/lib/supabase'
 import { config } from '@/lib/config'
-import { showCertificateInNewTab, createCertificateRecord } from '@/lib/certificates'
+import { showCertificateInNewTab } from '@/lib/certificates'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
 import { sendTestReceiptEmail } from '@/lib/notifications'
@@ -61,8 +61,6 @@ export default function UserManagementPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
-  const [processingInviteId, setProcessingInviteId] = useState<string | null>(null)
-  const [processingInquiryId, setProcessingInquiryId] = useState<string | null>(null)
   const [messageDialogOpen, setMessageDialogOpen] = useState(false)
   const [messageRecipient, setMessageRecipient] = useState<UserData | null>(null)
   const [messageTemplate, setMessageTemplate] = useState<MessageTemplate>('invite')
@@ -450,121 +448,6 @@ export default function UserManagementPage() {
     setMessageRecipient(user)
     setMessageTemplate(template)
     setMessageDialogOpen(true)
-  }
-
-  const sendCourseInvite = async (user: UserData) => {
-    setProcessingInviteId(user.id)
-    try {
-      const enrollUrl = `${window.location.origin}/course/enroll?utm_source=admin_invite&utm_medium=email&utm_campaign=ggj_course_invite`
-      const firstName = (user.displayName || user.email || '').split('@')[0]
-      // Immediate feedback while sending
-      toast({ title: 'Sending invite...', description: `Sending to ${user.email}` })
-      const result: any = await new Promise(async (resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error('Email send timed out. Please try again.')), 15000)
-        try {
-          const recipient = String(user.email || '').trim()
-          if (!recipient || !recipient.includes('@')) {
-            throw new Error('Invalid recipient email')
-          }
-          const res = await notifications.email({
-            to: recipient,
-            from: 'Global Goals Jam <marco@globalgoalsjam.org>',
-            subject: 'You\'re Invited to the GGJ Host Certification Course!',
-            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: #00A651; padding: 24px; text-align: center;">
-                <h1 style="color: white; margin: 0;">You're Invited!</h1>
-              </div>
-              <div style="padding: 24px;">
-                <p>Hi ${firstName},</p>
-                <p>You've been invited to enroll in the <strong>GGJ Host Certification Course</strong>.</p>
-                <p>This course will equip you with the skills and knowledge to host a Global Goals Jam in your community.</p>
-                <p><a href="${enrollUrl}" style="display:inline-block;padding:12px 24px;background:#00A651;color:white;text-decoration:none;border-radius:8px;font-weight:bold;">Enroll Now</a></p>
-              </div>
-            </div>`,
-          })
-          clearTimeout(timer)
-          resolve(res)
-        } catch (e) {
-          clearTimeout(timer)
-          reject(e)
-        }
-      })
-
-      if (result && (result as any).success) {
-        const msgId = (result as any).messageId ? ` (ID: ${(result as any).messageId})` : ''
-        toast({ title: 'Invite sent', description: `Invitation sent to ${user.email}${msgId}` })
-        // Do not create pending enrollment automatically; let checkout create/manage it
-        await loadEnrollments()
-      } else {
-        toast({ title: 'Email failed', description: 'Could not send invite email', variant: 'destructive' })
-      }
-    } catch (err: any) {
-      console.error('Invite email error', err)
-      toast({ title: 'Email error', description: err?.message || 'Failed to send invite', variant: 'destructive' })
-    } finally {
-      setProcessingInviteId(null)
-    }
-  }
-
-  // Payment inquiry — friendly follow-up for users whose Mollie checkout expired
-  const sendPaymentInquiry = async (user: UserData) => {
-    const confirm = window.confirm(
-      `Send a friendly payment follow-up to ${user.email}?\n\nThis asks if they hit an issue with checkout and offers a fresh link to complete enrollment.`
-    )
-    if (!confirm) return
-
-    setProcessingInquiryId(user.id)
-    try {
-      const enrollUrl = `${window.location.origin}/course/enroll?utm_source=admin_inquiry&utm_medium=email&utm_campaign=ggj_course_payment_followup`
-      const firstName = (user.displayName || user.email || '').split('@')[0]
-      toast({ title: 'Sending follow-up...', description: `Sending to ${user.email}` })
-      const recipient = String(user.email || '').trim()
-      if (!recipient || !recipient.includes('@')) {
-        throw new Error('Invalid recipient email')
-      }
-      const result: any = await new Promise(async (resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error('Email send timed out. Please try again.')), 15000)
-        try {
-          const res = await notifications.email({
-            to: recipient,
-            from: 'Global Goals Jam <marco@globalgoalsjam.org>',
-            subject: 'Everything OK with your GGJ enrollment?',
-            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111827;">
-              <div style="background: #00A651; padding: 24px; text-align: center;">
-                <h1 style="color: white; margin: 0;">A quick check-in</h1>
-              </div>
-              <div style="padding: 24px; line-height: 1.6;">
-                <p>Hi ${firstName},</p>
-                <p>I noticed you started signing up for the <strong>GGJ Host Certification Course</strong>, but your payment didn't come through. These things happen — a bank redirect can time out, the iDEAL app doesn't always open, or life just got in the way.</p>
-                <p>Was there anything that went wrong on your side? I'd love to hear it so we can smooth things out.</p>
-                <p>If you're still keen to join and support the Global Goals Jam movement, you can pick up right where you left off:</p>
-                <p style="text-align: center;"><a href="${enrollUrl}" style="display:inline-block;padding:12px 24px;background:#00A651;color:white;text-decoration:none;border-radius:8px;font-weight:bold;">Complete my enrollment</a></p>
-                <p>Either way, just reply to this email — I read every message.</p>
-                <p>Warmly,<br/>Marco<br/><em>Founder, Global Goals Jam</em></p>
-              </div>
-            </div>`,
-            text: `Hi ${firstName},\n\nI noticed you started signing up for the GGJ Host Certification Course, but your payment didn't come through. Was there anything that went wrong on your side? I'd love to hear it so we can smooth things out.\n\nIf you're still keen to join, you can pick up where you left off here:\n${enrollUrl}\n\nEither way, just reply to this email — I read every message.\n\nWarmly,\nMarco — Founder, Global Goals Jam`,
-          })
-          clearTimeout(timer)
-          resolve(res)
-        } catch (e) {
-          clearTimeout(timer)
-          reject(e)
-        }
-      })
-
-      if (result && (result as any).success) {
-        const msgId = (result as any).messageId ? ` (ID: ${(result as any).messageId})` : ''
-        toast({ title: 'Follow-up sent', description: `Message sent to ${user.email}${msgId}` })
-      } else {
-        toast({ title: 'Email failed', description: 'Could not send follow-up email', variant: 'destructive' })
-      }
-    } catch (err: any) {
-      console.error('Payment inquiry email error', err)
-      toast({ title: 'Email error', description: err?.message || 'Failed to send follow-up', variant: 'destructive' })
-    } finally {
-      setProcessingInquiryId(null)
-    }
   }
 
   // Certificate download handler
@@ -1257,32 +1140,3 @@ export default function UserManagementPage() {
   )
 }
 
-// Edge-safe PBKDF2 password hashing (matches functions/auth implementation)
-async function pbkdf2Hash(password: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const saltBytes = crypto.getRandomValues(new Uint8Array(16))
-  // base64url encode salt
-  const salt = btoa(String.fromCharCode(...saltBytes))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+/g, '')
-
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(password),
-    'PBKDF2',
-    false,
-    ['deriveBits']
-  )
-
-  // derive 256 bits
-  const derived = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: Uint8Array.from(atob(salt.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer, iterations: 100000, hash: 'SHA-256' },
-    keyMaterial,
-    256
-  )
-  const bytes = new Uint8Array(derived)
-  const binary = Array.from(bytes).map(b => String.fromCharCode(b)).join('')
-  const derivedB64 = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+/g, '')
-  return `${salt}:${derivedB64}`
-}

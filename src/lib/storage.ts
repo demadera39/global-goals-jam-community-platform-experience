@@ -97,7 +97,7 @@ export async function uploadFileToStorage(
   file: File
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(bucket)
       .upload(filePath, file, {
         cacheControl: '3600',

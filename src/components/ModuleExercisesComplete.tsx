@@ -489,7 +489,7 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
                 </div>
                 {exercise.template && (
                   <Button
-                    onClick={() => handleTemplateDownload(exercise.template, exercise.title)}
+                    onClick={() => handleTemplateDownload(exercise.template!, exercise.title)}
                     variant="outline"
                     size="sm"
                     className="ml-4"
@@ -507,7 +507,7 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
                     Step-by-Step Instructions:
                   </h5>
                   <ol className="space-y-2">
-                    {details.steps.map((step, stepIndex) => (
+                    {details.steps.map((step: string, stepIndex: number) => (
                       <li key={stepIndex} className="flex items-start">
                         <span className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold mr-3">
                           {stepIndex + 1}
@@ -523,7 +523,7 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
                 <div className="bg-pastel-amber border-l-4 border-amber-400 p-4 ml-11">
                   <h5 className="font-semibold text-foreground mb-2">💡 Pro Tips:</h5>
                   <ul className="space-y-1">
-                    {details.tips.map((tip, tipIndex) => (
+                    {details.tips.map((tip: string, tipIndex: number) => (
                       <li key={tipIndex} className="text-foreground/80 flex items-start">
                         <span className="mr-2">•</span>
                         <span>{tip}</span>
@@ -537,7 +537,7 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
                 <div className="bg-pastel-sky rounded-lg p-4 ml-11">
                   <h5 className="font-semibold text-foreground mb-3">📚 Helpful Resources:</h5>
                   <div className="space-y-2">
-                    {details.resources.map((resource, resourceIndex) => (
+                    {details.resources.map((resource: { title: string; url?: string; description?: string }, resourceIndex: number) => (
                       <div key={resourceIndex} className="flex items-start">
                         <ExternalLink className="w-4 h-4 text-sky-600 mr-2 mt-0.5 flex-shrink-0" />
                         <div>
@@ -609,7 +609,7 @@ export const ModuleExercisesComplete: React.FC<ModuleExercisesCompleteProps> = (
                     Use the template to guide your work and document your findings
                   </p>
                   <Button
-                    onClick={() => handleTemplateDownload(exercise.template, exercise.title)}
+                    onClick={() => handleTemplateDownload(exercise.template!, exercise.title)}
                     size="sm"
                     className="bg-primary hover:bg-primary/80"
                   >

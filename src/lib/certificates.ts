@@ -20,8 +20,6 @@ export function buildCertificateHtml(data: BuildCertData) {
   const titleText = isHost ? 'Certificate of Hosting' : 'Certificate of Participation'
   const subjectLabel = isHost ? 'Host' : 'Participant'
 
-  const siteOrigin = (typeof window !== 'undefined' ? window.location.origin : '')
-
   // Build optional event strings safely (avoid nested template backticks)
   const eventSuffix = (data.eventTitle ? ' — ' + escapeHtml(data.eventTitle) : '') + (data.eventLocation ? ' (' + escapeHtml(data.eventLocation) + ')' : '')
 
@@ -437,8 +435,6 @@ export async function showCertificateInNewTab(data: BuildCertData, opts?: { save
 
   // Inline critical public assets as data URLs so they always render inside blob previews
   try {
-    const origin = window.location.origin
-
     const fetchAsDataUrl = async (url: string): Promise<string> => {
       const res = await fetch(url, { cache: 'no-store' })
       if (!res.ok) throw new Error(`Failed to fetch asset: ${url}`)

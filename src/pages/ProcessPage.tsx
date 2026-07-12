@@ -246,7 +246,7 @@ export default function ProcessPage() {
 
           {/* Sprint Cards */}
           <div className="space-y-6">
-            {sprints.map((sprint, index) => (
+            {sprints.map((sprint) => (
               <Card
                 key={sprint.number}
                 variant="elevated"

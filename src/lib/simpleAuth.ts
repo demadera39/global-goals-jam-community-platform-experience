@@ -44,7 +44,7 @@ export const appAuth = {
       notify(null)
     } catch { /* ignore */ }
   },
-  onChange(listener: Listener) {
+  onChange(listener: Listener): () => void {
     listeners.add(listener)
     return () => listeners.delete(listener)
   },
@@ -71,8 +71,6 @@ export async function comparePassword(
 }
 
 // DB helpers with retry logic
-const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms))
-
 export async function withDbBackoff<T>(fn: () => Promise<T>, maxRetries = 4): Promise<T> {
   return safeDbCall(fn, { retries: maxRetries })
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card } from './ui/card'
 import { db, safeDbCall } from '../lib/supabase'
 
@@ -14,39 +14,6 @@ interface Sponsor {
 
 const CACHE_KEY = 'ggj_sponsors_cache_v1'
 const CACHE_TTL_MS = 30 * 1000 // 30 seconds
-
-async function sleep(ms: number) {
-  return new Promise((res) => setTimeout(res, ms))
-}
-
-async function fetchWithRetry<T>(fn: () => Promise<T>, maxAttempts = 4, baseDelay = 500) {
-  let attempt = 0
-  while (true) {
-    try {
-      return await fn()
-    } catch (err: any) {
-      attempt++
-      const status = err?.status || err?.statusCode || null
-      const isRateLimit = status === 429 || err?.details?.code === 'RATE_LIMIT_EXCEEDED'
-      if (attempt >= maxAttempts || !isRateLimit) {
-        throw err
-      }
-
-      // Try to respect reset time if provided
-      const reset = err?.details?.reset ? new Date(err.details.reset).getTime() : null
-      const now = Date.now()
-      let wait = baseDelay * Math.pow(2, attempt - 1)
-      if (reset && reset > now) {
-        wait = Math.max(wait, reset - now + 250)
-      }
-
-      // Gentle jitter
-      wait = Math.floor(wait * (0.75 + Math.random() * 0.5))
-      console.warn(`Sponsor fetch attempt ${attempt} failed with rate limit. Retrying in ${wait}ms`)
-      await sleep(wait)
-    }
-  }
-}
 
 const SponsorSection = () => {
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
@@ -89,7 +56,7 @@ const SponsorSection = () => {
           return
         }
 
-        const allDonations = await safeDbCall(() => (db as any).donations.list({
+        const allDonations = await safeDbCall<any[]>(() => (db as any).donations.list({
           where: { status: 'completed' },
           orderBy: { amount: 'desc' }
         }))

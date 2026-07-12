@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '../_shared/supabase.ts'
+import { grantLearnEntitlement } from '../_shared/entitlements.ts'
 
 const MOLLIE_API_KEY = () => Deno.env.get('MOLLIE_API_KEY') as string
 const MOLLIE_BASE = 'https://api.mollie.com/v2'
@@ -114,6 +115,7 @@ async function handleCourseEnrollment(supabase: any, payment: any, metadata: any
         updated_at: new Date().toISOString(),
       }).eq('id', userId)
     }
+    await grantLearnEntitlement(supabase, userId)
   }
 
   if (email) {

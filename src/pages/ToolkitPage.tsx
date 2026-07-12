@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Textarea } from '../components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
@@ -16,7 +15,6 @@ import {
   Download,
   Clock,
   Users,
-  Target,
   BookOpen,
   Loader2,
   User as UserIcon,
@@ -90,8 +88,8 @@ export default function ToolkitPage() {
   const [generatedContent, setGeneratedContent] = useState('')
   const [libraryFilter, setLibraryFilter] = useState<LibraryFilter>('all')
   const [creators, setCreators] = useState<Record<string, UserProfile>>({})
-  const [isPreview, setIsPreview] = useState(false)
-  const [isCertified, setIsCertified] = useState(false)
+  const [, setIsPreview] = useState(false)
+  const [, setIsCertified] = useState(false)
   const [saving, setSaving] = useState(false)
   const [savedToolkitId, setSavedToolkitId] = useState<string | null>(null)
   const [genStatus, setGenStatus] = useState('')
@@ -147,12 +145,12 @@ export default function ToolkitPage() {
       if (uid) {
         // Fallback to two simple queries (no OR support in older SDK)
         const [publicRows, myRows] = await Promise.all([
-          safeDbCall(() => (db as any).toolkits.list({
+          safeDbCall<any[]>(() => (db as any).toolkits.list({
             where: { isPublic: true },
             orderBy: { createdAt: 'desc' },
             limit: 50
           })),
-          safeDbCall(() => (db as any).toolkits.list({
+          safeDbCall<any[]>(() => (db as any).toolkits.list({
             where: { createdBy: uid },
             orderBy: { createdAt: 'desc' },
             limit: 50
@@ -229,7 +227,7 @@ export default function ToolkitPage() {
         const results: Record<string, UserProfile> = { ...creators }
         await Promise.all(missing.map(async (id) => {
           try {
-            const rows = await safeDbCall(() => (db as any).users.list({ where: { id }, limit: 1 }))
+            const rows = await safeDbCall<any[]>(() => (db as any).users.list({ where: { id }, limit: 1 }))
             const row = rows?.[0]
             if (row) {
               results[id] = {
@@ -253,31 +251,6 @@ export default function ToolkitPage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-  }
-
-  // Build a lightweight preview (no AI call)
-  const buildPreviewContent = () => {
-    const selectedSDG = sdgOptions.find(sdg => sdg.value === formData.sdgFocus)
-    const sdgLabel = selectedSDG?.label || 'Selected SDG'
-    return [
-      '### Jam Overview',
-      `- Duration: ${formData.jamDuration || '—'} day(s)`,
-      `- Participants: ${formData.participants || '—'}`,
-      `- SDG Focus: ${sdgLabel}`,
-      `- Challenge: ${formData.challenge || '—'}`,
-      '',
-      '### 4-Sprint Outline (Preview)',
-      '- Sprint 1: Understand & Empathize — Frame the challenge and stakeholders',
-      '- Sprint 2: Define & Ideate — Generate and cluster solution directions',
-      '- Sprint 3: Prototype & Test — Build quick prototypes and test with users',
-      '- Sprint 4: Implement & Scale — Plan roadmap, owners, and next steps',
-      '',
-      '### Sample Methods (Locked)',
-      '- Stakeholder Mapping — Identify key actors (details locked)',
-      '- Crazy 8s — Fast ideation (details locked)',
-      '',
-      'This is a preview. Certified Hosts unlock full step-by-step guides, printable method cards, participant templates, and a detailed session plan.'
-    ].join('\n')
   }
 
   // Robustly extract a JSON object from AI output that may include code fences or extra text
@@ -525,7 +498,7 @@ ${JSON.stringify(catalog)}`
       })
 
       // Fetch full content on-demand to avoid loading massive payloads in listings
-      const fullRows = await safeDbCall(() => (db as any).toolkits.list({ where: { id: toolkit.id }, limit: 1 }))
+      const fullRows = await safeDbCall<any[]>(() => (db as any).toolkits.list({ where: { id: toolkit.id }, limit: 1 }))
       const full = fullRows?.[0]
       const content = full?.content || ''
 

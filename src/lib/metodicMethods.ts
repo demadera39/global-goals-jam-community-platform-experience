@@ -125,7 +125,7 @@ export function mapCategoryToPhase(category: string | null | undefined): SprintP
  * four sprints), plus at most one thematic toolkit matched from the challenge.
  */
 export function getRelevantSlugs(challenge: string): string[] {
-  const slugs = [SLUGS.sdg, SLUGS.design]
+  const slugs: string[] = [SLUGS.sdg, SLUGS.design]
   const c = (challenge || '').toLowerCase()
   const add = (s: string) => {
     if (!slugs.includes(s)) slugs.push(s)

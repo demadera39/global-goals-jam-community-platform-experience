@@ -4,11 +4,12 @@ import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Separator } from '../components/ui/separator'
-import { Download, BookOpen, Globe2, Users, Sparkles, MessageSquare, Calendar, CheckSquare, ArrowLeft, Target, MapPin, Clock } from 'lucide-react'
+import { BookOpen, Globe2, Users, Sparkles, MessageSquare, Calendar, CheckSquare, ArrowLeft, Target, MapPin, Clock } from 'lucide-react'
 
 
 export default function OrganizerBookletPage() {
   const contentRef = useRef<HTMLDivElement | null>(null)
+  const navigate = useNavigate()
 
   const Year = new Date().getFullYear()
 

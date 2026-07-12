@@ -11,6 +11,7 @@ import { appAuth } from '@/lib/simpleAuth'
 import { getStoredUser } from '@/lib/auth'
 import { config } from '@/lib/config'
 import { callSupabaseFunction } from '@/lib/supabase-functions'
+import { goToLearn } from '@/lib/learnUrl'
 
 export default function CourseEnrollmentPage() {
   const navigate = useNavigate()
@@ -46,8 +47,8 @@ export default function CourseEnrollmentPage() {
       })
       const data = await resp.json().catch(() => null)
       if (data?.paid && (data.status === 'active' || data.status === 'completed')) {
-        toast.success('Payment confirmed — you’re in!')
-        navigate('/course/dashboard?enrolled=1')
+        toast.success('Payment confirmed — you’re in! Taking you to your course…')
+        goToLearn()
         return true
       }
       return false
@@ -84,7 +85,7 @@ export default function CourseEnrollmentPage() {
             if (Date.now() - ts < 20000) {
               setEnrollment(data)
               if (data?.status === 'active' || data?.status === 'completed') {
-                navigate('/course/dashboard?enrolled=1')
+                goToLearn()
                 return
               }
               if (data?.status === 'pending') {
@@ -105,7 +106,7 @@ export default function CourseEnrollmentPage() {
         if (enrollments.length > 0) {
           setEnrollment(enrollments[0])
           if (enrollments[0].status === 'active' || enrollments[0].status === 'completed') {
-            navigate('/course/dashboard?enrolled=1')
+            goToLearn()
             return
           }
 
@@ -179,9 +180,9 @@ export default function CourseEnrollmentPage() {
           enrolledAt: new Date().toISOString()
         }))
       } else if (record.status !== 'pending') {
-        // If already active/completed, go to dashboard
+        // If already active/completed, go straight to the learn platform
         if (record.status === 'active' || record.status === 'completed') {
-          navigate('/course/dashboard')
+          goToLearn()
           return
         }
       }
@@ -466,7 +467,7 @@ export default function CourseEnrollmentPage() {
                       <h4 className="font-medium">{m.title}</h4>
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {typeof m.duration === 'number' ? `${m.duration} min` : `${m.durationMinutes || ''} min`}
+                        {typeof m.duration === 'number' ? `${m.duration} min` : `${(m as { durationMinutes?: number | string }).durationMinutes || ''} min`}
                       </p>
                     </div>
                   </div>

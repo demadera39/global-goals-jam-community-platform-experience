@@ -52,7 +52,9 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
 
     setLoading(true)
     try {
-      const result = await authSignup(norm, password, norm.split('@')[0])
+      // Widen locally with an optional `error` field — the return type is
+      // defined in src/lib/auth.ts and does not declare `error` (type-only cast).
+      const result = (await authSignup(norm, password, norm.split('@')[0])) as Awaited<ReturnType<typeof authSignup>> & { error?: string }
       if (!result?.success || !result?.token || !result?.user) {
         throw new Error(result?.error || 'Failed to create account')
       }
@@ -104,7 +106,8 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
 
     setLoading(true)
     try {
-      const result = await authLogin(norm, password)
+      // Type-only cast, same reason as in handleSignup above.
+      const result = (await authLogin(norm, password)) as Awaited<ReturnType<typeof authLogin>> & { error?: string }
       if (!result?.success || !result?.token || !result?.user) {
         throw new Error(result?.error || 'Authentication failed')
       }

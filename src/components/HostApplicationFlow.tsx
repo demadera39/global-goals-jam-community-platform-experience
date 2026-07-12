@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 
 export default function HostApplicationFlow() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const [step] = useState(1);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -33,7 +33,7 @@ export default function HostApplicationFlow() {
       // Create host application
       await db.hostApplications.create({
         id: `app_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        userId: user.id,
+        userId: user!.id,
         email: formData.email,
         location: formData.location,
         motivation: formData.motivation,

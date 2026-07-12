@@ -1,7 +1,6 @@
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Users, Megaphone, Brain, Heart, Sparkles, Timer, Wrench, Target, Lightbulb, CheckSquare } from 'lucide-react';
+import { CheckCircle2, Brain, Heart, Sparkles, Timer, Wrench, Target, CheckSquare } from 'lucide-react';
 
 const Module4Content = () => {
   return (

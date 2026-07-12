@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Badge } from './ui/badge'
@@ -28,7 +28,7 @@ import ParticipantTemplate from './ParticipantTemplate'
 import SessionPlan from './SessionPlan'
 import JamAgenda from './JamAgenda'
 import MetodicUpsell from './MetodicUpsell'
-import { buildToolkitHtml, markdownToBasicHtml, buildMethodCardHtml, buildParticipantTemplateHtml, buildSessionPlanHtml } from '../lib/toolkitExport'
+import { buildToolkitHtml, markdownToBasicHtml, buildMethodCardHtml, buildParticipantTemplateHtml } from '../lib/toolkitExport'
 
 interface ToolkitDisplayProps {
   content: string
@@ -506,7 +506,7 @@ export default function ToolkitDisplay({
                   <p className="text-sm text-muted-foreground mb-6">Print these cards and use them during your jam session. Each card provides step-by-step instructions for key activities.</p>
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
-                  {methodCardsToShow.map((card, index) => (
+                  {methodCardsToShow.map((card: any, index: number) => (
                     <div key={index} className="relative">
                       {locked && (
                         <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-sm rounded-xl flex items-center justify-center">
@@ -546,7 +546,7 @@ export default function ToolkitDisplay({
                   <h3 className="text-lg font-semibold text-foreground mb-2">Participant Templates</h3>
                   <p className="text-sm text-muted-foreground mb-6">Print these templates for participants to fill out during activities. They provide structured guidance for key exercises.</p>
                 </div>
-                {participantTemplatesToShow.map((template, index) => (
+                {participantTemplatesToShow.map((template: any, index: number) => (
                   <div key={index} className="relative">
                     {locked && (
                       <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-sm rounded-xl flex items-center justify-center">

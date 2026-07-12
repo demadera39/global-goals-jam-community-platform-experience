@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Badge } from './ui/badge'
-import { Separator } from './ui/separator'
 import { Button } from './ui/button'
 import { Clock, Users, Target, AlertCircle, CheckCircle, Lightbulb, Zap, TrendingUp, Download } from 'lucide-react'
 import { buildSessionPlanHtml } from '../lib/toolkitExport'
@@ -187,8 +186,7 @@ export default function SessionPlan({
       {/* Daily Plans */}
       {normalizedDays.map((day: any, dayIndex: number) => {
         const PhaseIcon = phaseIcons[day.day as keyof typeof phaseIcons] || Target
-        const totalMin = day.activities.reduce((sum: number, a: any) => sum + (parseInt(String(a.duration)) || 0), 0)
-        
+
         return (
           <Card key={dayIndex} className="">
             <CardHeader className="bg-muted/30">
@@ -228,7 +226,7 @@ export default function SessionPlan({
               )}
 
               {day.activities.map((activity: any, activityIndex: number) => {
-                const energyInfo = energyConfig[activity.energyLevel]
+                const energyInfo = energyConfig[activity.energyLevel as keyof typeof energyConfig]
                 
                 return (
                   <div key={activityIndex} className="p-6 border-b last:border-b-0">

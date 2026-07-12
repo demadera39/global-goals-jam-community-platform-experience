@@ -32,9 +32,9 @@ export async function callSupabaseFunction<T = any>(
 ): Promise<T> {
   const url = getSupabaseFunctionUrl(functionName)
   
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options?.headers
+    ...(options?.headers as Record<string, string> | undefined)
   }
 
   // Add the anon key if available
@@ -44,9 +44,10 @@ export async function callSupabaseFunction<T = any>(
 
   const response = await fetch(url, {
     method: 'POST',
+    ...options,
+    // Merged headers (Content-Type + Authorization + options.headers) must win over the raw options.headers
     headers,
-    body: data ? JSON.stringify(data) : undefined,
-    ...options
+    ...(data ? { body: JSON.stringify(data) } : {}),
   })
 
   if (!response.ok) {

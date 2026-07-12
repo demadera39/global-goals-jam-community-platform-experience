@@ -64,7 +64,7 @@ export default function HostDirectoryPage() {
         for (let i = 0; i < missingIds.length; i += chunkSize) {
           const ids = missingIds.slice(i, i + chunkSize)
           for (const id of ids) {
-            const rows = await safeDbCall(() => (db as any).users.list<HostRow>({ where: { id }, limit: 1 }))
+            const rows: HostRow[] = await safeDbCall(() => (db as any).users.list({ where: { id }, limit: 1 }))
             if (rows && rows[0]) byId.set(rows[0].id, rows[0])
           }
         }

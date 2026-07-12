@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar'
-import { Calendar, MapPin, Users, ArrowLeft, Image as ImageIcon, FileText, Link as LinkIcon, Share2 } from 'lucide-react'
-import { cn } from '../lib/utils'
+import { Calendar, MapPin, ArrowLeft, FileText, Link as LinkIcon, Share2 } from 'lucide-react'
 
 interface UserRow {
   id: string

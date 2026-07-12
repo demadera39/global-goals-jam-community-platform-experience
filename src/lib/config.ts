@@ -19,6 +19,7 @@ export const config = {
     sendMessageUrl: `${supabaseUrl}/functions/v1/send-message`,
     scrapeJamImagesUrl: `${supabaseUrl}/functions/v1/scrape-jam-images`,
     listBucketImagesUrl: `${supabaseUrl}/functions/v1/list-bucket-images`,
+    learnSsoUrl: `${supabaseUrl}/functions/v1/learn-sso`,
   },
 
   // App configuration

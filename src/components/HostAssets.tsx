@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
-import { Download, FileText, Image as ImageIcon, FolderDown, BookOpen, BarChart3 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Download, FileText, Image as ImageIcon, FolderDown, BarChart3 } from 'lucide-react'
 
 const STORAGE_BASE = 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets'
 

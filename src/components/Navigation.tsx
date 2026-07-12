@@ -3,8 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu'
-import { Globe, Menu, X, User, LogOut, Settings, BookOpen, Shield } from 'lucide-react'
-import { LEARN_URL } from '../lib/learnUrl'
+import { Menu, X, User, LogOut, Settings, BookOpen, Shield } from 'lucide-react'
+import { goToLearn } from '../lib/learnUrl'
 import { getUserProfile, UserProfile, COURSE_STATUS } from '../lib/userStatus'
 import { appAuth } from '../lib/simpleAuth'
 import { clearAuthToken } from '../lib/auth'
@@ -14,6 +14,7 @@ interface User {
   email: string
   displayName?: string
   role: string
+  profileImage?: string
 }
 
 export default function Navigation() {
@@ -49,7 +50,9 @@ export default function Navigation() {
 
     updateFromLocal().catch(console.error)
 
-    return unsubscribe
+    return () => {
+      unsubscribe()
+    }
   }, [])
 
   const handleLogin = () => {
@@ -103,7 +106,7 @@ export default function Navigation() {
     // the default link to the enrolment page on this site.
     if (canAccessCourse) {
       e.preventDefault()
-      window.location.assign(LEARN_URL)
+      goToLearn()
     }
   }
 
@@ -115,7 +118,7 @@ export default function Navigation() {
   const handleDashboardClick = (e: React.MouseEvent) => {
     if (canSeeHostTools) return // default Link → /host-dashboard
     e.preventDefault()
-    if (canAccessCourse) window.location.assign(LEARN_URL)
+    if (canAccessCourse) goToLearn()
     else navigate('/course/enroll')
   }
 

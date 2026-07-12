@@ -26,7 +26,7 @@ import {
 import SupportersAdmin from '../components/SupportersAdmin'
 import CourseManagement from '../components/CourseManagement'
 import { db } from '../lib/supabase'
-import { getFullUser } from '../lib/userProfile'
+import { getFullUser, type FullUser } from '../lib/userProfile'
 import { config } from '../lib/config'
 import toast from 'react-hot-toast'
 import { invalidateEventsCache } from '../hooks/usePublishedEvents'
@@ -91,7 +91,7 @@ interface Media {
 }
 
 export default function AdminDashboard() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [currentUser, setCurrentUser] = useState<FullUser | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [hostApplications, setHostApplications] = useState<HostApplication[]>([])

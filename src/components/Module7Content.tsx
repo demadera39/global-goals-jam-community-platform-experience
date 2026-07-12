@@ -1,7 +1,6 @@
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Target, Users, TrendingUp, Network, Handshake, Rocket, Globe, Building, MessageSquare, MapPin } from 'lucide-react';
+import { CheckCircle2, Target, TrendingUp, Network, Handshake, Rocket, Globe, MapPin } from 'lucide-react';
 
 const Module7Content = () => {
   return (

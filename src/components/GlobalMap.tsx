@@ -38,12 +38,11 @@ interface Event {
 }
 
 export default function GlobalMap() {
-  const { events: sharedEvents, loading: loadingShared, error, retryInSec, refresh } = usePublishedEvents({ maxAgeMs: 60_000 })
+  const { events: sharedEvents, error, retryInSec, refresh } = usePublishedEvents({ maxAgeMs: 60_000 })
   const [events, setEvents] = useState<Event[]>([])
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
   const [geocoding, setGeocoding] = useState(false)
-  const [currentPos, setCurrentPos] = useState<[number, number] | null>(null)
   const mapRef = useRef<LeafletMap | null>(null)
   const fitTimeout = useRef<number | null>(null)
   const hasFittedRef = useRef<string>('')
@@ -118,8 +117,14 @@ export default function GlobalMap() {
       ...e,
       latitude: Number(e.latitude),
       longitude: Number(e.longitude),
-    })) as Event[]
+    })) as Array<Event & { latitude: number; longitude: number }>
   }, [events])
+
+  // Ensure tiles render correctly once the map container becomes visible
+  useEffect(() => {
+    const t = window.setTimeout(() => mapRef.current?.invalidateSize(), 0)
+    return () => window.clearTimeout(t)
+  }, [])
 
   // Debounced fitBounds to avoid jitter when events update rapidly
   useEffect(() => {
@@ -189,11 +194,7 @@ export default function GlobalMap() {
                 zoom={geoEvents.length ? 2 : 2} 
                 scrollWheelZoom 
                 className="h-full w-full"
-                whenCreated={(map) => { 
-                  mapRef.current = map 
-                  // Ensure tiles render correctly when container becomes visible
-                  setTimeout(() => map.invalidateSize(), 0)
-                }}
+                ref={mapRef}
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

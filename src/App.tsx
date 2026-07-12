@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Navigation from './components/Navigation'
 import ProtectedRoute from './components/ProtectedRoute'
-import { Toaster } from './components/ui/toaster'
+import { Toaster } from './components/ui/sonner'
 
 // Pages
 import HomePage from './pages/HomePage'

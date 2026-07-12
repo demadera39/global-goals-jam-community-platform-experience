@@ -28,17 +28,14 @@ import {
   Share2,
   Link as LinkIcon,
   Code,
-  Clipboard,
   Check,
   BookOpen,
-  Compass,
   FileText,
-  Clock,
   FileUp,
   UserPlus,
   ArrowRight
 } from 'lucide-react'
-import { LEARN_URL } from '../lib/learnUrl'
+import { LEARN_URL, goToLearn } from '../lib/learnUrl'
 import { db, auth, storage, safeDbCall, supabase } from '../lib/supabase'
 import { stripHtml } from '../lib/utils'
 import { getFullUser } from '../lib/userProfile'
@@ -112,7 +109,7 @@ export default function HostDashboard() {
   const [events, setEvents] = useState<Event[]>([])
   const canCreateEvents = profile ? canAccessFeature(profile, 'create_events') : false
   const [registrations, setRegistrations] = useState<Registration[]>([])
-  const [courseEnrollment, setCourseEnrollment] = useState<any>(null)
+  const [, setCourseEnrollment] = useState<any>(null)
   const [hostEligible, setHostEligible] = useState(false)
   const [eligibilityChecked, setEligibilityChecked] = useState(false)
   const [showNewEventDialog, setShowNewEventDialog] = useState(false)
@@ -136,8 +133,8 @@ export default function HostDashboard() {
   const csvInputRef = useRef<HTMLInputElement | null>(null)
 
   // Certificate generation overlay state
-  const [certGenerating, setCertGenerating] = useState(false)
-  const [certStatus, setCertStatus] = useState('')
+  const [certGenerating] = useState(false)
+  const [certStatus] = useState('')
 
   // Which management tab is open — controlled so the lifecycle rail can jump to a tab
   const [activeTab, setActiveTab] = useState('events')
@@ -233,7 +230,6 @@ export default function HostDashboard() {
         }
         const local = appAuth.get()
         const userId = (full as any)?.id || local?.id
-        const userRole = (full as any)?.role || local?.role
 
         setUser((full as any) || (local as any) || null)
 
@@ -901,7 +897,7 @@ export default function HostDashboard() {
             </button>
           )}
           <Link to="/toolkit" className={railLink}>Open the Jamkit</Link>
-          <a href={LEARN_URL} className={railLink}>Host Programme <ArrowRight className="h-3 w-3" /></a>
+          <a href={LEARN_URL} onClick={(e) => { e.preventDefault(); goToLearn() }} className={railLink}>Host Programme <ArrowRight className="h-3 w-3" /></a>
         </>
       ),
     },
@@ -1671,7 +1667,7 @@ export default function HostDashboard() {
               <CardContent className="py-8 text-center">
                 <h3 className="text-lg font-semibold mb-2">GGJ Host Programme</h3>
                 <p className="text-sm text-muted-foreground mb-4">Your modules, artefacts and Facilitator live on the Learn platform.</p>
-                <Button className="bg-primary-solid text-white hover:bg-primary/90" onClick={() => { window.location.assign(LEARN_URL) }}>Go to Course</Button>
+                <Button className="bg-primary-solid text-white hover:bg-primary/90" onClick={() => { goToLearn() }}>Go to Course</Button>
               </CardContent>
             </Card>
           </TabsContent>

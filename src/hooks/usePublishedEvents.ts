@@ -13,6 +13,8 @@ export interface PublishedEvent {
   coverImage?: string
   sdgFocus?: string
   hostId?: string
+  maxParticipants?: number
+  manualParticipantCount?: string
 }
 
 // Module-level cache to dedupe requests across components

@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { Heart, Coffee, Globe, Target, Award, ArrowLeft } from 'lucide-react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { config } from '../lib/config'
+import { Heart, Coffee, Globe, Target, Award } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { callSupabaseFunction } from '../lib/supabase-functions'
 import toast from 'react-hot-toast'
 
@@ -12,7 +11,7 @@ const DonatePage = () => {
   const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null)
-  const [selectedTier, setSelectedTier] = useState<string | null>(null)
+  const [, setSelectedTier] = useState<string | null>(null)
   const [customValue, setCustomValue] = useState<number | null>(null)
 
   useEffect(() => {

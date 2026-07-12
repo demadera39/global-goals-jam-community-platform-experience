@@ -83,7 +83,8 @@ export default function JamDiversityCarousel() {
         }
 
         const result = await response.json()
-        const files = result.success && result.files ? result.files : []
+        const files: Array<{ name: string; url: string; folder?: string }> =
+          result.success && result.files ? result.files : []
         console.log('[JamDiversityCarousel] Total files found:', files.length)
         console.log('[JamDiversityCarousel] Raw files data:', files)
         

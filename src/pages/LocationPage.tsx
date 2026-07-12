@@ -13,7 +13,6 @@ import {
   Clock,
   Globe,
   Mail,
-  Phone,
   ExternalLink,
   Plus,
   Award,
@@ -32,6 +31,9 @@ interface User {
   email: string
   displayName?: string
   role: string
+  profileImage?: string | null
+  bio?: string
+  location?: string
 }
 
 interface Event {
@@ -111,10 +113,6 @@ export default function LocationPage() {
 
     return unsubscribe
   }, [])
-
-  const promptSignInEmail = () => {
-    window.location.href = `/sign-in?redirect=${encodeURIComponent(window.location.href)}`
-  }
 
   useEffect(() => {
     if (location) {
@@ -328,7 +326,7 @@ export default function LocationPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <Avatar className="w-12 h-12">
-                      <AvatarImage src={hostInfo.profileImage} />
+                      <AvatarImage src={hostInfo.profileImage ?? undefined} />
                       <AvatarFallback>
                         {(hostInfo.displayName || hostInfo.email).charAt(0).toUpperCase()}
                       </AvatarFallback>
@@ -660,7 +658,7 @@ export default function LocationPage() {
                   <CardContent>
                     <div className="flex items-center gap-4 mb-4">
                       <Avatar className="w-16 h-16">
-                        <AvatarImage src={hostInfo.profileImage} />
+                        <AvatarImage src={hostInfo.profileImage ?? undefined} />
                         <AvatarFallback className="text-lg">
                           {(hostInfo.displayName || hostInfo.email).charAt(0).toUpperCase()}
                         </AvatarFallback>

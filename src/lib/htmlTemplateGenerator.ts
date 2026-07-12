@@ -18,7 +18,7 @@ export const generateHTMLTemplate = (templateType: string): string => {
   }
   
   // Fallback to old generators
-  const generator = allTemplateGenerators[templateType];
+  const generator = allTemplateGenerators[templateType as keyof typeof allTemplateGenerators];
   
   if (!generator) {
     console.error(`Template type "${templateType}" not found`);

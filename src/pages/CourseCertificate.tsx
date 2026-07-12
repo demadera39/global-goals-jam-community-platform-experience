@@ -215,7 +215,7 @@ export default function CourseCertificate() {
 
       // Keep previous signin working: bootstrap legacy token and user
       try {
-        const token = await getAuthToken();
+        await getAuthToken();
         // legacy token ignored; using managed auth only
         const stored = await getStoredUser();
         if (stored?.id) {

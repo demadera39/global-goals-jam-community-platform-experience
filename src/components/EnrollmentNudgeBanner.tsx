@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from './ui/button'
 import { X, Star, ArrowRight } from 'lucide-react'
-import { getUserProfile, UserProfile, COURSE_STATUS } from '../lib/userStatus'
+import { getUserProfile, UserProfile } from '../lib/userStatus'
 import { auth } from '../lib/supabase'
 
 interface EnrollmentNudgeBannerProps {
@@ -12,8 +12,8 @@ interface EnrollmentNudgeBannerProps {
 export default function EnrollmentNudgeBanner({ onDismiss }: EnrollmentNudgeBannerProps) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isVisible, setIsVisible] = useState(false)
-  const [isDismissed, setIsDismissed] = useState(false)
-  const [nudgeCount, setNudgeCount] = useState(0)
+  const [, setIsDismissed] = useState(false)
+  const [nudgeCount] = useState(0)
 
   useEffect(() => {
     const checkUserStatus = async () => {

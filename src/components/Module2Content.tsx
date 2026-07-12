@@ -1,7 +1,5 @@
-import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Users, MapPin, Calendar, Clock, AlertCircle, Sparkles, Target } from 'lucide-react';
+import { CheckCircle2, Users, Target } from 'lucide-react';
 import AudioPlayer from '@/components/ui/AudioPlayer';
 import { courseModules } from '@/data/courseContent';
 

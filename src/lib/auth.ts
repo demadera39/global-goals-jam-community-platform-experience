@@ -77,7 +77,7 @@ export async function signup(email: string, password: string, fullName: string) 
     return { success: true, token: data.session?.access_token, user: userData }
   }
 
-  return { success: false, token: null, user: null }
+  return { success: false, token: null, user: null, error: 'Signup did not complete — no account was returned. Please try again.' }
 }
 
 // ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ export async function login(email: string, password: string) {
     return { success: true, token: data.session?.access_token, user: userData }
   }
 
-  return { success: false, token: null, user: null }
+  return { success: false, token: null, user: null, error: 'Sign-in did not complete — no user session was returned. Please try again.' }
 }
 
 // ---------------------------------------------------------------------------

@@ -70,12 +70,13 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState<Event[]>([])
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
+  const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [locationFilter, setLocationFilter] = useState('')
   const [geolocating, setGeolocating] = useState(false)
   const [retryCountdown, setRetryCountdown] = useState(0)
-  const [loadError, setLoadError] = useState<any | null>(null)
+  const [, setLoadError] = useState<any | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -147,6 +148,18 @@ export default function EventsPage() {
   const filterEvents = useCallback(() => {
     let filtered = events.filter(e => e.status !== 'draft')
 
+    // Distance sort (activated by "Find near me"); events without coordinates go last
+    const distanceFrom = (origin: { lat: number; lon: number }, e: Event) => {
+      if (e.latitude === undefined || e.longitude === undefined) return Infinity
+      const toRad = (d: number) => (d * Math.PI) / 180
+      const dLat = toRad(Number(e.latitude) - origin.lat)
+      const dLon = toRad(Number(e.longitude) - origin.lon)
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(origin.lat)) * Math.cos(toRad(Number(e.latitude))) * Math.sin(dLon / 2) ** 2
+      return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    }
+
     // Search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
@@ -169,8 +182,12 @@ export default function EventsPage() {
       )
     }
 
+    if (userCoords) {
+      filtered = [...filtered].sort((a, b) => distanceFrom(userCoords, a) - distanceFrom(userCoords, b))
+    }
+
     setFilteredEvents(filtered)
-  }, [events, searchTerm, statusFilter, locationFilter])
+  }, [events, searchTerm, statusFilter, locationFilter, userCoords])
 
   useEffect(() => {
     filterEvents()
@@ -253,6 +270,7 @@ export default function EventsPage() {
           { enableHighAccuracy: false, timeout: 10000 }
         )
       })
+      setUserCoords(coords)
       setStatusFilter('published')
       setLocationFilter('')
       setSearchTerm('')

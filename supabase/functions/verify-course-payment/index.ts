@@ -1,5 +1,6 @@
 import { corsHeaders } from '../_shared/cors.ts'
 import { getSupabaseClient } from '../_shared/supabase.ts'
+import { grantLearnEntitlement } from '../_shared/entitlements.ts'
 
 // Proactive payment verification for course enrollment.
 //
@@ -89,6 +90,7 @@ Deno.serve(async (req) => {
           role: 'host', status: 'approved', updated_at: new Date().toISOString(),
         }).eq('id', enr.user_id)
       }
+      await grantLearnEntitlement(supabase, enr.user_id)
     }
 
     return json({ status: 'active', paid: true, amountPaid })

@@ -1,4 +1,3 @@
-import React from 'react';
 import { ModuleExercisesEnhanced } from './ModuleExercisesEnhanced';
 
 interface SimplifiedExercisesProps {

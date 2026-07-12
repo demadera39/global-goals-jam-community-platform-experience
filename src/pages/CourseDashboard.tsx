@@ -6,14 +6,9 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
 import { PlayCircle, CheckCircle, Lock, Clock, BookOpen, ChevronRight } from 'lucide-react';
 import { db, safeDbCall } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { TemplateCard } from '@/components/TemplateDownload';
-import { generateTemplate } from '@/lib/templateGenerator';
-import { generateHTMLTemplate, openHTMLInNewWindow } from '@/lib/htmlTemplateGenerator';
-import jsPDF from 'jspdf';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import AudioPlayer from '@/components/ui/AudioPlayer';
 import Module1Content from '@/components/Module1Content';
@@ -72,10 +67,6 @@ export default function CourseDashboard() {
   const [modules, setModules] = useState<Module[]>([]);
   const [progress, setProgress] = useState<Record<string, ModuleProgress>>({});
   const [currentModule, setCurrentModule] = useState<Module | null>(null);
-  const [checkAnswer, setCheckAnswer] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
-  const [exerciseAnswers, setExerciseAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadCourseData = async (userId: string, userRole?: string) => {
@@ -272,76 +263,6 @@ export default function CourseDashboard() {
     }
   };
 
-  const submitCheckOfLearning = async () => {
-    if (!currentModule || !enrollment || !user || !checkAnswer.trim()) {
-      toast.error('Please provide an answer');
-      return;
-    }
-    
-    setSubmitting(true);
-    try {
-      const progressId = `prog_${enrollment.id}_${currentModule.id}`;
-      
-      await upsertProgress(progressId, {
-        userId: user.id,
-        enrollmentId: enrollment.id,
-        moduleId: currentModule.id,
-        startedAt: new Date().toISOString(),
-        completedAt: new Date().toISOString(),
-        quizAnswers: checkAnswer,
-        videoWatchedPercent: '100',
-        exercisesCompleted: JSON.stringify(['check_completed'])
-      });
-      
-      // Update completed modules
-      const completedModules = JSON.parse(enrollment.completedModules || '[]');
-      if (!completedModules.includes(currentModule.moduleNumber)) {
-        completedModules.push(currentModule.moduleNumber);
-        const updateData: any = {
-          completedModules: JSON.stringify(completedModules),
-          updatedAt: new Date().toISOString()
-        };
-        // If all modules completed, mark enrollment as completed
-        if (completedModules.length >= modules.length) {
-          updateData.status = 'completed';
-        }
-        await safeDbCall(() => db.courseEnrollments.update(enrollment.id, updateData));
-        setEnrollment({ ...enrollment, completedModules: JSON.stringify(completedModules), status: updateData.status || enrollment.status });
-      }
-      
-      // Update local progress
-      setProgress({
-        ...progress,
-        [currentModule.id]: {
-          ...progress[currentModule.id],
-          completed_at: new Date().toISOString(),
-          exercisesCompleted: JSON.stringify(['check_completed'])
-        }
-      });
-      
-      toast.success('Module completed! Great work!');
-      setCheckAnswer('');
-      
-      // Check if all modules completed
-      if (completedModules.length === modules.length) {
-        toast.success('Congratulations! You\'ve completed the entire course!');
-        setTimeout(() => {
-          navigate('/course/certificate');
-        }, 2000);
-      } else {
-        const nextModule = modules.find(m => parseInt(m.moduleNumber) === parseInt(currentModule.moduleNumber) + 1);
-        if (nextModule) {
-          setCurrentModule(nextModule);
-        }
-      }
-    } catch (error) {
-      console.error('Error submitting check:', error);
-      toast.error('Failed to submit answer');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const calculateOverallProgress = () => {
     if (!enrollment || modules.length === 0) return 0;
     const completed = JSON.parse(enrollment.completedModules || '[]').length;
@@ -393,6 +314,25 @@ export default function CourseDashboard() {
         </div>
       );
     }
+
+    // Enrolled but no modules could be loaded — show a fallback instead of crashing
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Course Content Unavailable</CardTitle>
+            <CardDescription>
+              Your enrollment is active, but the course modules could not be loaded. Please try again in a moment.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => window.location.reload()} className="w-full">
+              Reload
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Compute media URL with fallback to static content sheet
@@ -493,7 +433,6 @@ export default function CourseDashboard() {
                   <div className="p-4 space-y-3">
                     {Array.from(new Map(modules.map((m) => [String(m.moduleNumber), m])).values()).map((module) => {
                       const locked = isModuleLocked(module.moduleNumber);
-                      const completed = isModuleCompleted(module.id);
                       const current = currentModule?.id === module.id;
                       const completedModuleNumbers = JSON.parse(enrollment?.completedModules || '[]');
                       const isCompleted = completedModuleNumbers.includes(module.moduleNumber);

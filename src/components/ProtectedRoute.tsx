@@ -17,7 +17,6 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ 
   children, 
   requiredFeature,
-  requiredRole = 'host',
   allowedRoles = ['participant', 'host', 'admin'],
   redirectMessage = 'You need appropriate permissions to access this page.'
 }: ProtectedRouteProps) {

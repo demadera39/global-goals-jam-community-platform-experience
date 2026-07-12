@@ -83,7 +83,7 @@ export function markdownToBasicHtml(md: string) {
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
 
   // Convert simple lists "- " into <ul><li>
-  html = html.replace(/(^|\n)-\s+(.*)(?=\n|$)/g, (match, p1, item) => `${p1}<li>${item}</li>`)
+  html = html.replace(/(^|\n)-\s+(.*)(?=\n|$)/g, (_match, p1, item) => `${p1}<li>${item}</li>`)
   // Wrap consecutive <li> groups in <ul>
   html = html.replace(/(<li>[^<]*<\/li>\n?)+/g, (group) => `<ul>${group.replace(/\n/g, '')}</ul>`) 
 
@@ -293,7 +293,6 @@ export function buildSessionPlanHtml(plan: SessionPlanExportData) {
   let normalizedPlan = plan
   try {
     // Lazy import to avoid circular deps at build time
-    // @ts-expect-error - require available in bundler context
     const { normalizeDayActivities } = require('./schedule') as typeof import('./schedule')
     const days = plan.days.map((d) => {
       const res = normalizeDayActivities(d.activities)

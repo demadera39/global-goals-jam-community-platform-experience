@@ -48,7 +48,9 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await login(formData.email, formData.password)
+      // Widen locally with an optional `error` field — the return type is
+      // defined in src/lib/auth.ts and does not declare `error` (type-only cast).
+      const result = (await login(formData.email, formData.password)) as Awaited<ReturnType<typeof login>> & { error?: string }
 
       if (result.success && result.token) {
         // Store the Supabase JWT so features like impersonation can access it

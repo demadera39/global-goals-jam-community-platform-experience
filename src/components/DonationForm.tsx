@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
-import { Textarea } from './ui/textarea'
 import { Upload, X } from 'lucide-react'
 import { db, storage } from '../lib/supabase'
 import toast from 'react-hot-toast'
@@ -22,7 +21,7 @@ const DonationForm = ({ sessionId, amount, tierName, onComplete }: DonationFormP
     donorOrganization: '',
     donorLogoUrl: ''
   })
-  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
   const handleLogoUpload = async (file: File) => {

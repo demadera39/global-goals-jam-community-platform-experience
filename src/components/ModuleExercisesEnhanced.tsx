@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { CheckCircle2, Circle, Download, ExternalLink, BookOpen, Lightbulb, Target, Users, FileText } from 'lucide-react';
+import { CheckCircle2, Circle, ExternalLink, BookOpen, Lightbulb, Target, FileText } from 'lucide-react';
 import { courseModules, courseResources } from '../data/courseContent';
 import { getTemplate } from '../lib/allModuleTemplates';
 
