@@ -79,6 +79,14 @@ export default function HeroSection() {
               <Download className="w-4 h-4" />
               Download the 2026 guide
             </a>
+            <a
+              href="/GGJ-Playbook.pdf"
+              download="GGJ-Playbook.pdf"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#00713a] underline decoration-2 decoration-[#00A651]/30 underline-offset-4 hover:decoration-[#00A651] transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              The GGJ Playbook (PDF)
+            </a>
           </div>
 
           {/* Quiet stat tiles */}
