@@ -19,42 +19,20 @@ export default function CourseEnrollmentPage() {
   const [enrollment, setEnrollment] = useState<any>(null)
   const [checkingEnrollment, setCheckingEnrollment] = useState(true)
   const [searchParams] = useSearchParams()
-  const [isPolling, setIsPolling] = useState(false)
-  const [confirming, setConfirming] = useState(false)
   // Start in the "confirming" state when we land back from the payment page so
   // there's no flash of the resume card before the verify poll kicks in.
   const [verifying, setVerifying] = useState(searchParams.get('success') === '1')
-  const pollRef = useRef<number | null>(null)
-  const pollTimeoutRef = useRef<number | null>(null)
-  const pollingIntervalRef = useRef<number | null>()
   const verifyPollRef = useRef<number | null>(null)
 
-  // While we confirm the payment (active verify poll or legacy Stripe poll),
-  // show a calm "confirming" state — the system checks payment itself; the user
-  // is never asked to verify anything by hand. This clears on its own once the
-  // poll resolves (activated → dashboard) or gives up (→ resume card), so a
-  // stalled/failed payment can never trap the user on a spinner.
-  const showConfirming = verifying || isPolling
+  // While we confirm the payment (active verify poll), show a calm "confirming"
+  // state — the system checks payment itself; the user is never asked to verify
+  // anything by hand. This clears on its own once the poll resolves (activated
+  // → dashboard) or gives up (→ resume card), so a stalled/failed payment can
+  // never trap the user on a spinner.
+  const showConfirming = verifying
   // A genuinely unfinished enrollment that we're NOT actively confirming → the
   // only action is to (re)start checkout. No manual "I already paid" button.
   const showResumeCard = !showConfirming && !!enrollment && enrollment.status === 'pending'
-
-  // Define stopEnrollmentPolling before using it
-  const stopEnrollmentPolling = useCallback(() => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current)
-      pollingIntervalRef.current = null
-    }
-    if (pollRef.current) {
-      clearInterval(pollRef.current)
-      pollRef.current = null
-    }
-    if (pollTimeoutRef.current) {
-      clearTimeout(pollTimeoutRef.current)
-      pollTimeoutRef.current = null
-    }
-    setIsPolling(false)
-  }, [setIsPolling])
 
   // Ask the server to confirm the payment directly with Mollie and activate
   // the enrollment if paid (idempotent). Returns true once active.
@@ -93,64 +71,6 @@ export default function CourseEnrollmentPage() {
     }
     tick()
   }, [verifyMolliePayment])
-
-  // Polling: refetch a single enrollment by id until status becomes active/completed or timeout
-  const startEnrollmentPolling = useCallback((enrollmentId: string) => {
-    // If there's already a poll running, don't start another
-    if (pollRef.current) return
-    setIsPolling(true)
-
-    const pollInterval = 5000 // ms
-    const maxDuration = 2 * 60 * 1000 // 2 minutes
-    const start = Date.now()
-
-    const tick = async () => {
-      try {
-        const rows = await safeDbCall(() => db.courseEnrollments.list({ where: { id: enrollmentId }, limit: 1 }))
-        const row = rows?.[0]
-        if (!row) {
-          // Enrollment disappeared — stop
-          stopEnrollmentPolling()
-          setEnrollment(null)
-          setCheckingEnrollment(false)
-          return
-        }
-
-        setEnrollment(row)
-
-        if (row.status === 'active' || row.status === 'completed') {
-          stopEnrollmentPolling()
-          toast.success('Payment received — enrollment confirmed')
-          navigate('/course/dashboard?enrolled=1')
-          return
-        }
-
-        // If polling has exceeded max duration, stop and show a message
-        if (Date.now() - start > maxDuration) {
-          stopEnrollmentPolling()
-          setCheckingEnrollment(false)
-          toast.error('Payment is taking longer than expected. If your card was charged, contact support or reload this page.')
-          return
-        }
-      } catch (err) {
-        console.error('Polling error:', err)
-      }
-    }
-
-    // Run immediately then set interval
-    tick()
-    const id = window.setInterval(tick, pollInterval)
-    pollRef.current = id
-
-    // Safety timeout to force stop after maxDuration
-    const timeoutId = window.setTimeout(() => {
-      if (pollRef.current) {
-        stopEnrollmentPolling()
-        toast.error('Payment confirmation timed out. Please check your email or contact support.')
-      }
-    }, maxDuration + 5000)
-    pollTimeoutRef.current = timeoutId
-  }, [navigate, stopEnrollmentPolling])
 
   useEffect(() => {
     const checkEnrollmentStatus = async (userId: string) => {
@@ -240,75 +160,9 @@ export default function CourseEnrollmentPage() {
     return () => {
       window.clearTimeout(safety)
       unsubscribe()
-      stopEnrollmentPolling()
       if (verifyPollRef.current) { window.clearTimeout(verifyPollRef.current); verifyPollRef.current = null }
     }
-  }, [navigate, stopEnrollmentPolling, startEnrollmentPolling, startVerifyPolling, verifyMolliePayment])
-
-  const confirmEnrollmentNow = async () => {
-    try {
-      setConfirming(true)
-      const sessionId = searchParams.get('session_id')
-
-      // If we have a Stripe session_id from success redirect → call confirm endpoint
-      if (sessionId) {
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-        const resp = await fetch(config.functions.confirmCourseEnrollmentUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
-          body: JSON.stringify({ sessionId, userId: user?.id, enrollmentId: searchParams.get('enr_id') || enrollment?.id })
-        })
-        const data = await resp.json().catch(() => null)
-        if (!resp.ok) {
-          if (resp.status === 409 || resp.status === 202) {
-            toast.message?.('Payment not confirmed yet. We’ll keep checking for a bit…')
-            const id = data?.enrollment?.id || enrollment?.id
-            if (id) startEnrollmentPolling(id)
-            return false
-          }
-          const fallbackId = data?.enrollment?.id || enrollment?.id
-          if (fallbackId) startEnrollmentPolling(fallbackId)
-          throw new Error(data?.error || 'Failed to confirm enrollment')
-        }
-        if (data?.enrollment) setEnrollment(data.enrollment)
-        toast.success('Enrollment confirmed')
-        navigate('/course/dashboard?enrolled=1')
-        return true
-      }
-
-      // If there's no session_id, NEVER reopen checkout from Verify button.
-      // Instead, check the latest enrollment and poll until webhook/confirm marks it active.
-      if (!user?.id) {
-        toast.message?.('Looking up your enrollment…')
-        return false
-      }
-
-      // Load the most recent enrollment for this user
-      const latest = await safeDbCall(() => db.courseEnrollments.list({ where: { userId: user.id }, orderBy: { createdAt: 'desc' }, limit: 1 }))
-      const rec = latest?.[0]
-      if (!rec) {
-        toast.error('No enrollment found yet. Please start checkout first.')
-        return false
-      }
-      setEnrollment(rec)
-
-      if (rec.status === 'active' || rec.status === 'completed') {
-        navigate('/course/dashboard?enrolled=1')
-        return true
-      }
-
-      // Pending → start polling and inform the user
-      toast.message?.('Checking Stripe for your payment… we’ll update automatically.')
-      startEnrollmentPolling(rec.id)
-      return false
-    } catch (err) {
-      console.error('Confirm enrollment error', err)
-      toast.error('Could not verify payment yet')
-      return false
-    } finally {
-      setConfirming(false)
-    }
-  }
+  }, [navigate, startVerifyPolling, verifyMolliePayment])
 
   const startCheckout = async () => {
     if (!user) return
@@ -366,9 +220,9 @@ export default function CourseEnrollmentPage() {
       console.error('Checkout error', err)
       const msg = err?.message || ''
       if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-        toast.error('Could not reach the checkout service. The Stripe integration may not be deployed yet.')
-      } else if (msg.includes('Stripe not configured')) {
-        toast.error('Stripe is not configured on the server. Please contact the administrator.')
+        toast.error('Could not reach the checkout service. Please try again in a moment.')
+      } else if (msg.includes('not configured')) {
+        toast.error('Payments are not configured on the server. Please contact the administrator.')
       } else {
         toast.error(`Could not start checkout: ${msg || 'unknown error'}`)
       }
@@ -383,48 +237,26 @@ export default function CourseEnrollmentPage() {
     startCheckout()
   }
 
-  const scheduleEmailSequence = async (enrollmentId: string, userId: string) => {
-    const startDate = new Date()
-    for (let day = 1; day <= 8; day++) {
-      const scheduledDate = new Date(startDate)
-      scheduledDate.setDate(scheduledDate.getDate() + (day - 1))
-      scheduledDate.setHours(9, 0, 0, 0) // 9 AM
-      await safeDbCall(() => db.emailSchedule.create({
-        id: `email_${enrollmentId}_${day}`,
-        enrollmentId,
-        userId,
-        moduleNumber: String(day),
-        scheduledFor: scheduledDate.toISOString(),
-        status: 'scheduled'
-      }))
-    }
-  }
-
-  // If user just signed up and landed here with checkout=1, auto-start Stripe.
+  // If user just signed up and landed here with checkout=1, auto-start checkout.
   // We use a ref to ensure we only trigger once.
   const autoCheckoutTriggered = useRef(false)
   useEffect(() => {
     if (!loading && !checkingEnrollment && user && !autoCheckoutTriggered.current) {
       const wantsCheckout = searchParams.get('checkout') === '1'
-      const isStripeReturn = searchParams.get('success') === '1' || searchParams.get('canceled') === '1'
-      // Only auto-trigger if checkout=1 is set and this isn't a Stripe return
-      if (wantsCheckout && !isStripeReturn && !enrollment) {
+      const isPaymentReturn = searchParams.get('success') === '1' || searchParams.get('canceled') === '1'
+      // Only auto-trigger if checkout=1 is set and this isn't a payment return
+      if (wantsCheckout && !isPaymentReturn && !enrollment) {
         autoCheckoutTriggered.current = true
         startCheckout()
       }
     }
   }, [loading, checkingEnrollment, user, searchParams, enrollment])
 
-  // Returning from the payment page → confirm automatically.
+  // Returning from the payment page → confirm automatically by verifying the
+  // payment directly against Mollie and activating.
   useEffect(() => {
     if (loading) return
-    const success = searchParams.get('success') === '1'
-    const sid = searchParams.get('session_id')
-    if (success && sid) {
-      // Legacy Stripe return.
-      confirmEnrollmentNow()
-    } else if (success) {
-      // Mollie return: verify the payment directly against Mollie and activate.
+    if (searchParams.get('success') === '1') {
       const enrId = searchParams.get('enr_id')
       if (enrId) startVerifyPolling(enrId)
     }
@@ -478,7 +310,7 @@ export default function CourseEnrollmentPage() {
     )
   }
 
-  // Pending enrollment but not in Stripe return flow → show a clear resume card
+  // Pending enrollment but not in a payment-return flow → show a clear resume card
   if (showResumeCard) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -727,7 +559,7 @@ export default function CourseEnrollmentPage() {
             </Button>
             
             <p className="text-xs text-muted-foreground mt-4">
-              Opens Stripe Checkout in a new tab. Promo codes accepted. Not planning to host? You’ll still earn a facilitation certificate and full access to tools and templates.
+              Opens the secure payment page in a new tab. Promo codes accepted. Not planning to host? You’ll still earn a facilitation certificate and full access to tools and templates.
             </p>
           </CardContent>
         </Card>

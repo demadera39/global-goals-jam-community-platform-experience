@@ -11,17 +11,12 @@ export const config = {
     baseUrl: `${supabaseUrl}/functions/v1/auth`,
   },
 
-  // Edge Functions
+  // Edge Functions (checkout/AI calls go through callSupabaseFunction by name)
   functions: {
-    confirmCourseEnrollmentUrl: `${supabaseUrl}/functions/v1/confirm-course-enrollment`,
     verifyCoursePaymentUrl: `${supabaseUrl}/functions/v1/verify-course-payment`,
-    createCourseCheckoutUrl: `${supabaseUrl}/functions/v1/create-mollie-course-checkout`,
     impersonateUserUrl: `${supabaseUrl}/functions/v1/impersonate-user`,
-    createDonationSessionUrl: `${supabaseUrl}/functions/v1/create-mollie-donation`,
     deleteUserUrl: `${supabaseUrl}/functions/v1/delete-user`,
     sendMessageUrl: `${supabaseUrl}/functions/v1/send-message`,
-    stripeWebhookUrl: `${supabaseUrl}/functions/v1/stripe-webhook`,
-    geminiAiUrl: `${supabaseUrl}/functions/v1/gemini-ai`,
     scrapeJamImagesUrl: `${supabaseUrl}/functions/v1/scrape-jam-images`,
     listBucketImagesUrl: `${supabaseUrl}/functions/v1/list-bucket-images`,
   },

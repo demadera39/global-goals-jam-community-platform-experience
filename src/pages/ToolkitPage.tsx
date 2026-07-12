@@ -705,7 +705,7 @@ ${JSON.stringify(catalog)}`
                 <p className="text-muted-foreground">
                   Answer a few questions and we'll build a 4-sprint jam agenda from real facilitation methods. Continue in{' '}
                   <span className="font-medium text-foreground">Metodic</span> to turn it into facilitator guides and slides, or complete the{' '}
-                  <Link to="/course/train-the-trainer" className="text-primary hover:underline font-medium">Train-the-Trainer course</Link>{' '}
+                  <Link to="/course/enroll" className="text-primary hover:underline font-medium">Train-the-Trainer course</Link>{' '}
                   to unlock the full Jamkit.
                 </p>
               </CardHeader>

@@ -18,7 +18,7 @@ export default function Footer() {
     {
       title: 'Get Involved',
       links: [
-        { name: 'Host a Jam', href: '/course/train-the-trainer' },
+        { name: 'Host a Jam', href: '/course/enroll' },
         { name: 'Toolkit', href: '/toolkit' },
         { name: 'Certification Course', href: '/course/enroll' },
         { name: '2026 Guide (PDF)', href: 'https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJ_2026_Resilient_by_Design.pdf', external: true },

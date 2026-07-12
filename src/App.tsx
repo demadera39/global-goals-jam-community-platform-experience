@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Navigation from './components/Navigation'
 import ProtectedRoute from './components/ProtectedRoute'
 import { Toaster } from './components/ui/toaster'
@@ -18,7 +18,6 @@ import EventResultsPage from './pages/EventResultsPage'
 import LocationPage from './pages/LocationPage'
 import AuthContinue from './pages/AuthContinue'
 import ToolkitDetailsPage from './pages/ToolkitDetailsPage'
-import CourseRegistrationPage from './pages/CourseRegistrationPage'
 import CourseEnrollmentPage from './pages/CourseEnrollmentPage'
 import CourseDashboard from './pages/CourseDashboard'
 import CourseCertificate from './pages/CourseCertificate'
@@ -26,7 +25,6 @@ import ProfilePage from './pages/ProfilePage'
 import HostPage from './pages/HostPage'
 import HostDirectoryPage from './pages/HostDirectoryPage'
 import OrganizerBookletPage from './pages/OrganizerBookletPage'
-import CertificateFlowDemo from './pages/CertificateFlowDemo'
 import DonatePage from './pages/DonatePage'
 import DonationSuccessPage from './pages/DonationSuccessPage'
 import SupportersPage from './pages/SupportersPage'
@@ -121,7 +119,8 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="/auth/continue" element={<AuthContinue />} />
-            <Route path="/course/train-the-trainer" element={<CourseRegistrationPage />} />
+            {/* Legacy course landing — the course lives on the Learn platform now */}
+            <Route path="/course/train-the-trainer" element={<Navigate to="/course/enroll" replace />} />
             <Route path="/course/enroll" element={<CourseEnrollmentPage />} />
             <Route path="/course/dashboard" element={
               <ProtectedRoute requiredFeature="course_content">

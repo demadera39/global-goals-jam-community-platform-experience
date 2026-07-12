@@ -432,7 +432,7 @@ export default function ProcessPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="pill" size="xl" asChild className="group">
-              <Link to="/course/train-the-trainer">
+              <Link to="/course/enroll">
                 Start your host journey
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>

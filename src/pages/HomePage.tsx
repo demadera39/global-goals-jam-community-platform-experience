@@ -273,7 +273,7 @@ export default function HomePage() {
               </h3>
               <div className="mt-5 space-y-2.5">
                 <Link
-                  to="/course/train-the-trainer"
+                  to="/course/enroll"
                   className="flex w-full items-center justify-center rounded-full bg-[#00A651] px-5 py-3 text-sm font-semibold text-white hover:bg-[#008a44] transition-colors"
                 >
                   <GraduationCap className="w-4 h-4 mr-2" /> Train-the-Trainer Course
