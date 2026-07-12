@@ -6,6 +6,7 @@ import Footer from '../components/Footer'
 import { Link } from 'react-router-dom'
 import { ArrowRight, GraduationCap, Users, Download } from 'lucide-react'
 import GlobalEventsOverview from '../components/GlobalEventsOverview'
+import JamHighlights from '../components/JamHighlights'
 import HostExploreBanner from '../components/HostExploreBanner'
 import TestimonialsSection from '../components/TestimonialsSection'
 
@@ -189,6 +190,9 @@ export default function HomePage() {
 
       {/* Global Events Overview (This Edition) */}
       <GlobalEventsOverview />
+
+      {/* Jam Highlights — computed strip of completed jams that have results */}
+      <JamHighlights />
 
       {/* Jam Diversity Carousel - Showcasing jams from different cities */}
       <JamDiversityCarousel />

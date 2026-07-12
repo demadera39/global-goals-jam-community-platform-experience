@@ -1,4 +1,5 @@
 import type { PublishedEvent } from '@/hooks/usePublishedEvents'
+import { firstMediaImage, summaryExcerpt, type HighlightMedia } from '@/lib/highlights'
 
 // ---------------------------------------------------------------------------
 // Types shared by the community hub
@@ -67,6 +68,8 @@ export interface ActivityCard {
   emoji: string
   headline: string
   sub?: string
+  /** Plain-text results excerpt — only set on 'results' cards that have a summary. */
+  excerpt?: string
   date: Date
   href: string
   image?: string
@@ -162,6 +165,15 @@ export function buildActivityCards(events: CommunityEvent[], media: MediaRow[]):
   const cards: ActivityCard[] = []
   const eventById = new Map(events.map((e) => [e.id, e]))
 
+  // First uploaded image per event — used as the results-card thumbnail (with
+  // the cover image as fallback) so a completed jam reads richer than a link.
+  const imageByEvent = new Map<string, string>()
+  for (const m of media) {
+    if (!m.eventId || imageByEvent.has(m.eventId)) continue
+    const img = firstMediaImage([m as HighlightMedia])
+    if (img) imageByEvent.set(m.eventId, img)
+  }
+
   for (const e of events) {
     if (!e.id || e.status === 'draft') continue
     const city = cityFromLocation(e.location, e.title)
@@ -189,15 +201,17 @@ export function buildActivityCards(events: CommunityEvent[], media: MediaRow[]):
       const end = toDate(e.endDate) ?? toDate(e.eventDate)
       const date = end && end <= now ? end : toDate(e.updatedAt) ?? toDate(e.createdAt) ?? end
       if (date) {
+        const excerpt = summaryExcerpt(e.resultsSummary, 140)
         cards.push({
           key: `res-${e.id}`,
           kind: 'results',
           emoji: '🏁',
           headline: `Results are in from ${e.title}`,
           sub: `See what the teams in ${city} made`,
+          excerpt: excerpt || undefined,
           date,
           href: `/events/${e.id}`,
-          image: e.coverImage,
+          image: imageByEvent.get(e.id) || e.coverImage,
           dot: sdgDot(`res-${e.id}`),
         })
       }

@@ -136,7 +136,11 @@ export function ActivityCardView({ card }: { card: ActivityCard }) {
             <span className="mr-1.5" aria-hidden="true">{card.emoji}</span>
             {card.headline}
           </p>
-          {card.sub && <p className="mt-0.5 truncate text-[13px] text-[#4c5a52]">{card.sub}</p>}
+          {card.excerpt ? (
+            <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-[#4c5a52]">{card.excerpt}</p>
+          ) : (
+            card.sub && <p className="mt-0.5 truncate text-[13px] text-[#4c5a52]">{card.sub}</p>
+          )}
           <span className="mt-1.5 inline-flex items-center gap-1 text-[12px] font-semibold text-[#00713a]">
             {card.kind === 'results' ? 'See the results' : card.kind === 'media' ? 'Take a look' : 'View the jam'}
             <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />

@@ -8,9 +8,12 @@ interface RichTextEditorProps {
   onChange: (value: string)=>  void
   placeholder?: string
   minHeight?: string
+  /** 'ggj' adopts the hairline + green-accent styling used on the results editor. */
+  variant?: 'default' | 'ggj'
 }
 
-export default function RichTextEditor({ value, onChange, placeholder = 'Start typing...', minHeight = '200px' }: RichTextEditorProps) {
+export default function RichTextEditor({ value, onChange, placeholder = 'Start typing...', minHeight = '200px', variant = 'default' }: RichTextEditorProps) {
+  const ggj = variant === 'ggj'
   const editorRef = useRef<HTMLDivElement>(null)
   const [isFocused, setIsFocused] = useState(false)
 
@@ -40,9 +43,15 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Start t
   }
 
   return (
-    <div className={cn('border rounded-lg overflow-hidden', isFocused && 'ring-2 ring-primary')}>
+    <div
+      className={cn(
+        'overflow-hidden',
+        ggj ? 'rounded-xl border border-[#dfe9e2] bg-white' : 'border rounded-lg',
+        isFocused && (ggj ? 'ring-2 ring-[#00A651]/40 border-[#00A651]/50' : 'ring-2 ring-primary'),
+      )}
+    >
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-1 p-2 bg-muted/50 border-b">
+      <div className={cn('flex flex-wrap gap-1 p-2 border-b', ggj ? 'bg-[#F6FAF7] border-[#dfe9e2]' : 'bg-muted/50')}>
         <Button
           type="button"
           variant="ghost"
