@@ -13,6 +13,7 @@ import { getAuthToken, getStoredUser } from '@/lib/auth';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { downloadDataUrl } from '@/lib/utils';
+import { goToLearn } from '@/lib/learnUrl';
 
 export default function CourseCertificate() {
   const navigate = useNavigate();
@@ -584,7 +585,7 @@ export default function CourseCertificate() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate('/course/dashboard')} className="w-full">
+            <Button onClick={() => goToLearn()} className="w-full">
               Return to Course
             </Button>
           </CardContent>

@@ -223,7 +223,7 @@ export default function Navigation() {
                       Return to Admin
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onSelect={() => navigate(canAccessCourse ? '/course/dashboard' : '/course/enroll')}>
+                  <DropdownMenuItem onSelect={() => (canAccessCourse ? goToLearn() : navigate('/course/enroll'))}>
                     <BookOpen className="mr-2 h-4 w-4" />
                     {canAccessCourse ? 'My Course' : 'Certification Course'}
                   </DropdownMenuItem>

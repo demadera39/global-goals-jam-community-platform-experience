@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast'
 import { db, auth } from '@/lib/supabase'
 import { appAuth } from '@/lib/simpleAuth'
 import EnrollmentNudgeBanner from '@/components/EnrollmentNudgeBanner'
+import { goToLearn } from '@/lib/learnUrl'
 
 interface ProfileForm {
   displayName: string
@@ -138,7 +139,7 @@ export default function ProfilePage() {
           <p className="text-muted-foreground">Manage your name, photo, and details used across the platform.</p>
           {hasActiveCourse && (
             <div className="mt-4">
-              <Button variant="pill" onClick={() => navigate('/course/dashboard')}>
+              <Button variant="pill" onClick={() => goToLearn()}>
                 Go to Course
               </Button>
             </div>

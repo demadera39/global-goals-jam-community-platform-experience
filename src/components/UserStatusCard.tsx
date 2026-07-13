@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { UserProfile, getUserStatusSummary, canAccessFeature } from '../lib/userStatus'
 import { useNavigate } from 'react-router-dom'
+import { goToLearn } from '../lib/learnUrl'
 
 interface UserStatusCardProps {
   profile: UserProfile | null
@@ -169,7 +170,7 @@ export default function UserStatusCard({ profile, showActions = true }: UserStat
                       key={index}
                       size="sm" 
                       className="w-full justify-start"
-                      onClick={() => navigate('/course/dashboard')}
+                      onClick={() => goToLearn()}
                     >
                       <BookOpen className="w-4 h-4 mr-2" />
                       {step}

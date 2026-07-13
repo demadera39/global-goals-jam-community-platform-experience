@@ -19,7 +19,7 @@ import LocationPage from './pages/LocationPage'
 import AuthContinue from './pages/AuthContinue'
 import ToolkitDetailsPage from './pages/ToolkitDetailsPage'
 import CourseEnrollmentPage from './pages/CourseEnrollmentPage'
-import CourseDashboard from './pages/CourseDashboard'
+import CourseRedirect from './pages/CourseRedirect'
 import CourseCertificate from './pages/CourseCertificate'
 import ProfilePage from './pages/ProfilePage'
 import HostPage from './pages/HostPage'
@@ -122,11 +122,10 @@ function App() {
             {/* Legacy course landing — the course lives on the Learn platform now */}
             <Route path="/course/train-the-trainer" element={<Navigate to="/course/enroll" replace />} />
             <Route path="/course/enroll" element={<CourseEnrollmentPage />} />
-            <Route path="/course/dashboard" element={
-              <ProtectedRoute requiredFeature="course_content">
-                <CourseDashboard />
-              </ProtectedRoute>
-            } />
+            {/* Legacy in-app course retired — always forward to the Learn
+                platform (with SSO). Catches bookmarks, old emails and menu
+                links; learn.globalgoalsjam.org gates on paid entitlement. */}
+            <Route path="/course/dashboard" element={<CourseRedirect />} />
             <Route path="/course/certificate" element={
               <ProtectedRoute allowedRoles={['participant','host','admin']}>
                 <CourseCertificate />

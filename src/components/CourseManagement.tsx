@@ -6,7 +6,7 @@ import { Badge } from './ui/badge'
 import { db } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import { Edit, Eye } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { LEARN_URL } from '../lib/learnUrl'
 
 interface Module {
   id: string
@@ -77,8 +77,8 @@ export default function CourseManagement() {
   }
 
   const openPreview = () => {
-    // open course dashboard in new tab for preview
-    window.open(`${window.location.origin}/course/dashboard`, '_blank')
+    // The course lives on the Learn platform — open it for preview.
+    window.open(LEARN_URL, '_blank')
   }
 
   return (
@@ -119,9 +119,9 @@ export default function CourseManagement() {
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" asChild>
-                  <Link to="/course/dashboard">
+                  <a href={LEARN_URL} target="_blank" rel="noreferrer">
                     <Eye className="w-4 h-4" />
-                  </Link>
+                  </a>
                 </Button>
                 <Button size="sm" onClick={() => startEdit(m)}>
                   <Edit className="w-4 h-4" />
