@@ -1,4 +1,10 @@
 import { notifications } from './supabase'
+import { LEARN_URL } from './learnUrl'
+
+// Absolute learn-platform URL for use in emails (never a relative fallback).
+const LEARN_EMAIL_URL = LEARN_URL.startsWith('http')
+  ? LEARN_URL
+  : 'https://learn.globalgoalsjam.org'
 
 function getBaseUrl() {
   // Prefer current origin at runtime (works for trial subdomain and custom domains)
@@ -238,7 +244,7 @@ export async function sendTestReceiptEmail(email: string) {
           <h4 style="margin: 0 0 8px; font-size: 14px; color: #1E40AF; font-weight: 600;">What's Next?</h4>
           <ul style="margin: 0; padding-left: 16px; color: #1E40AF; font-size: 13px; line-height: 1.5;">
             <li>Your enrollment is now active</li>
-            <li>Access your learning dashboard anytime</li>
+            <li>Access the Host Programme on the learning platform anytime</li>
             <li>Module 1 email will arrive shortly</li>
             <li>Complete all 8 modules to earn your certificate</li>
           </ul>
@@ -246,7 +252,7 @@ export async function sendTestReceiptEmail(email: string) {
         
         <!-- CTA Button -->
         <div style="text-align: center; margin: 24px 0;">
-          <a href="${getBaseUrl()}/course/dashboard" style="display: inline-block; padding: 14px 32px; background: #00A651; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">Start Learning Now →</a>
+          <a href="${LEARN_EMAIL_URL}" style="display: inline-block; padding: 14px 32px; background: #00A651; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">Start Learning Now →</a>
         </div>
         
         <!-- Support Info -->

@@ -1,4 +1,6 @@
 import { getSupabaseClient } from '../_shared/supabase.ts'
+import { grantLearnEntitlement } from '../_shared/entitlements.ts'
+import { LEARN_URL, learnMagicLinkForEmail } from '../_shared/learn.ts'
 
 // Stripe webhook - no CORS needed (server-to-server)
 Deno.serve(async (req) => {
@@ -99,6 +101,7 @@ async function handleCourseEnrollment(supabase: any, session: any, stripeKey: st
         updated_at: new Date().toISOString(),
       }).eq('id', userId)
     }
+    await grantLearnEntitlement(supabase, userId)
   }
 
   // Send confirmation email
@@ -106,6 +109,8 @@ async function handleCourseEnrollment(supabase: any, session: any, stripeKey: st
     try {
       const resendKey = Deno.env.get('RESEND_API_KEY')
       if (resendKey) {
+        // One-click into the learning platform, already signed in.
+        const learnLink = await learnMagicLinkForEmail(email)
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -123,8 +128,9 @@ async function handleCourseEnrollment(supabase: any, session: any, stripeKey: st
               <div style="padding: 24px;">
                 <p>Your enrollment in the GGJ Host Certification Course has been confirmed.</p>
                 <p><strong>Amount paid:</strong> $${amountPaid.toFixed(2)}</p>
-                <p>You can access your course dashboard at any time.</p>
-                <p><a href="https://globalgoalsjam.org/course/dashboard" style="display:inline-block;padding:12px 24px;background:#00A651;color:white;text-decoration:none;border-radius:8px;">Go to Dashboard</a></p>
+                <p>Your course lives on the Global Goals Jam learning platform. The button below signs you straight in.</p>
+                <p><a href="${learnLink}" style="display:inline-block;padding:12px 24px;background:#00A651;color:white;text-decoration:none;border-radius:8px;">Start the Host Programme</a></p>
+                <p style="color:#6b7280;font-size:13px;">Or visit <a href="${LEARN_URL}" style="color:#00A651;">${LEARN_URL.replace(/^https?:\/\//, '')}</a> and sign in with this email address.</p>
               </div>
             </div>`,
           }),
