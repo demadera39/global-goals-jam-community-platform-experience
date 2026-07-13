@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, GraduationCap, Users, Download } from 'lucide-react'
 import GlobalEventsOverview from '../components/GlobalEventsOverview'
 import JamHighlights from '../components/JamHighlights'
+import LearnShowcase from '../components/LearnShowcase'
 import HostExploreBanner from '../components/HostExploreBanner'
 import TestimonialsSection from '../components/TestimonialsSection'
 
@@ -292,7 +293,7 @@ export default function HomePage() {
                   {[
                     'Pick a local SDG challenge with partners',
                     'Plan your 2-day jam using our Jamkit',
-                    'Facilitate 6 sprints from ideas to actions',
+                    'Facilitate the 4 jam sprints, from ideas to action',
                     'Document outcomes and share with the community',
                   ].map((step) => (
                     <li key={step} className="flex items-start gap-2.5">
@@ -315,6 +316,11 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Learn platform showcase — demo video + feature cards */}
+      <section className="border-b border-[#dfe9e2] bg-white/70">
+        <LearnShowcase variant="landing" />
       </section>
 
       {/* Partnership + Jamkit CTA */}

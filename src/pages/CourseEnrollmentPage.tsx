@@ -3,14 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, Clock, Users, Award, BookOpen, Mail, CreditCard, ArrowRight } from 'lucide-react'
+import { CheckCircle, Users, Award, BookOpen, Mail, CreditCard, ArrowRight } from 'lucide-react'
 import { db, safeDbCall } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { courseModules } from '@/data/courseContent'
 import { appAuth } from '@/lib/simpleAuth'
 import { getStoredUser } from '@/lib/auth'
 import { config } from '@/lib/config'
 import { callSupabaseFunction } from '@/lib/supabase-functions'
+import LearnShowcase, { ProgrammeModuleCards } from '@/components/LearnShowcase'
 import { goToLearn } from '@/lib/learnUrl'
 
 export default function CourseEnrollmentPage() {
@@ -344,7 +344,7 @@ export default function CourseEnrollmentPage() {
           <p className="text-xs uppercase tracking-[0.2em] font-semibold text-primary/60 mb-3">Certification Course</p>
           <Badge variant="green" className="mb-6 px-4 py-2 text-sm font-medium rounded-pill">
             <Award className="w-4 h-4 mr-2" />
-            8-Day Program
+            9 modules · 4 sprints · certificate
           </Badge>
           <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight">
             Become a Certified <span className="text-primary-solid">Facilitator</span>
@@ -354,6 +354,9 @@ export default function CourseEnrollmentPage() {
           </p>
         </div>
       </section>
+
+      {/* SaaS-style tour of the Learn platform: framed demo video + feature cards */}
+      <LearnShowcase variant="enroll" />
 
       <div className="container mx-auto px-4 py-12">
 
@@ -378,15 +381,15 @@ export default function CourseEnrollmentPage() {
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
-                    <strong>8 comprehensive modules</strong>
-                    <p className="text-sm text-muted-foreground">From foundations to advanced facilitation</p>
+                    <strong>9 guided modules</strong>
+                    <p className="text-sm text-muted-foreground">Across four sprints — Understand, Define, Prototype, Implement</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
-                    <strong>Daily email lessons</strong>
-                    <p className="text-sm text-muted-foreground">Bite-sized learning delivered to your inbox</p>
+                    <strong>Narrated video explainers</strong>
+                    <p className="text-sm text-muted-foreground">Marco walks you through every module, in his own voice</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
@@ -426,8 +429,8 @@ export default function CourseEnrollmentPage() {
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
-                    <strong>6-Sprint methodology</strong>
-                    <p className="text-sm text-muted-foreground">Guide teams from ideation to documentation</p>
+                    <strong>The 4-sprint jam method</strong>
+                    <p className="text-sm text-muted-foreground">Guide teams from understanding to implementation</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
@@ -449,34 +452,20 @@ export default function CourseEnrollmentPage() {
           </Card>
         </div>
 
-        {/* Module Preview */}
-        <Card variant="elevated" className="max-w-4xl mx-auto mb-12">
-          <CardHeader>
-            <CardTitle className="font-display">Course Modules</CardTitle>
-            <CardDescription>Your 8-day journey to becoming a certified facilitator — host-ready when you are</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              {courseModules.map((m) => (
-                <div key={m.id} className="flex items-center justify-between p-4 border rounded-xl">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-pastel-green flex items-center justify-center">
-                      <span className="font-semibold text-primary">{m.moduleNumber}</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium">{m.title}</h4>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {typeof m.duration === 'number' ? `${m.duration} min` : `${(m as { durationMinutes?: number | string }).durationMinutes || ''} min`}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="outline">Day {m.moduleNumber}</Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Programme overview — the 4-sprint path as floating tilted module cards */}
+        <div className="max-w-6xl mx-auto mb-14">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <p className="text-xs uppercase tracking-[0.22em] font-semibold text-primary/70 mb-2">The programme</p>
+            <h3 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-3">
+              Nine modules across four sprints
+            </h3>
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              The same Understand → Define → Prototype → Implement rhythm you’ll run at your jam. Each
+              module ends with an artefact — together they become your complete jam plan.
+            </p>
+          </div>
+          <ProgrammeModuleCards />
+        </div>
 
         {/* Fast track to hosting */}
         <Card variant="elevated" className="max-w-5xl mx-auto mb-12">
@@ -506,7 +495,7 @@ export default function CourseEnrollmentPage() {
               <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
                 <li>Frame a local SDG challenge with partners</li>
                 <li>Recruit and welcome a diverse group of participants</li>
-                <li>Facilitate the 6-sprint jam process</li>
+                <li>Facilitate the 4-sprint jam process</li>
                 <li>Document outcomes and share them with the community</li>
               </ul>
             </div>
@@ -537,7 +526,7 @@ export default function CourseEnrollmentPage() {
             <div className="space-y-3 mb-8">
               <div className="flex items-center gap-2 justify-center">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>8-day email course</span>
+                <span>Self-paced · 9 modules on the platform</span>
               </div>
               <div className="flex items-center gap-2 justify-center">
                 <BookOpen className="h-4 w-4 text-primary" />

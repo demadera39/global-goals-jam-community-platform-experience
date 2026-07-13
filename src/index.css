@@ -621,3 +621,92 @@
   .ggj-artefact,
   .ggj-artefact:hover { transition: none; transform: none !important; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   GGJ Learn showcase — SaaS-style product tour (LearnShowcase.tsx)
+   ══════════════════════════════════════════════════════════════════ */
+.learn-showcase { padding: 3.5rem 0; overflow-x: clip; }
+.learn-showcase--landing { padding: 4.5rem 0; }
+
+/* Framed, gently-tilted autoplay demo video */
+.learn-demo-stage { position: relative; max-width: 62rem; margin: 0 auto; perspective: 1800px; }
+.learn-demo-glow {
+  position: absolute; inset: -8% -4% -12%; z-index: 0; pointer-events: none; filter: blur(52px);
+  background: radial-gradient(58% 62% at 50% 32%, hsl(var(--primary) / 0.30), transparent 72%);
+}
+.learn-demo-frame {
+  position: relative; z-index: 1; border-radius: 16px; overflow: hidden;
+  background: hsl(var(--card)); border: 1px solid hsl(var(--border));
+  box-shadow: 0 42px 82px -30px rgba(15, 32, 24, 0.45), 0 12px 28px -12px rgba(15, 32, 24, 0.25);
+  transform: rotateX(3deg) rotateY(-4deg) rotate(-0.6deg); transform-origin: center;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.6s; will-change: transform;
+}
+.learn-demo-stage[data-tilt="off"] .learn-demo-frame { transform: none; }
+.learn-demo-stage:hover .learn-demo-frame {
+  transform: rotateX(0deg) rotateY(0deg) rotate(0deg) translateY(-4px);
+  box-shadow: 0 52px 92px -28px rgba(15, 32, 24, 0.5), 0 16px 32px -12px rgba(15, 32, 24, 0.3);
+}
+.learn-demo-chrome {
+  display: flex; align-items: center; gap: 7px; padding: 10px 14px;
+  background: hsl(var(--muted) / 0.6); border-bottom: 1px solid hsl(var(--border));
+}
+.learn-demo-dot { width: 11px; height: 11px; border-radius: 999px; display: inline-block; }
+.learn-demo-url {
+  margin-left: 10px; font-size: 12px; color: hsl(var(--muted-foreground));
+  background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 999px;
+  padding: 3px 12px; display: inline-flex; align-items: center; gap: 6px; max-width: 260px;
+}
+.learn-demo-lock { font-size: 9px; opacity: 0.6; }
+.learn-demo-video { display: block; width: 100%; height: auto; background: #0e1712; }
+
+/* Floating feature cards */
+.learn-feature-card {
+  background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 16px;
+  padding: 1.35rem 1.4rem 1.5rem; box-shadow: 0 10px 30px -18px rgba(15, 32, 24, 0.35);
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s, border-color 0.35s;
+  will-change: transform;
+}
+.learn-feature-card:hover {
+  transform: rotate(0deg) translateY(-5px); box-shadow: 0 22px 44px -20px rgba(15, 32, 24, 0.4);
+  border-color: hsl(var(--primary) / 0.4);
+}
+.learn-feature-icon {
+  width: 42px; height: 42px; border-radius: 12px; margin-bottom: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Programme module cards (the floating tilted scatter) */
+.programme-cards {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); gap: 1rem;
+  padding: 0.5rem 0.25rem;
+}
+.programme-card {
+  position: relative; background: hsl(var(--card)); border: 1px solid hsl(var(--border));
+  border-radius: 14px; padding: 1.1rem 1.15rem 1.2rem 1.35rem;
+  box-shadow: 0 8px 24px -16px rgba(15, 32, 24, 0.35); overflow: hidden;
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s; will-change: transform;
+}
+.programme-card::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--sprint, hsl(var(--primary)));
+}
+.programme-card:hover {
+  transform: rotate(0deg) translateY(-4px); box-shadow: 0 20px 40px -18px rgba(15, 32, 24, 0.42); z-index: 2;
+}
+.programme-card--capstone {
+  background: linear-gradient(180deg, hsl(var(--primary) / 0.06), hsl(var(--card)));
+  border-color: hsl(var(--primary) / 0.35);
+}
+.programme-card__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+.programme-card__num { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.03em; color: hsl(var(--foreground)); opacity: 0.26; }
+.programme-card__sprint { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.programme-card__tick { width: 7px; height: 7px; border-radius: 999px; display: inline-block; }
+.programme-card__title { font-size: 0.98rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; color: hsl(var(--foreground)); margin-bottom: 0.4rem; }
+.programme-card__artefact { font-size: 0.8rem; line-height: 1.45; color: hsl(var(--muted-foreground)); }
+.programme-card__leave { color: hsl(var(--primary)); font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+  .learn-demo-frame, .learn-feature-card, .programme-card { transform: none !important; transition: none; }
+}
