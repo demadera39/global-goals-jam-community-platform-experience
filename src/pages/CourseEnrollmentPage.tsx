@@ -389,7 +389,7 @@ export default function CourseEnrollmentPage() {
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <strong>Narrated video explainers</strong>
-                    <p className="text-sm text-muted-foreground">Marco walks you through every module, in his own voice</p>
+                    <p className="text-sm text-muted-foreground">An animated explainer per module, narrated by an AI in Marco’s voice</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2">

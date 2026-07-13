@@ -90,8 +90,13 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Learn platform showcase — moved high to stand out */}
+      <section className="border-y border-[#dfe9e2] bg-white/70 mt-6">
+        <LearnShowcase variant="landing" />
+      </section>
+
       {/* Metodic toolkit sponsor — quiet strip */}
-      <div className="max-w-6xl mx-auto px-5 sm:px-8 pb-6">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-10 pb-6">
         <SponsorBanner />
       </div>
 
@@ -316,11 +321,6 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Learn platform showcase — demo video + feature cards */}
-      <section className="border-b border-[#dfe9e2] bg-white/70">
-        <LearnShowcase variant="landing" />
       </section>
 
       {/* Partnership + Jamkit CTA */}
