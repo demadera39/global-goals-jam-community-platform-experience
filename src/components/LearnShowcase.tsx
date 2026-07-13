@@ -44,8 +44,8 @@ const FEATURES: Feature[] = [
   },
   {
     icon: PlayCircle,
-    title: 'Narrated video explainers',
-    body: 'An animated explainer opens each module — about ninety seconds, narrated by an AI in Marco’s own voice, so the ground is clear before you write a word.',
+    title: 'Explainers & deep dives',
+    body: 'A short animated explainer opens each module, narrated by an AI in Marco’s own voice — with longer deep-dive videos underneath for when you want to go further.',
     tint: 'rgba(38,189,226,0.14)',
     ink: '#1595bd',
   },
