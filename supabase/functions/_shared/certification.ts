@@ -26,16 +26,37 @@ export async function activateCertification(
     await supabase.from('certifications').upsert({ email: normEmail, source: 'mollie', ...patch }, { onConflict: 'email' })
   }
 
-  // Grant the host role on the main site.
+  // Grant the host role on the main site. Someone who only ever used the
+  // learn platform has no `users` row yet — create one (passwordless; the
+  // forgot-password flow lets them set a password) so the host dashboard is
+  // genuinely unlocked the moment they certify.
   const { data: siteUser } = await supabase
     .from('users')
     .select('id, role')
     .ilike('email', normEmail)
     .maybeSingle()
-  if (siteUser && siteUser.role === 'participant') {
-    await supabase.from('users').update({
-      role: 'host', status: 'approved', updated_at: now,
-    }).eq('id', siteUser.id)
+  if (siteUser) {
+    if (siteUser.role === 'participant') {
+      await supabase.from('users').update({
+        role: 'host', status: 'approved', updated_at: now,
+      }).eq('id', siteUser.id)
+    }
+  } else {
+    const { data: learnProfile } = await supabase
+      .from('profiles')
+      .select('name')
+      .ilike('email', normEmail)
+      .maybeSingle()
+    await supabase.from('users').insert({
+      id: `user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+      email: normEmail,
+      display_name: learnProfile?.name || normEmail.split('@')[0],
+      role: 'host',
+      status: 'approved',
+      email_verified: 1,
+      created_at: now,
+      updated_at: now,
+    })
   }
 
   // Thank-you email (best effort).
