@@ -12,6 +12,7 @@ import {
   renderArticleHtml,
   tagList,
 } from '@/lib/articles'
+import { usePageMeta } from '@/lib/usePageMeta'
 
 /**
  * /articles/:slug — the magazine reader.
@@ -27,15 +28,29 @@ export default function ArticleDetailPage() {
     if (!slug) return
     setLoading(true)
     fetchArticleBySlug(slug)
-      .then((a) => {
-        setArticle(a)
-        if (a?.title) document.title = `${a.title} — Global Goals Jam`
-      })
+      .then((a) => setArticle(a))
       .finally(() => setLoading(false))
-    return () => {
-      document.title = 'Global Goals Jam'
-    }
   }, [slug])
+
+  usePageMeta({
+    title: article?.title || 'Articles',
+    description: article?.excerpt || 'Stories, methods, impact and news from the worldwide Global Goals Jam community.',
+    path: slug ? `/articles/${slug}` : '/articles',
+    image: article?.coverImageUrl || undefined,
+    jsonLd: article
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: article.title,
+          description: article.excerpt || undefined,
+          image: article.coverImageUrl || undefined,
+          datePublished: article.publishedAt || undefined,
+          author: { '@type': 'Person', name: article.authorName || 'Global Goals Jam' },
+          publisher: { '@id': 'https://www.globalgoalsjam.org/#org' },
+          mainEntityOfPage: `https://www.globalgoalsjam.org/articles/${article.slug}`,
+        }
+      : null,
+  })
 
   const html = useMemo(() => (article ? renderArticleHtml(article.content) : ''), [article])
 

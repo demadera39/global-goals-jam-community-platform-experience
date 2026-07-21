@@ -1,4 +1,5 @@
 import { Badge } from '../components/ui/badge'
+import { usePageMeta } from '@/lib/usePageMeta'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Calendar, Download } from 'lucide-react'
@@ -8,6 +9,11 @@ import { AspectRatio } from '../components/ui/aspect-ratio'
 import TestimonialsSection from '../components/TestimonialsSection'
 
 export default function AboutPage() {
+  usePageMeta({
+    title: 'About',
+    description: 'The story and mission of the Global Goals Jam: a worldwide community running 48-hour design sprints for the UN Sustainable Development Goals since 2016.',
+    path: '/about',
+  })
   // Copy extracted from the archived site (Jan 2025 snapshot)
   const why = `The challenges before us are so complex that no single discipline, mindset, or expertise will be able to solve them. To address social challenges globally, we need to collaborate and learn from local ideas that are being developed across the globe.\n\nTo collaborate, we need to engage in a way that goes beyond talking, towards making and creating, in a space for people from all backgrounds who bring in their local knowledge, ensuring a bottom-up, grassroots approach.\n\nThis is why we started the Jam: a 2-day event to engage makers and designers to contribute to the Sustainable Development Goals by creating short-term interventions with long-term impact. More than an event, it is a network of cities and organisations that are excited to engage their local communities to create real impact for the Global Goals.\n\nLocal organisers – ranging from universities and design labs to NGOs or consultancies – can apply to host a Jam. Together with partners from the local industry they co-design challenges related to one or more of the selected global themes. We provide them with a toolkit and online training to guide the design process.`
 

@@ -27,6 +27,7 @@ import { getFullUser } from '../lib/userProfile'
 import ToolkitDisplay from '../components/ToolkitDisplay'
 import { buildToolkitHtml, markdownToBasicHtml, buildJamAgendaHtml } from '../lib/toolkitExport'
 import { fetchMethods, toCatalogForPrompt, indexById } from '../lib/metodicMethods'
+import { usePageMeta } from '@/lib/usePageMeta'
 
 interface User {
   id: string
@@ -80,6 +81,11 @@ const sdgOptions = [
 type LibraryFilter = 'all' | 'mine' | 'others'
 
 export default function ToolkitPage() {
+  usePageMeta({
+    title: 'Toolkit Generator — AI Jam Agenda Builder',
+    description: 'Free AI toolkit generator for SDG design sprints: answer a few questions and get a complete 4-sprint Global Goals Jam agenda built from real facilitation methods, powered by Metodic.',
+    path: '/toolkit',
+  })
   const navigate = useNavigate()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)

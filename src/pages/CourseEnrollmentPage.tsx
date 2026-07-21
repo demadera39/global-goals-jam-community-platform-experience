@@ -11,6 +11,7 @@ import { getStoredUser } from '@/lib/auth'
 import { callSupabaseFunction } from '@/lib/supabase-functions'
 import LearnShowcase, { ProgrammeModuleCards } from '@/components/LearnShowcase'
 import { goToLearn } from '@/lib/learnUrl'
+import { usePageMeta } from '@/lib/usePageMeta'
 
 // The Host Programme is free for everyone. The one payment moment in the
 // model is the official certification (€39), claimed on the learn platform
@@ -19,6 +20,11 @@ import { goToLearn } from '@/lib/learnUrl'
 // enroll-course-free edge function (which also provisions the learn account
 // and emails a one-click sign-in link).
 export default function CourseEnrollmentPage() {
+  usePageMeta({
+    title: 'Free Host Programme & GGJ Host Certification',
+    description: 'Learn to facilitate a Global Goals Jam with the free 9-module Host Programme. Official Certified GGJ Host certification (€39) unlocks host status, the host dashboard and the right to run official jams.',
+    path: '/course/enroll',
+  })
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [checkingEnrollment, setCheckingEnrollment] = useState(true)

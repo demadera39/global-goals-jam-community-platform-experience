@@ -1,4 +1,5 @@
 import { Badge } from '../components/ui/badge'
+import { usePageMeta } from '@/lib/usePageMeta'
 import { Card, CardContent } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Link } from 'react-router-dom'
@@ -170,6 +171,11 @@ const daySchedule = [
 ]
 
 export default function ProcessPage() {
+  usePageMeta({
+    title: 'The 4-Sprint Jam Process',
+    description: 'How a Global Goals Jam works: 48 hours through four sprints — Understand, Define, Prototype, Implement — turning the SDGs into concrete local action.',
+    path: '/process',
+  })
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}

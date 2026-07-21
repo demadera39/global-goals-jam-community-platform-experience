@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { usePageMeta } from '@/lib/usePageMeta'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -22,6 +23,11 @@ const contactSchema = z.object({
 type ContactFormData = z.infer<typeof contactSchema>
 
 export default function ContactPage() {
+  usePageMeta({
+    title: 'Contact',
+    description: 'Get in touch with the Global Goals Jam team — questions about jams, hosting, partnerships or the platform.',
+    path: '/contact',
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
 

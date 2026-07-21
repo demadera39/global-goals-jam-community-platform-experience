@@ -1,0 +1,32 @@
+# Global Goals Jam
+
+> Global Goals Jam (GGJ) is a worldwide series of 48-hour design sprints in which local, multidisciplinary teams create concrete interventions for the UN Sustainable Development Goals (SDGs). Jams are run by certified local hosts in cities around the world and follow four sprints: Understand, Define, Prototype, Implement. Outcomes are shared openly. The community was co-initiated in Amsterdam (2016) by Marco van Hout and partners, originally with UNDP, and is coordinated from globalgoalsjam.org.
+
+Key facts:
+- A jam is a 2-day (48-hour) design sprint focused on local action for the SDGs.
+- The method uses 4 sprints — Understand, Define, Prototype, Implement — with real facilitation methods (powered by Metodic, metodic.io).
+- The GGJ Host Programme (9 modules, self-paced, on learn.globalgoalsjam.org) is free for everyone.
+- Official "Certified GGJ Host" certification costs €39 once, unlocks host status, the host dashboard and the right to run official jams, and funds the platform and community.
+- Anyone can generate a facilitation-ready jam agenda with the free Toolkit Generator.
+
+## Main pages
+- [Home](https://www.globalgoalsjam.org/): What the Global Goals Jam is, latest highlights and stories.
+- [Events](https://www.globalgoalsjam.org/events): Upcoming and past jams worldwide, with locations and results.
+- [Process](https://www.globalgoalsjam.org/process): The 4-sprint jam methodology explained.
+- [2026 Theme](https://www.globalgoalsjam.org/theme): The current edition's theme.
+- [About](https://www.globalgoalsjam.org/about): Mission, history and the team.
+- [FAQ](https://www.globalgoalsjam.org/faq): Common questions about joining and hosting.
+
+## Hosting a jam
+- [Host Programme (free course)](https://www.globalgoalsjam.org/course/enroll): Free 9-module course; official Certified GGJ Host certification is €39.
+- [Toolkit Generator](https://www.globalgoalsjam.org/toolkit): Free AI-assisted generator that builds a 4-sprint jam agenda from real facilitation methods from the Metodic library.
+- [Host directory](https://www.globalgoalsjam.org/host-directory): Certified hosts around the world.
+
+## Community & content
+- [Articles](https://www.globalgoalsjam.org/articles): Stories, methods, impact and news from the community.
+- [Supporters](https://www.globalgoalsjam.org/supporters): Partners and supporters.
+- [Donate](https://www.globalgoalsjam.org/donate): Support the platform and community.
+
+## Contact
+- Email: marco@globalgoalsjam.org
+- Learning platform: https://learn.globalgoalsjam.org

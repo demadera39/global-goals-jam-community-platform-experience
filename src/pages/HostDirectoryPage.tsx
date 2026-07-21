@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
+import { usePageMeta } from '@/lib/usePageMeta'
 import { Link } from 'react-router-dom'
 import { db, safeDbCall } from '../lib/supabase'
 import { isCertifiedHost } from '../lib/userProfile'
@@ -24,6 +25,11 @@ interface EventHostOnly {
 }
 
 export default function HostDirectoryPage() {
+  usePageMeta({
+    title: 'Host Directory',
+    description: 'Certified Global Goals Jam hosts around the world — find a host near you or become one via the free Host Programme.',
+    path: '/host-directory',
+  })
   const [hosts, setHosts] = useState<HostRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

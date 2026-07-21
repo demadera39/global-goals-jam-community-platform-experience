@@ -5,11 +5,105 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Global Goals Jam</title>
+    <meta name="theme-color" content="#00A651" />
+
+    <title>Global Goals Jam — 48h Design Sprints for the SDGs</title>
+    <meta name="description" content="Global Goals Jam is a worldwide series of 48-hour design sprints where local teams tackle the UN Sustainable Development Goals. Join a jam near you, take the free host course, or become an official certified GGJ host." />
+    <link rel="canonical" href="https://www.globalgoalsjam.org/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Global Goals Jam" />
+    <meta property="og:title" content="Global Goals Jam — 48h Design Sprints for the SDGs" />
+    <meta property="og:description" content="Local teams, global goals. Join a 48-hour design sprint for the UN Sustainable Development Goals — or become an official certified GGJ host. The course is free." />
+    <meta property="og:url" content="https://www.globalgoalsjam.org/" />
+    <meta property="og:image" content="https://www.globalgoalsjam.org/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Global Goals Jam — 48h Design Sprints for the SDGs" />
+    <meta name="twitter:description" content="Local teams, global goals. Join a 48-hour design sprint for the UN SDGs — or become an official certified GGJ host." />
+    <meta name="twitter:image" content="https://www.globalgoalsjam.org/og-image.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Structured data: who we are, what the jam is, and the host course -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://www.globalgoalsjam.org/#org",
+          "name": "Global Goals Jam",
+          "url": "https://www.globalgoalsjam.org/",
+          "logo": "https://www.globalgoalsjam.org/ggj-logo.png",
+          "description": "A worldwide community organising 48-hour design sprints (jams) in which local teams create concrete interventions for the UN Sustainable Development Goals.",
+          "email": "marco@globalgoalsjam.org",
+          "founder": { "@type": "Person", "name": "Marco van Hout" }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.globalgoalsjam.org/#website",
+          "url": "https://www.globalgoalsjam.org/",
+          "name": "Global Goals Jam",
+          "publisher": { "@id": "https://www.globalgoalsjam.org/#org" }
+        },
+        {
+          "@type": "EventSeries",
+          "@id": "https://www.globalgoalsjam.org/#jamseries",
+          "name": "Global Goals Jam",
+          "description": "An annual worldwide series of 48-hour design sprints for the UN Sustainable Development Goals, hosted by certified local hosts in cities around the world. Teams move through four sprints — Understand, Define, Prototype, Implement — and publish their outcomes openly.",
+          "url": "https://www.globalgoalsjam.org/events",
+          "organizer": { "@id": "https://www.globalgoalsjam.org/#org" },
+          "eventAttendanceMode": "https://schema.org/MixedEventAttendanceMode"
+        },
+        {
+          "@type": "Course",
+          "@id": "https://www.globalgoalsjam.org/#hostcourse",
+          "name": "GGJ Host Programme",
+          "description": "A free, self-paced course (9 modules across the four GGJ sprints) that teaches you to facilitate a Global Goals Jam. Official Certified GGJ Host certification (€39) unlocks host status, the host dashboard and the right to run official jams.",
+          "url": "https://www.globalgoalsjam.org/course/enroll",
+          "provider": { "@id": "https://www.globalgoalsjam.org/#org" },
+          "isAccessibleForFree": true,
+          "offers": {
+            "@type": "Offer",
+            "name": "Official Certified GGJ Host certification",
+            "price": "39.00",
+            "priceCurrency": "EUR",
+            "url": "https://www.globalgoalsjam.org/course/enroll"
+          },
+          "hasCourseInstance": {
+            "@type": "CourseInstance",
+            "courseMode": "online",
+            "courseWorkload": "PT8H"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main style="max-width:640px;margin:40px auto;font-family:sans-serif;line-height:1.6">
+        <h1>Global Goals Jam</h1>
+        <p>Global Goals Jam is a worldwide series of 48-hour design sprints where local teams create concrete interventions for the UN Sustainable Development Goals. Jams follow four sprints — Understand, Define, Prototype, Implement — and share their outcomes openly.</p>
+        <ul>
+          <li><a href="/events">Find a jam near you</a></li>
+          <li><a href="/course/enroll">Take the free Host Programme and get certified</a></li>
+          <li><a href="/toolkit">Generate a jam agenda with the Toolkit Generator</a></li>
+          <li><a href="/articles">Stories, methods and impact from the community</a></li>
+          <li><a href="/about">About the Global Goals Jam</a></li>
+        </ul>
+        <p>This site works best with JavaScript enabled.</p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-</html> 
+</html>

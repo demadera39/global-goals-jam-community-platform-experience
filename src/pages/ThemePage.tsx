@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { usePageMeta } from '@/lib/usePageMeta'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
@@ -64,6 +65,11 @@ const JAM_IDEAS = [
 ]
 
 export default function ThemePage() {
+  usePageMeta({
+    title: '2026 Theme',
+    description: "The Global Goals Jam 2026 theme: what this year's worldwide design sprints focus on and how your city can take part.",
+    path: '/theme',
+  })
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}

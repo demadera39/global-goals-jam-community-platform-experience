@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { usePageMeta } from '@/lib/usePageMeta'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Clock, PenLine } from 'lucide-react'
 import Footer from '../components/Footer'
@@ -65,6 +66,11 @@ function Cover({ a, className }: { a: Article; className?: string }) {
 }
 
 export default function ArticlesPage() {
+  usePageMeta({
+    title: 'Articles — Stories, Methods & Impact',
+    description: 'Stories, methods, impact and news from the worldwide Global Goals Jam community, written by hosts and the GGJ team.',
+    path: '/articles',
+  })
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | ArticleCategory>('all')

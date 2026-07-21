@@ -1,9 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { usePageMeta } from '@/lib/usePageMeta'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
 import { HelpCircle } from 'lucide-react'
 
 export default function FAQPage() {
+  usePageMeta({
+    title: 'FAQ',
+    description: 'Frequently asked questions about joining a Global Goals Jam, hosting your own, the free Host Programme and the official GGJ Host certification.',
+    path: '/faq',
+  })
   const sections = [
     {
       title: 'How to host your own Global Goals Jam',

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { usePageMeta } from '@/lib/usePageMeta'
 import { Link } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
@@ -66,6 +67,11 @@ const statusLabels = {
 }
 
 export default function EventsPage() {
+  usePageMeta({
+    title: 'Jams & Events Worldwide',
+    description: 'Upcoming and past Global Goals Jam events around the world — find a 48-hour SDG design sprint near you, see locations, dates and results.',
+    path: '/events',
+  })
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState<Event[]>([])
