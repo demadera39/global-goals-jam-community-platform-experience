@@ -123,7 +123,6 @@ export default function Navigation() {
   }
 
   const baseItems = [
-    { name: 'Home', href: '/' },
     { name: '2026 Theme', href: '/theme' },
     { name: 'Events', href: '/events' },
     { name: 'Process', href: '/process' },
