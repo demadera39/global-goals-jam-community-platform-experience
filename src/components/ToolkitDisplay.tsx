@@ -38,6 +38,9 @@ interface ToolkitDisplayProps {
   onDownload: () => void
   locked?: boolean
   onUnlock?: () => void
+  /** Enables the Jam Studio's light edits (swap / retime / remove); receives
+   *  the full updated agenda for persistence. */
+  onAgendaChange?: (updated: any) => void
 }
 
 const sdgOptions = [
@@ -75,7 +78,8 @@ export default function ToolkitDisplay({
   challenge,
   onDownload,
   locked = false,
-  onUnlock
+  onUnlock,
+  onAgendaChange
 }: ToolkitDisplayProps) {
   const selectedSDG = sdgOptions.find(sdg => sdg.value === sdgFocus)
 
@@ -368,14 +372,21 @@ export default function ToolkitDisplay({
     }, 250)
   }
 
-  // New grounded format: render the dedicated JamAgenda view.
+  // New grounded format: render the dedicated Jam Studio (mini) view — it
+  // brings its own studio chrome, so no extra Card wrapper.
   if (structured?.format === 'ggj.jam-agenda.v1') {
     return (
-      <Card className="mt-8 overflow-hidden">
-        <CardContent className="p-5 sm:p-7">
-          <JamAgenda agenda={structured} onDownload={onDownload} />
-        </CardContent>
-      </Card>
+      <div className="mt-8">
+        {/* Keyed by generation timestamp: a REgeneration remounts the studio
+            with fresh state, while in-studio edits (same generatedAt) keep
+            local editing state alive. */}
+        <JamAgenda
+          key={structured.meta?.generatedAt || 'agenda'}
+          agenda={structured}
+          onDownload={onDownload}
+          onChange={onAgendaChange}
+        />
+      </div>
     )
   }
 

@@ -959,6 +959,7 @@ ${JSON.stringify(catalog)}`
                       }}
                       locked={false}
                       onUnlock={() => navigate('/sign-in')}
+                      onAgendaChange={(updated) => setGeneratedContent(JSON.stringify(updated))}
                     />
 
                     {/* Actions below the generated preview */}
