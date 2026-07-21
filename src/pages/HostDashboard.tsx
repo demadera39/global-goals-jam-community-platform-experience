@@ -44,6 +44,7 @@ import type { UserProfile } from '../lib/userStatus'
 import { getStoredUser } from '../lib/auth'
 import { appAuth } from '../lib/simpleAuth'
 import HostAssets from '../components/HostAssets'
+import HostArticlesTab from '../components/HostArticlesTab'
 import { showCertificateInNewTab } from '../lib/certificates'
 import { FloatingFeedback } from '../components/FloatingFeedback'
 import DonateButton from '../components/DonateButton'
@@ -1141,6 +1142,7 @@ export default function HostDashboard() {
             <TabsTrigger value="events" className={tabTriggerClass}>My Events</TabsTrigger>
             <TabsTrigger value="participants" className={tabTriggerClass}>Participants</TabsTrigger>
             <TabsTrigger value="promote" className={tabTriggerClass}>Promote</TabsTrigger>
+            <TabsTrigger value="articles" className={tabTriggerClass}>Articles</TabsTrigger>
             <TabsTrigger value="media" className={tabTriggerClass}>Media</TabsTrigger>
             <TabsTrigger value="certificates" className={tabTriggerClass}>Certificates</TabsTrigger>
             <TabsTrigger value="courses" className={tabTriggerClass}>My Courses</TabsTrigger>
@@ -1670,6 +1672,10 @@ export default function HostDashboard() {
                 <Button className="bg-primary-solid text-white hover:bg-primary/90" onClick={() => { goToLearn() }}>Go to Course</Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="articles" className="space-y-6 pt-6">
+            <HostArticlesTab user={user} />
           </TabsContent>
 
           <TabsContent value="promote" className="space-y-6 pt-6">

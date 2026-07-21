@@ -27,6 +27,7 @@ export default function Footer() {
     {
       title: 'Community',
       links: [
+        { name: 'Articles', href: '/articles' },
         { name: 'Host Directory', href: '/host-directory' },
         { name: 'Supporters', href: '/supporters' },
         { name: 'Organizer Booklet', href: '/organizer-booklet' },

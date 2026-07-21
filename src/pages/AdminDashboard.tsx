@@ -271,6 +271,7 @@ export default function AdminDashboard() {
     { dot: '#FCC30B', title: 'Passwords', blurb: 'Set or bulk-generate sign-in credentials.', to: '/admin/passwords' },
     { dot: '#A21942', title: 'Certificates', blurb: 'Compose and download custom certificates.', to: '/admin/certificate-creator' },
     { dot: '#FD6925', title: 'Cert access', blurb: 'Repair certificate access for completed learners.', to: '/admin/certificate-fix' },
+    { dot: '#4C9F38', title: 'Articles', blurb: 'Review host stories, write and AI-generate pieces.', to: '/admin/articles' },
     { dot: '#DD1367', title: 'Highlights', blurb: 'Verify and curate jam photos for the site.', to: '/admin/highlights' },
     { dot: '#0A97D9', title: 'Carousel', blurb: 'Manage homepage carousel imagery.', to: '/admin/carousel' },
     { dot: '#4C9F38', title: 'Events', blurb: 'Publish, draft and update every jam.', tab: 'events' },

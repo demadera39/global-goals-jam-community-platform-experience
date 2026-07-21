@@ -18,6 +18,9 @@ import EventResultsPage from './pages/EventResultsPage'
 import LocationPage from './pages/LocationPage'
 import AuthContinue from './pages/AuthContinue'
 import ToolkitDetailsPage from './pages/ToolkitDetailsPage'
+import ArticlesPage from './pages/ArticlesPage'
+import ArticleDetailPage from './pages/ArticleDetailPage'
+import AdminArticlesPage from './pages/AdminArticlesPage'
 import CourseEnrollmentPage from './pages/CourseEnrollmentPage'
 import CourseRedirect from './pages/CourseRedirect'
 import CourseCertificate from './pages/CourseCertificate'
@@ -74,6 +77,15 @@ function App() {
             {/* Toolkit pages are public: teaser + library and toolkit detail pages */}
             <Route path="/toolkit" element={<ToolkitPage />} />
             <Route path="/toolkit/:id" element={<ToolkitDetailsPage />} />
+
+            {/* Articles — public reading + admin editorial desk */}
+            <Route path="/articles" element={<ArticlesPage />} />
+            <Route path="/articles/:slug" element={<ArticleDetailPage />} />
+            <Route path="/admin/articles" element={
+              <ProtectedRoute requiredFeature="admin_dashboard">
+                <AdminArticlesPage />
+              </ProtectedRoute>
+            } />
 
             <Route path="/host-dashboard" element={
               <ProtectedRoute 
