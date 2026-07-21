@@ -159,7 +159,7 @@ export default function CourseEnrollmentPage() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <p className="text-xs text-muted-foreground text-center mt-2">
-                When you complete the programme you can claim your official Host certification (€39) — your contribution supports the GGJ community and this platform.
+                When you complete the programme you can claim your official Host certification (€39) — it unlocks host status and the host dashboard, and supports the GGJ community and this platform. Without it you simply stay a participant with full course access.
               </p>
             </div>
           </CardContent>
@@ -367,7 +367,7 @@ export default function CourseEnrollmentPage() {
               </div>
               <div className="flex items-center gap-2 justify-center">
                 <Award className="h-4 w-4 text-primary" />
-                <span>Official host certification (€39, optional)</span>
+                <span>Official certification (€39) unlocks host status + host dashboard</span>
               </div>
               <div className="flex items-center gap-2 justify-center">
                 <Users className="h-4 w-4 text-primary" />
@@ -381,7 +381,7 @@ export default function CourseEnrollmentPage() {
             </Button>
 
             <p className="text-xs text-muted-foreground mt-4">
-              No payment needed to learn. When you finish, the official Certified GGJ Host credential (€39) unlocks your verified certificate, your Certified Host status, and the right to run official jams.
+              No payment needed to learn — as a participant you get the full course. When you finish, the official Certified GGJ Host credential (€39) unlocks your verified certificate, host status with the host dashboard, and the right to run official jams. Skip it and you simply stay a participant with full course access.
             </p>
           </CardContent>
         </Card>

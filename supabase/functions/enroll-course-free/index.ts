@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
                 <p>Your course lives on the Global Goals Jam learning platform. The button below signs you straight in.</p>
                 <p><a href="${learnLink}" style="display:inline-block;padding:12px 24px;background:#00A651;color:white;text-decoration:none;border-radius:8px;">Start the Host Programme</a></p>
                 <p style="color:#6b7280;font-size:13px;">Or visit <a href="${LEARN_URL}" style="color:#00A651;">${LEARN_URL.replace(/^https?:\/\//, '')}</a> and sign in with this email address.</p>
-                <p style="color:#6b7280;font-size:13px;">When you complete the programme, you can claim your official Host certification (€39) — your contribution directly supports the Global Goals Jam community and keeps this platform running.</p>
+                <p style="color:#6b7280;font-size:13px;">When you complete the programme, you can claim your official Host certification (€39). It unlocks your verified certificate, host status with the host dashboard on globalgoalsjam.org, and the right to run official jams — and your contribution directly supports the Global Goals Jam community and keeps this platform running. Without it you simply keep full course access as a participant.</p>
               </div>
             </div>`,
           }),

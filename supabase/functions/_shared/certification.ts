@@ -55,7 +55,7 @@ export async function activateCertification(
             </div>
             <div style="padding: 24px;">
               <p>You are now an <strong>Official Certified Global Goals Jam Host</strong>.</p>
-              <p>Your certificate is ready on the learning platform, and your host tools are unlocked on globalgoalsjam.org.</p>
+              <p>Your certificate is ready on the learning platform, and your host status is active: the host dashboard on globalgoalsjam.org is now unlocked — organise events, manage participants, and publish articles.</p>
               <p>Thank you — your €${opts.amountPaid.toFixed(2)} contribution directly supports the Global Goals Jam community and keeps this platform running.</p>
               <p><a href="https://learn.globalgoalsjam.org/certificate" style="display:inline-block;padding:12px 24px;background:#00A651;color:white;text-decoration:none;border-radius:8px;">View your certificate</a></p>
             </div>
