@@ -4,7 +4,7 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Alert, AlertDescription } from './ui/alert'
-import { Mail, Lock, UserPlus, LogIn, CheckCircle, Loader2, CreditCard, ArrowRight } from 'lucide-react'
+import { Mail, Lock, UserPlus, LogIn, CheckCircle, Loader2, GraduationCap, ArrowRight } from 'lucide-react'
 import { appAuth, emailAuth } from '../lib/simpleAuth'
 import { signup as authSignup } from '../lib/auth'
 
@@ -184,14 +184,14 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
     <Card variant="elevated" className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <div className="w-12 h-12 bg-pastel-green rounded-full flex items-center justify-center mx-auto mb-4">
-          {isCourseEnrollment ? <CreditCard className="w-6 h-6 text-primary" /> : <Mail className="w-6 h-6 text-primary" />}
+          {isCourseEnrollment ? <GraduationCap className="w-6 h-6 text-primary" /> : <Mail className="w-6 h-6 text-primary" />}
         </div>
         <CardTitle className="text-2xl font-bold font-display text-foreground">
           {mode === 'signup' ? 'Create your account' : 'Sign in'}
         </CardTitle>
         <p className="text-muted-foreground">
           {isCourseEnrollment
-            ? 'Create an account to enroll in the certification course'
+            ? 'Create an account to start the free Host Programme'
             : 'Access the Global Goals Jam platform'}
         </p>
         {isCourseEnrollment && (
@@ -201,11 +201,11 @@ export function SimpleEmailSignIn({ redirectUrl = '/host', onClose }: SimpleEmai
             </span>
             <ArrowRight className="w-3 h-3" />
             <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
-              2. Secure payment
+              2. Start learning — free
             </span>
             <ArrowRight className="w-3 h-3" />
             <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
-              3. Start learning
+              3. Get certified (€39)
             </span>
           </div>
         )}
