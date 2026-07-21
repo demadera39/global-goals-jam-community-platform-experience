@@ -178,7 +178,7 @@ export default function LearnShowcase({ variant = 'enroll' }: { variant?: 'enrol
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <p className="text-xs text-muted-foreground mt-3">
-                  €39.99 · lifetime access · become a certified Global Goals Jam host
+                  Free course · official certification €39 · become a certified Global Goals Jam host
                 </p>
               </div>
             )}

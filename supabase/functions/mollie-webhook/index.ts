@@ -1,6 +1,7 @@
 import { getSupabaseClient } from '../_shared/supabase.ts'
 import { grantLearnEntitlement } from '../_shared/entitlements.ts'
 import { LEARN_URL, learnMagicLinkForEmail } from '../_shared/learn.ts'
+import { activateCertification } from '../_shared/certification.ts'
 
 const MOLLIE_API_KEY = () => Deno.env.get('MOLLIE_API_KEY') as string
 const MOLLIE_BASE = 'https://api.mollie.com/v2'
@@ -75,6 +76,13 @@ Deno.serve(async (req) => {
       await handleCourseEnrollment(supabase, payment, metadata)
     } else if (purpose === 'platform_donation') {
       await handleDonation(supabase, payment, metadata)
+    } else if (purpose === 'host_certification' && metadata.email) {
+      await activateCertification(supabase, {
+        certificationId: metadata.certification_id,
+        email: metadata.email || '',
+        molliePaymentId: payment.id,
+        amountPaid: parseFloat(payment.amount.value),
+      })
     }
 
     return new Response(JSON.stringify({ received: true }), {
