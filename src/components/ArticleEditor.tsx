@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
-import { Eye, PenLine, X } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { Eye, ImagePlus, PenLine, Trash2, Upload, X } from 'lucide-react'
+import { toast } from 'sonner'
+import { storage } from '@/lib/supabase'
 import {
   ARTICLE_CATEGORIES,
   type Article,
@@ -8,6 +10,11 @@ import {
   renderArticleHtml,
   slugify,
 } from '@/lib/articles'
+
+/** Cover guidance: cards crop to 16:9 and the reader shows up to ~1400px
+ *  wide — 1600×900 is the sweet spot. */
+const COVER_HINT = '16:9 landscape · ideally 1600 × 900 px (min 1200 wide) · JPG or PNG, max 5 MB'
+const MAX_COVER_BYTES = 5 * 1024 * 1024
 
 /**
  * ArticleEditor — the shared write/edit surface for articles.
@@ -57,6 +64,48 @@ export default function ArticleEditor({
   const [tags, setTags] = useState(initial?.tags || '')
   const [content, setContent] = useState(initial?.content || '')
   const [view, setView] = useState<'write' | 'preview'>('write')
+  const [uploading, setUploading] = useState(false)
+  const [coverDims, setCoverDims] = useState<{ w: number; h: number } | null>(null)
+  const fileRef = useRef<HTMLInputElement | null>(null)
+
+  const uploadCover = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please pick an image file (JPG or PNG).')
+      return
+    }
+    if (file.size > MAX_COVER_BYTES) {
+      toast.error('That image is over 5 MB — resize it and try again.')
+      return
+    }
+    setUploading(true)
+    try {
+      const ext = file.name.split('.').pop() || 'jpg'
+      const { publicUrl } = await storage.upload(
+        file,
+        `articles/covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`,
+        { upsert: true }
+      )
+      setCoverDims(null)
+      setCoverImageUrl(publicUrl)
+      toast.success('Cover uploaded')
+    } catch (e) {
+      console.error(e)
+      toast.error('Upload failed — try again or paste an image URL.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  /** Soft quality check once the preview loads — never blocks saving. */
+  const coverWarning = useMemo(() => {
+    if (!coverDims) return null
+    const { w, h } = coverDims
+    if (w < 1200) return `This image is ${w}×${h}px — under 1200px wide it may look soft on the article page.`
+    const ratio = w / h
+    if (Math.abs(ratio - 16 / 9) / (16 / 9) > 0.25)
+      return `This image is ${w}×${h}px (${ratio.toFixed(2)}:1) — cards crop covers to 16:9, so the edges may be cut off.`
+    return null
+  }, [coverDims])
 
   const previewHtml = useMemo(
     () => (view === 'preview' ? renderArticleHtml(content || '*Nothing written yet.*') : ''),
@@ -163,21 +212,89 @@ export default function ArticleEditor({
               />
             </div>
             <div>
-              <label className={labelClass}>Cover image URL (optional)</label>
+              <label className={labelClass}>Cover image (optional)</label>
               <input
-                value={coverImageUrl}
-                onChange={(e) => setCoverImageUrl(e.target.value)}
-                placeholder="https://…"
-                className={inputClass}
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) uploadCover(f)
+                  e.target.value = ''
+                }}
               />
-              {coverImageUrl.trim() && (
-                <img
-                  src={coverImageUrl}
-                  alt="Cover preview"
-                  className="mt-2 h-20 rounded-lg border border-[#dfe9e2] object-cover"
-                  onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
-                />
+              {coverImageUrl.trim() ? (
+                <div className="rounded-xl border border-[#dfe9e2] overflow-hidden">
+                  <div className="relative aspect-[16/9] bg-[#f0f7f2]">
+                    <img
+                      src={coverImageUrl}
+                      alt="Cover preview"
+                      className="absolute inset-0 h-full w-full object-cover"
+                      onLoad={(e) => {
+                        const img = e.currentTarget
+                        setCoverDims({ w: img.naturalWidth, h: img.naturalHeight })
+                      }}
+                      onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 bg-white">
+                    <span className="font-mono text-[11px] tabular-nums text-[#7d8a83] truncate">
+                      {coverDims ? `${coverDims.w} × ${coverDims.h} px` : '…'}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => fileRef.current?.click()}
+                        disabled={uploading}
+                        className="inline-flex items-center gap-1 rounded-full border border-[#dfe9e2] px-2.5 py-1 text-[11px] font-semibold text-[#4c5a52] hover:border-[#00A651]/50 hover:text-[#00713a] transition-colors disabled:opacity-50"
+                      >
+                        <Upload className="w-3 h-3" /> Replace
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCoverImageUrl('')
+                          setCoverDims(null)
+                        }}
+                        className="p-1.5 rounded-full text-[#9aa8a0] hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        title="Remove cover"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full rounded-xl border-2 border-dashed border-[#c9d8ce] bg-[#fbfdfc] px-4 py-6 text-center hover:border-[#00A651]/50 transition-colors disabled:opacity-60"
+                >
+                  <ImagePlus className="w-5 h-5 mx-auto text-[#7d8a83]" />
+                  <span className="block text-sm font-semibold text-[#14201a] mt-1.5">
+                    {uploading ? 'Uploading…' : 'Upload a cover'}
+                  </span>
+                  <span className="block text-[11px] text-[#7d8a83] mt-0.5">{COVER_HINT}</span>
+                </button>
               )}
+              {coverWarning && (
+                <p className="mt-1.5 text-[11px] leading-snug text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5">
+                  {coverWarning}
+                </p>
+              )}
+              <div className="mt-1.5 flex items-center gap-2">
+                <input
+                  value={coverImageUrl}
+                  onChange={(e) => {
+                    setCoverDims(null)
+                    setCoverImageUrl(e.target.value)
+                  }}
+                  placeholder="…or paste an image URL"
+                  className={inputClass + ' !py-1.5 text-xs font-mono'}
+                />
+              </div>
             </div>
           </div>
 
