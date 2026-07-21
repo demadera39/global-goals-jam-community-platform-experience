@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Clock, Link2, PenLine, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Footer from '../components/Footer'
+import { CoverCaption } from '../components/ArticleEditor'
 import {
   ARTICLE_CATEGORIES,
   type Article,
@@ -134,11 +135,14 @@ export default function ArticleDetailPage() {
 
         {/* Cover */}
         {article.coverImageUrl && (
-          <img
-            src={article.coverImageUrl}
-            alt=""
-            className="w-full rounded-2xl border border-[#dfe9e2] mt-8 object-cover max-h-[440px]"
-          />
+          <figure className="relative mt-8">
+            <img
+              src={article.coverImageUrl}
+              alt=""
+              className="w-full rounded-2xl border border-[#dfe9e2] object-cover max-h-[440px]"
+            />
+            {article.coverCaption && <CoverCaption caption={article.coverCaption} />}
+          </figure>
         )}
 
         {/* Body */}

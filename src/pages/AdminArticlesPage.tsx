@@ -88,6 +88,7 @@ export default function AdminArticlesPage() {
         excerpt: draft.excerpt || null,
         content: draft.content,
         coverImageUrl: draft.coverImageUrl || null,
+        coverCaption: draft.coverCaption || null,
         category: draft.category,
         tags: draft.tags || null,
         status: intent,

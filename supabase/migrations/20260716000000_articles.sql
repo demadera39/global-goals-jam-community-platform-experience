@@ -11,6 +11,7 @@ create table if not exists public.articles (
   excerpt text,
   content text not null,                       -- markdown body
   cover_image_url text,
+  cover_caption text,                          -- optional credit/location, shown as a tilted overlay
   category text not null default 'stories',    -- stories | methods | impact | news
   tags text,                                   -- comma-separated
   author_id text,

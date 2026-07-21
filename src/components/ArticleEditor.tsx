@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Eye, ImagePlus, PenLine, Trash2, Upload, X } from 'lucide-react'
+import { Camera, Eye, ImagePlus, PenLine, Trash2, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { storage } from '@/lib/supabase'
 import {
@@ -33,6 +33,7 @@ export interface ArticleDraft {
   category: ArticleCategory
   excerpt: string
   coverImageUrl: string
+  coverCaption: string
   tags: string
   content: string
 }
@@ -61,6 +62,7 @@ export default function ArticleEditor({
   )
   const [excerpt, setExcerpt] = useState(initial?.excerpt || '')
   const [coverImageUrl, setCoverImageUrl] = useState(initial?.coverImageUrl || '')
+  const [coverCaption, setCoverCaption] = useState(initial?.coverCaption || '')
   const [tags, setTags] = useState(initial?.tags || '')
   const [content, setContent] = useState(initial?.content || '')
   const [view, setView] = useState<'write' | 'preview'>('write')
@@ -118,6 +120,7 @@ export default function ArticleEditor({
     category,
     excerpt: excerpt.trim(),
     coverImageUrl: coverImageUrl.trim(),
+    coverCaption: coverCaption.trim(),
     tags,
     content,
   }
@@ -237,6 +240,7 @@ export default function ArticleEditor({
                       }}
                       onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
                     />
+                    {coverCaption.trim() && <CoverCaption caption={coverCaption} />}
                   </div>
                   <div className="flex items-center justify-between gap-2 px-3 py-2 bg-white">
                     <span className="font-mono text-[11px] tabular-nums text-[#7d8a83] truncate">
@@ -295,6 +299,26 @@ export default function ArticleEditor({
                   className={inputClass + ' !py-1.5 text-xs font-mono'}
                 />
               </div>
+              {coverImageUrl.trim() && (
+                <div className="mt-2.5">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Camera className="w-3 h-3 text-[#00A651]" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7d8a83]">
+                      Caption (optional)
+                    </span>
+                  </div>
+                  <input
+                    value={coverCaption}
+                    onChange={(e) => setCoverCaption(e.target.value)}
+                    maxLength={90}
+                    placeholder="e.g. Photo by Nadia · Amsterdam Noord, Sept 2026"
+                    className={inputClass + ' !py-2 text-xs'}
+                  />
+                  <p className="mt-1 text-[11px] text-[#9aa8a0]">
+                    Shown as a tilted chip on the image — a credit or where it was taken.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -368,6 +392,25 @@ export default function ArticleEditor({
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * The tilted caption chip that sits on a cover image — shared by the editor
+ * preview and the public reader so they look identical. Alternate the tilt by
+ * passing `tilt`.
+ */
+export function CoverCaption({ caption, tilt = -2 }: { caption: string; tilt?: number }) {
+  return (
+    <div
+      className="absolute bottom-3 left-3 right-3 sm:right-auto sm:max-w-[80%]"
+      style={{ transform: `rotate(${tilt}deg)` }}
+    >
+      <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#dfe9e2] bg-white/95 px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold leading-snug text-[#14201a] shadow-[0_6px_18px_-8px_rgba(15,32,24,0.45)] backdrop-blur">
+        <Camera className="w-3 h-3 shrink-0 text-[#00A651]" aria-hidden />
+        <span className="truncate">{caption}</span>
+      </span>
     </div>
   )
 }

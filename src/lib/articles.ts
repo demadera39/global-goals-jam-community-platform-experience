@@ -24,6 +24,7 @@ export interface Article {
   excerpt?: string | null
   content: string
   coverImageUrl?: string | null
+  coverCaption?: string | null
   category: ArticleCategory
   tags?: string | null
   authorId?: string | null
