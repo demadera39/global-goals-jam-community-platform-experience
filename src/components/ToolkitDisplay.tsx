@@ -19,8 +19,7 @@ import {
   Layout,
   BookOpen,
   ClipboardList,
-  Calendar,
-  Loader2
+  Calendar
 } from 'lucide-react'
 import SDGCard from './SDGCard'
 import MethodCard from './MethodCard'
@@ -436,13 +435,12 @@ export default function ToolkitDisplay({
         {/* Tabbed Content */}
         <div className="p-6">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview" className="flex items-center gap-2"><BookOpen className="w-4 h-4" />Overview</TabsTrigger>
               <TabsTrigger value="sdg-cards" className="flex items-center gap-2"><Target className="w-4 h-4" />SDG Cards</TabsTrigger>
               <TabsTrigger value="method-cards" className="flex items-center gap-2"><Layout className="w-4 h-4" />Method Cards</TabsTrigger>
               <TabsTrigger value="templates" className="flex items-center gap-2"><ClipboardList className="w-4 h-4" />Templates</TabsTrigger>
               <TabsTrigger value="session-plan" className="flex items-center gap-2"><Calendar className="w-4 h-4" />Session Plan</TabsTrigger>
-              <TabsTrigger value="enrich" className="flex items-center gap-2"><Loader2 className={`w-4 h-4`} />Enrich</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="mt-6 space-y-6">
