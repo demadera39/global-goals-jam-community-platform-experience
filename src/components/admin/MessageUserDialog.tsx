@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader2, Send, CheckCircle2, AlertTriangle, Eye, Pencil } from 'lucide-react'
+import { Loader2, Send, CheckCircle2, AlertTriangle, Eye, Pencil, Code2 } from 'lucide-react'
+import RichHtmlEditor from './RichHtmlEditor'
 import { useToast } from '@/hooks/use-toast'
 import { notifications } from '@/lib/supabase'
 
@@ -88,7 +89,7 @@ function buildCustom(recipient: MessageRecipient): TemplateBuild {
   </div>
   <div style="padding: 24px; line-height: 1.6;">
     <p>Hi ${firstName},</p>
-    <p><!-- write your message here --></p>
+    <p><br/></p>
     <p>Warmly,<br/>Marco<br/><em>Founder, Global Goals Jam</em></p>
   </div>
 </div>`
@@ -122,7 +123,7 @@ export default function MessageUserDialog({ open, onOpenChange, recipient, initi
   const [template, setTemplate] = useState<MessageTemplate>(initialTemplate)
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
-  const [view, setView] = useState<'edit' | 'preview'>('edit')
+  const [view, setView] = useState<'edit' | 'html' | 'preview'>('edit')
   const [sending, setSending] = useState(false)
   const [sentAt, setSentAt] = useState<string | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
@@ -230,7 +231,7 @@ export default function MessageUserDialog({ open, onOpenChange, recipient, initi
         {/* Edit / preview toggle */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label>Body (HTML)</Label>
+            <Label>Body</Label>
             <div className="inline-flex items-center rounded-md border p-0.5 gap-0.5 text-xs">
               <button
                 type="button"
@@ -239,6 +240,14 @@ export default function MessageUserDialog({ open, onOpenChange, recipient, initi
                 aria-pressed={view === 'edit'}
               >
                 <Pencil className="h-3 w-3" /> Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('html')}
+                className={`flex items-center gap-1 px-2 py-1 rounded ${view === 'html' ? 'bg-muted' : 'hover:bg-muted/60'}`}
+                aria-pressed={view === 'html'}
+              >
+                <Code2 className="h-3 w-3" /> HTML
               </button>
               <button
                 type="button"
@@ -252,6 +261,8 @@ export default function MessageUserDialog({ open, onOpenChange, recipient, initi
           </div>
 
           {view === 'edit' ? (
+            <RichHtmlEditor value={body} onChange={setBody} />
+          ) : view === 'html' ? (
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
