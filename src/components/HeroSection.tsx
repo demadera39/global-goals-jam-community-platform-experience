@@ -58,11 +58,8 @@ export default function HeroSection() {
             ground up, city by city.
           </p>
 
-          {/* CTAs */}
-          <div
-            className="ggj-rise mt-9 flex flex-wrap items-center gap-x-6 gap-y-4"
-            style={{ animationDelay: '240ms' }}
-          >
+          {/* CTA */}
+          <div className="ggj-rise mt-9" style={{ animationDelay: '240ms' }}>
             <a
               href={LEARN_URL}
               onClick={(e) => { e.preventDefault(); goToLearn() }}
@@ -71,22 +68,33 @@ export default function HeroSection() {
               Start your host journey
               <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
             </a>
+          </div>
+
+          {/* Downloads — a tidy row beneath the CTA */}
+          <div
+            className="ggj-rise mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm"
+            style={{ animationDelay: '300ms' }}
+          >
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7d8a83]">
+              Downloads
+            </span>
             <a
               href="https://kzeoegabvbaonypooaev.supabase.co/storage/v1/object/public/Assets/GGJ_2026_Resilient_by_Design.pdf"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#00713a] underline decoration-2 decoration-[#00A651]/30 underline-offset-4 hover:decoration-[#00A651] transition-colors"
+              className="inline-flex items-center gap-1.5 font-semibold text-[#00713a] underline decoration-2 decoration-[#00A651]/30 underline-offset-4 hover:decoration-[#00A651] transition-colors"
             >
               <Download className="w-4 h-4" />
-              Download the 2026 guide
+              2026 guide
             </a>
+            <span aria-hidden="true" className="text-[#c8d5cc]">·</span>
             <a
               href="/GGJ-Playbook.pdf"
               download="GGJ-Playbook.pdf"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#00713a] underline decoration-2 decoration-[#00A651]/30 underline-offset-4 hover:decoration-[#00A651] transition-colors"
+              className="inline-flex items-center gap-1.5 font-semibold text-[#00713a] underline decoration-2 decoration-[#00A651]/30 underline-offset-4 hover:decoration-[#00A651] transition-colors"
             >
               <Download className="w-4 h-4" />
-              The GGJ Playbook (PDF)
+              The GGJ Playbook
             </a>
           </div>
 
