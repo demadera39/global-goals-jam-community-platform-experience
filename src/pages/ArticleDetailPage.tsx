@@ -45,7 +45,9 @@ export default function ArticleDetailPage() {
           description: article.excerpt || undefined,
           image: article.coverImageUrl || undefined,
           datePublished: article.publishedAt || undefined,
-          author: { '@type': 'Person', name: article.authorName || 'Global Goals Jam' },
+          author: article.source === 'ai' || !article.authorName
+            ? { '@type': 'Organization', name: 'Global Goals Jam', url: 'https://www.globalgoalsjam.org/' }
+            : { '@type': 'Person', name: article.authorName },
           publisher: { '@id': 'https://www.globalgoalsjam.org/#org' },
           mainEntityOfPage: `https://www.globalgoalsjam.org/articles/${article.slug}`,
         }
@@ -138,6 +140,11 @@ export default function ArticleDetailPage() {
           <span className="font-semibold text-[#14201a]">
             {article.authorName || 'Global Goals Jam'}
           </span>
+          {article.source === 'ai' && (
+            <span className="rounded-full border border-[#dfe9e2] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#7d8a83]">
+              Editorial
+            </span>
+          )}
           <span className="font-mono tabular-nums text-xs">{formatArticleDate(article.publishedAt)}</span>
           {article.readMinutes ? (
             <span className="inline-flex items-center gap-1 font-mono tabular-nums text-xs">
