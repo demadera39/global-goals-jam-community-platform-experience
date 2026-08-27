@@ -207,9 +207,10 @@ export default function TenYearsPage() {
             Ten years on film
           </h2>
           <p className="mt-3 max-w-2xl text-[#3d4f45]">
-            Every official trailer and aftermovie since 2016, plus the films
-            local hosts made of their own jams — from a Snapchat story in
-            Twente to a full livestream from Tokyo.
+            Official trailers and aftermovies since 2016, plus films local
+            hosts made of their own jams — from a Snapchat story in Twente to
+            a full livestream from Tokyo. Made one we missed? Let us know via{' '}
+            <Link to="/memories" className="font-semibold text-[#00713a] underline decoration-[#00A651]/40 underline-offset-2 hover:decoration-[#00A651]">Jam Memories</Link>.
           </p>
           <div className="mt-10">
             <VideoArchive />
@@ -223,7 +224,7 @@ export default function TenYearsPage() {
           The network
         </p>
         <h2 className="font-display mt-2 text-3xl font-extrabold tracking-tight text-[#14201a] sm:text-4xl">
-          Every city that jammed
+          The cities that jammed
         </h2>
         <p className="mt-3 max-w-2xl text-[#3d4f45]">
           The {DECADE_CITIES.length} cities we could verify from archived
