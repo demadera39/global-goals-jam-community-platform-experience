@@ -9,6 +9,7 @@ export interface JamHighlight {
   year?: number
   description?: string
   sourceUrl?: string
+  submittedBy?: string
   isVerified: boolean
   createdAt: string
 }
@@ -20,7 +21,8 @@ export async function getRandomHighlights(limit: number = 20): Promise<JamHighli
   try {
     const result = await safeDbCall(() =>
       db.jamHighlights.list({
-        where: { isVerified: true },
+        // is_verified is an integer column — filter with 1, not true.
+        where: { isVerified: 1 },
         limit: 100,
       })
     )
@@ -63,8 +65,9 @@ export async function getAllHighlights(): Promise<JamHighlight[]> {
  */
 export async function verifyHighlight(id: string): Promise<boolean> {
   try {
+    // is_verified is an integer column — always write 0/1, never a boolean.
     await safeDbCall(() =>
-      db.jamHighlights.update(id, { isVerified: true })
+      db.jamHighlights.update(id, { isVerified: 1 })
     )
     return true
   } catch (error) {
@@ -98,6 +101,7 @@ export async function addHighlight(data: {
   year?: number
   description?: string
   sourceUrl?: string
+  submittedBy?: string
   isVerified?: boolean
 }): Promise<string | null> {
   try {
@@ -112,7 +116,9 @@ export async function addHighlight(data: {
         year: data.year ? String(data.year) : undefined,
         description: data.description,
         sourceUrl: data.sourceUrl,
-        isVerified: data.isVerified ?? false,
+        submittedBy: data.submittedBy,
+        // is_verified is an integer column — always write 0/1, never a boolean.
+        isVerified: data.isVerified ? 1 : 0,
       })
     )
 
@@ -169,6 +175,7 @@ function formatHighlight(record: any): JamHighlight {
     year: record.year ? Number(record.year) : undefined,
     description: record.description,
     sourceUrl: record.sourceUrl || record.source_url,
+    submittedBy: record.submittedBy || record.submitted_by,
     isVerified: record.isVerified === true || record.isVerified === 1 || record.is_verified === '1',
     createdAt: record.createdAt || record.created_at,
   }

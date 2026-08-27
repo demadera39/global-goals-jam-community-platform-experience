@@ -131,6 +131,7 @@ export default function Navigation() {
     { name: 'Contact', href: '/contact' },
     { name: 'Toolkit', href: '/toolkit' },
     { name: 'Articles', href: '/articles' },
+    { name: '10 Years', href: '/ten' },
     { name: 'Certification course', href: '/course/enroll', onClick: handleCertificationCourseClick }
   ]
   const navItems = [

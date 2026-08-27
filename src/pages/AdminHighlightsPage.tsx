@@ -272,6 +272,9 @@ export default function AdminHighlightsPage() {
                     {highlight.description}
                   </p>
                 )}
+                {highlight.submittedBy && (
+                  <p className="mt-1 text-xs text-[#7d8a83]">Sent in by {highlight.submittedBy}</p>
+                )}
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {highlight.city && (
                     <Pill tone="grey">

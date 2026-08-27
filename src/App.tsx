@@ -43,6 +43,8 @@ import ResetPasswordPage from './pages/ResetPasswordPage'
 import StorageDebugPage from './pages/StorageDebugPage'
 import ThemePage from './pages/ThemePage'
 import ProcessPage from './pages/ProcessPage'
+import TenYearsPage from './pages/TenYearsPage'
+import MemoriesPage from './pages/MemoriesPage'
 
 function App() {
   return (
@@ -54,6 +56,8 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/theme" element={<ThemePage />} />
+            <Route path="/ten" element={<TenYearsPage />} />
+            <Route path="/memories" element={<MemoriesPage />} />
             <Route path="/process" element={<ProcessPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/faq" element={<FAQPage />} />
