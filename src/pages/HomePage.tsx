@@ -10,6 +10,7 @@ import JamHighlights from '../components/JamHighlights'
 import LearnShowcase from '../components/LearnShowcase'
 import HostExploreBanner from '../components/HostExploreBanner'
 import TestimonialsSection from '../components/TestimonialsSection'
+import TenYearsPromo from '../components/TenYearsPromo'
 
 /**
  * Homepage — composed in the GGJ "jam poster" design language.
@@ -165,6 +166,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Ten Years of Jamming — anniversary teaser */}
+      <TenYearsPromo />
 
       {/* The 17 Sustainable Development Goals */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
