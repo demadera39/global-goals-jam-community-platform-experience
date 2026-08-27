@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu'
-import { Menu, X, User, LogOut, Settings, BookOpen, Shield } from 'lucide-react'
+import { Menu, X, User, LogOut, Settings, BookOpen, Shield, ChevronDown } from 'lucide-react'
 import { goToLearn } from '../lib/learnUrl'
 import { getUserProfile, UserProfile, COURSE_STATUS } from '../lib/userStatus'
 import { appAuth } from '../lib/simpleAuth'
@@ -122,27 +122,57 @@ export default function Navigation() {
     else navigate('/course/enroll')
   }
 
-  const baseItems = [
-    { name: '2026 Theme', href: '/theme' },
-    { name: 'Events', href: '/events' },
-    { name: 'Process', href: '/process' },
-    { name: 'About', href: '/about' },
-    { name: 'FAQ', href: '/faq' },
-    { name: 'Contact', href: '/contact' },
-    { name: 'Toolkit', href: '/toolkit' },
-    { name: 'Articles', href: '/articles' },
-    { name: '10 Years', href: '/ten' },
-    { name: 'Certification course', href: '/course/enroll', onClick: handleCertificationCourseClick }
+  // The nav is bundled into three dropdown groups plus a few top-level
+  // entries, so the bar stays short even for signed-in users.
+  interface NavLink {
+    name: string
+    href: string
+    onClick?: (e: React.MouseEvent) => void
+  }
+  interface NavGroup {
+    name: string
+    items: NavLink[]
+  }
+
+  const navGroups: NavGroup[] = [
+    {
+      name: 'The Jam',
+      items: [
+        { name: '2026 Theme', href: '/theme' },
+        { name: 'Events', href: '/events' },
+        { name: 'Process', href: '/process' },
+        { name: 'FAQ', href: '/faq' },
+      ],
+    },
+    {
+      name: 'Resources',
+      items: [
+        { name: 'Toolkit', href: '/toolkit' },
+        { name: 'Articles', href: '/articles' },
+      ],
+    },
+    {
+      name: 'About',
+      items: [
+        { name: 'About us', href: '/about' },
+        { name: 'Contact', href: '/contact' },
+      ],
+    },
   ]
-  const navItems = [
-    ...(baseItems ?? []),
+
+  const topLevelItems: NavLink[] = [
+    // The anniversary page stays a top-level entry through the 2026 edition.
+    { name: '10 Years', href: '/ten' },
+    { name: 'Certification course', href: '/course/enroll', onClick: handleCertificationCourseClick },
     // Signed-in users get a visible Dashboard entry: hosts/admins to the
     // Host Dashboard, enrolled learners to the Learn platform.
     ...(user ? [{ name: 'Dashboard', href: canSeeHostTools ? '/host-dashboard' : '/course/enroll', onClick: handleDashboardClick }] : []),
-    // Community is the network hub: open to every signed-in user. The feed
-    // mixes member posts with activity computed from live platform data.
-    ...(user ? [{ name: 'Community', href: '/community' }] : [])
+    // Community is the network hub: open to every signed-in user.
+    ...(user ? [{ name: 'Community', href: '/community' }] : []),
   ]
+
+  const groupIsActive = (group: NavGroup) =>
+    group.items.some((item) => location.pathname === item.href)
 
   return (
     <nav aria-label="Main navigation" className="bg-white/85 backdrop-blur-lg border-b border-[#dfe9e2] sticky top-0 z-50">
@@ -167,9 +197,43 @@ export default function Navigation() {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation — three grouped dropdowns + top-level links */}
           <div className="hidden lg:flex items-center gap-0.5 xl:gap-1">
-            {(navItems || []).map((item) => (
+            {navGroups.map((group) => (
+              <DropdownMenu key={group.name}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={`inline-flex items-center gap-1 whitespace-nowrap text-[13px] xl:text-sm px-2.5 xl:px-3 py-1.5 rounded-full transition-colors duration-200 ${
+                      groupIsActive(group)
+                        ? 'text-[#00713a] font-semibold bg-[#00A651]/10'
+                        : 'text-[#4c5a52] hover:text-[#14201a] hover:bg-[#14201a]/5'
+                    }`}
+                  >
+                    {group.name}
+                    <ChevronDown className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  {group.items.map((item) => (
+                    <DropdownMenuItem key={item.name} asChild>
+                      <Link
+                        to={item.href}
+                        onClick={item.onClick}
+                        className={
+                          location.pathname === item.href
+                            ? 'font-semibold text-[#00713a]'
+                            : undefined
+                        }
+                      >
+                        {item.name}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ))}
+            {topLevelItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
@@ -303,23 +367,49 @@ export default function Navigation() {
         {mobileMenuOpen && (
           <div className="lg:hidden">
             <div className="px-3 pt-3 pb-4 space-y-1 rounded-xl shadow-card bg-white border border-[#dfe9e2] mt-1 mx-2 mb-2">
-              {(navItems || []).map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`block px-3 py-2.5 text-base rounded-lg transition-colors duration-200 ${
-                    location.pathname === item.href
-                      ? 'text-[#00713a] font-semibold bg-[#00A651]/10'
-                      : 'text-[#4c5a52] hover:text-[#14201a] hover:bg-[#14201a]/5'
-                  }`}
-                  onClick={(e) => {
-                    item.onClick?.(e)
-                    setMobileMenuOpen(false)
-                  }}
-                >
-                  {item.name}
-                </Link>
+              {navGroups.map((group) => (
+                <div key={group.name} className="pb-1">
+                  <p className="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7d8a83]">
+                    {group.name}
+                  </p>
+                  {group.items.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`block px-3 py-2 text-base rounded-lg transition-colors duration-200 ${
+                        location.pathname === item.href
+                          ? 'text-[#00713a] font-semibold bg-[#00A651]/10'
+                          : 'text-[#4c5a52] hover:text-[#14201a] hover:bg-[#14201a]/5'
+                      }`}
+                      onClick={(e) => {
+                        item.onClick?.(e)
+                        setMobileMenuOpen(false)
+                      }}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
               ))}
+              <div className="border-t border-[#dfe9e2] pt-2">
+                {topLevelItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`block px-3 py-2.5 text-base rounded-lg font-medium transition-colors duration-200 ${
+                      location.pathname === item.href
+                        ? 'text-[#00713a] font-semibold bg-[#00A651]/10'
+                        : 'text-[#14201a] hover:bg-[#14201a]/5'
+                    }`}
+                    onClick={(e) => {
+                      item.onClick?.(e)
+                      setMobileMenuOpen(false)
+                    }}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
               <div className="pt-4 pb-3 border-t border-border/50">
                 {user ? (
                   <div className="flex items-center px-3">
