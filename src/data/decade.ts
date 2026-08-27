@@ -152,12 +152,12 @@ export const EDITIONS: Edition[] = [
 ]
 
 /* Headline stats — the set we can defend with sources. */
-export const DECADE_STATS = [
+export const DECADE_STATS: { value?: number; suffix?: string; text?: string; label: string }[] = [
   { value: 10, suffix: '', label: 'years of jamming, 2016–2026' },
   { value: 100, suffix: '', label: 'cities have hosted a jam' },
-  { value: 7000, suffix: '+', label: 'jammers took part' },
+  { text: 'Thousands', label: 'of jammers took part' },
   { value: 200, suffix: '+', label: 'local jams organised' },
-] as const
+]
 
 /* Every city we could verify from archived edition pages and host reports. */
 export const DECADE_CITIES: string[] = [

@@ -65,7 +65,7 @@ export default function TenYearsPage() {
   usePageMeta({
     title: 'Ten Years of Jamming',
     description:
-      'Ten years of the Global Goals Jam: 100 cities, 7,000+ jammers and 200+ local jams since 2016. The full story, the videos and the memories — and how to join the anniversary edition.',
+      'Ten years of the Global Goals Jam: 100 cities, thousands of jammers and 200+ local jams since 2016. The full story, the videos and the memories — and how to join the anniversary edition.',
     path: '/ten',
   })
 
@@ -93,8 +93,8 @@ export default function TenYearsPage() {
           <p className="mt-5 max-w-2xl text-lg text-[#3d4f45]">
             In September 2016, five hundred people in seventeen cities spent one
             weekend designing for the Global Goals. Ten years later that weekend
-            has happened in a hundred cities, from Amsterdam to Mogadishu. This
-            is what it looked like.
+            has happened in a hundred cities and reached thousands of jammers,
+            from Amsterdam to Mogadishu. This is what it looked like.
           </p>
           <div className="ggj-rainbow mt-8 h-1.5 w-40 rounded-full" aria-hidden="true" />
         </div>
@@ -110,7 +110,11 @@ export default function TenYearsPage() {
               style={{ transform: `rotate(${[-0.8, 0.6, -0.5, 0.9][i % 4]}deg)` }}
             >
               <div className="text-4xl font-extrabold text-[#00A651] sm:text-5xl">
-                <CountUp value={s.value} suffix={s.suffix} />
+                {s.value != null ? (
+                  <CountUp value={s.value} suffix={s.suffix ?? ''} />
+                ) : (
+                  <span className="font-display">{s.text}</span>
+                )}
               </div>
               <p className="mt-2 text-sm text-[#3d4f45]">{s.label}</p>
             </div>
