@@ -25,7 +25,8 @@ export default function TenYearsPromo() {
             </h2>
             <p className="text-[#4c5a52] text-lg leading-relaxed mt-4">
               What started with 500 people in seventeen cities has become a
-              network of a hundred cities and thousands of jammers. Explore the
+              network of a hundred cities and more than ten thousand jammers.
+              Explore the
               decade: the story of every edition, the films, and the memories
               the community is adding right now.
             </p>
@@ -84,10 +85,10 @@ export default function TenYearsPromo() {
               <span className="block text-xs text-[#4c5a52] leading-snug">
                 cities have hosted a jam
               </span>
-              <span className="mt-2 block font-display text-3xl font-extrabold text-[#00A651]">
-                Thousands
+              <span className="mt-2 block font-display text-3xl font-extrabold tabular-nums text-[#00A651]">
+                10,000+
               </span>
-              <span className="block text-xs text-[#4c5a52] leading-snug">of jammers since 2016</span>
+              <span className="block text-xs text-[#4c5a52] leading-snug">jammers since 2016</span>
             </Link>
 
             {/* Polaroid quote */}

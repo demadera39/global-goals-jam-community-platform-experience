@@ -65,7 +65,7 @@ export default function TenYearsPage() {
   usePageMeta({
     title: 'Ten Years of Jamming',
     description:
-      'Ten years of the Global Goals Jam: 100 cities, thousands of jammers and 200+ local jams since 2016. The full story, the videos and the memories — and how to join the anniversary edition.',
+      'Ten years of the Global Goals Jam: 100 cities, 10,000+ jammers and 200+ local jams since 2016. The full story, the videos and the memories — and how to join the anniversary edition.',
     path: '/ten',
   })
 
@@ -93,8 +93,8 @@ export default function TenYearsPage() {
           <p className="mt-5 max-w-2xl text-lg text-[#3d4f45]">
             In September 2016, five hundred people in seventeen cities spent one
             weekend designing for the Global Goals. Ten years later that weekend
-            has happened in a hundred cities and reached thousands of jammers,
-            from Amsterdam to Mogadishu. This is what it looked like.
+            has happened in a hundred cities and reached more than ten thousand
+            jammers, from Amsterdam to Mogadishu. This is what it looked like.
           </p>
           <div className="ggj-rainbow mt-8 h-1.5 w-40 rounded-full" aria-hidden="true" />
         </div>
@@ -121,8 +121,9 @@ export default function TenYearsPage() {
           ))}
         </div>
         <p className="mt-4 text-xs text-[#7d8a83]">
-          Figures from the official edition records and the five-year impact
-          report by the World Design Organization.
+          Figures from the official edition records. The jammer count sums the
+          sourced per-edition numbers — the first four editions alone add up to
+          9,200 — so the true total is comfortably past ten thousand.
         </p>
       </section>
 

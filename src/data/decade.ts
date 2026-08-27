@@ -155,7 +155,7 @@ export const EDITIONS: Edition[] = [
 export const DECADE_STATS: { value?: number; suffix?: string; text?: string; label: string }[] = [
   { value: 10, suffix: '', label: 'years of jamming, 2016–2026' },
   { value: 100, suffix: '', label: 'cities have hosted a jam' },
-  { text: 'Thousands', label: 'of jammers took part' },
+  { value: 10000, suffix: '+', label: 'jammers took part' },
   { value: 200, suffix: '+', label: 'local jams organised' },
 ]
 
