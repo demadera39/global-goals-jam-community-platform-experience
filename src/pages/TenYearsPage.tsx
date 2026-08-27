@@ -121,9 +121,7 @@ export default function TenYearsPage() {
           ))}
         </div>
         <p className="mt-4 text-xs text-[#7d8a83]">
-          Figures from the official edition records. The jammer count sums the
-          sourced per-edition numbers — the first four editions alone add up to
-          9,200 — so the true total is comfortably past ten thousand.
+          Figures from the official edition records, 2016–2026.
         </p>
       </section>
 
