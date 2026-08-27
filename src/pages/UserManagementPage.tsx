@@ -109,6 +109,25 @@ export default function UserManagementPage() {
     }
   }
 
+  // Emails with a paid host certification (the €39 payment moment since the
+  // free-course model). Certifications are keyed by email, not user id.
+  const [certifiedEmails, setCertifiedEmails] = useState<Set<string>>(new Set())
+
+  const loadCertifications = async () => {
+    try {
+      const rows = await db.certifications.list<{ email?: string; status?: string }>({ limit: 1000 })
+      setCertifiedEmails(
+        new Set(
+          (rows || [])
+            .filter((c) => c.status === 'paid' && c.email)
+            .map((c) => String(c.email).toLowerCase())
+        )
+      )
+    } catch (error) {
+      console.error('Failed to load certifications:', error)
+    }
+  }
+
   const loadEnrollments = async () => {
     try {
       const list = await db.courseEnrollments.list({
@@ -135,9 +154,13 @@ export default function UserManagementPage() {
         )
         // Manual override = paid but no real provider ref (e.g. "manual_<timestamp>" or empty).
         const isManualOverride = isPaid && !hasRealPayment
-        // Flag users who look "done" but have no recorded payment — likely abandoned / expired Mollie checkouts
-        // where the course status was flipped manually or via legacy data.
-        const needsPaymentReview = (status === 'active' || status === 'completed') && !isPaid
+        // Since July 2026 the course is FREE — an active/completed enrollment with €0
+        // is the normal state, not an anomaly. Only flag pre-free-model enrollments
+        // that look "done" without a recorded payment (abandoned/expired legacy checkouts).
+        const FREE_MODEL_CUTOFF = new Date('2026-07-01')
+        const enrolledBeforeFreeModel = !!e.enrolledAt && new Date(e.enrolledAt) < FREE_MODEL_CUTOFF
+        const needsPaymentReview =
+          (status === 'active' || status === 'completed') && !isPaid && enrolledBeforeFreeModel
         const existing = map[e.userId]
         if (!existing || (existing.status !== 'completed' && status === 'completed') || (existing.status === 'pending' && (status === 'active' || status === 'completed'))) {
           map[e.userId] = { status, isPaid, paidStrict, hasRealPayment, isManualOverride, needsPaymentReview, molliePaymentId: e.molliePaymentId, amountPaid: e.amountPaid, enrolledAt: e.enrolledAt }
@@ -153,7 +176,7 @@ export default function UserManagementPage() {
     const loadData = async () => {
       setLoading(true)
       await Promise.all([loadUsers(), loadPasswordResets()])
-      await loadEnrollments()
+      await Promise.all([loadEnrollments(), loadCertifications()])
       setLoading(false)
     }
     loadData()
@@ -736,13 +759,22 @@ export default function UserManagementPage() {
                         <TableCell>
                           {(() => {
                             const info = enrollments[user.id]
+                            // The €39 host certification is the payment moment
+                            // since the free-course model (July 2026).
+                            if (user.email && certifiedEmails.has(user.email.toLowerCase())) {
+                              return (
+                                <Pill tone="green" title="Paid host certification (€39) — from the shared certifications table">
+                                  certified host
+                                </Pill>
+                              )
+                            }
                             if (info?.hasRealPayment) {
                               return (
                                 <Pill
                                   tone="green"
-                                  title={`Real Mollie payment (${info.molliePaymentId})`}
+                                  title={`Real course payment from the paid-course era (${info.molliePaymentId})`}
                                 >
-                                  paid
+                                  paid · course
                                 </Pill>
                               )
                             }
@@ -760,9 +792,16 @@ export default function UserManagementPage() {
                               return (
                                 <Pill
                                   tone="amber"
-                                  title={`Enrollment is ${info.status} but no payment recorded. Check Mollie — may be expired / abandoned checkout.`}
+                                  title={`Pre-July-2026 enrollment is ${info.status} but no payment was recorded. Check Mollie — may be an expired / abandoned checkout from the paid-course era.`}
                                 >
-                                  needs review
+                                  needs review (legacy)
+                                </Pill>
+                              )
+                            }
+                            if (info?.status === 'active' || info?.status === 'completed') {
+                              return (
+                                <Pill tone="grey" title="Enrolled under the free-course model — nothing to pay until they claim the €39 certification">
+                                  free course
                                 </Pill>
                               )
                             }

@@ -189,6 +189,7 @@ export const db = {
   forumPosts: createTableHelper('forum_posts', 'snake'),
   jamHighlights: createTableHelper('jam_highlights', 'snake'),
   articles: createTableHelper('articles', 'snake'),
+  certifications: createTableHelper('certifications', 'snake'),
 }
 
 // ---------------------------------------------------------------------------
