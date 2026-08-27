@@ -346,7 +346,7 @@ export default function HomePage() {
             "Our partnership with Digital Society School in the Global Goals Jam
             facilitates a way to take real action. People all over the world can
             see and learn from each other's work, as well as create impact."
-            — UNDP &amp; Digital Society School
+            <footer className="mt-2 font-semibold text-[#14201a]">— Boaz Paldi, UNDP</footer>
           </blockquote>
         </div>
 

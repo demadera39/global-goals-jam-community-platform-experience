@@ -113,11 +113,27 @@ export default function HeroSection() {
             ))}
           </dl>
 
-          {/* Trust line */}
-          <p className="ggj-rise mt-8 text-[13px] text-[#7d8a83]" style={{ animationDelay: '400ms' }}>
-            Co-founded with UNDP in 2016 · run by local hosts, powered by a
-            global community
-          </p>
+          {/* Co-creation with UNDP */}
+          <div
+            className="ggj-rise mt-8 flex items-center gap-4 border-t border-[#dfe9e2] pt-6"
+            style={{ animationDelay: '400ms' }}
+          >
+            <img
+              src="/undp-logo.svg"
+              alt="UNDP — United Nations Development Programme"
+              className="h-16 w-auto shrink-0 sm:h-20"
+            />
+            <div>
+              <p className="text-sm font-semibold text-[#14201a]">
+                Co-created with UNDP since 2016
+              </p>
+              <p className="mt-1 text-[13px] leading-snug text-[#4c5a52] max-w-md">
+                “…a way to take real action. People all over the world can see
+                and learn from each other’s work.”
+                <span className="text-[#7d8a83]"> — Boaz Paldi, UNDP</span>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
