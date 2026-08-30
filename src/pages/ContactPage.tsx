@@ -12,6 +12,8 @@ import { CheckCircle2, Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
 import { Badge } from '../components/ui/badge'
 import { toast } from 'sonner'
 import { notifications } from '../lib/supabase'
+import HoneypotField from '../components/HoneypotField'
+import { isSpamSubmission } from '../lib/spam'
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -30,6 +32,7 @@ export default function ContactPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [honeypot, setHoneypot] = useState('')
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -42,6 +45,16 @@ export default function ContactPage() {
   })
 
   const onSubmit = async (data: ContactFormData) => {
+    // Bot: show the normal success state without sending anything.
+    if (isSpamSubmission(honeypot)) {
+      setSubmitSuccess(true)
+      form.reset()
+      setHoneypot('')
+      toast.success('Message sent! We\'ll get back to you soon.')
+      setTimeout(() => setSubmitSuccess(false), 5000)
+      return
+    }
+
     setIsSubmitting(true)
     try {
       // Send email to Marco via Resend
@@ -183,6 +196,8 @@ export default function ContactPage() {
 
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <HoneypotField value={honeypot} onChange={setHoneypot} />
+
                   {/* Name */}
                   <FormField
                     control={form.control}

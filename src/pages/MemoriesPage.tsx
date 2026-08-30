@@ -5,6 +5,8 @@ import { ArrowRight, Camera, Check, Loader2, MapPin, Upload } from 'lucide-react
 import { usePageMeta } from '@/lib/usePageMeta'
 import { storage } from '../lib/supabase'
 import { addHighlight, getRandomHighlights, type JamHighlight } from '../lib/jamHighlights'
+import HoneypotField from '../components/HoneypotField'
+import { isSpamSubmission } from '../lib/spam'
 
 /**
  * /memories — Jam Memories.
@@ -36,6 +38,7 @@ export default function MemoriesPage() {
   const [consent, setConsent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [honeypot, setHoneypot] = useState('')
 
   const [memories, setMemories] = useState<JamHighlight[]>([])
 
@@ -74,6 +77,13 @@ export default function MemoriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSubmit || !file) return
+
+    // Bot: show the normal success state without uploading or storing anything.
+    if (isSpamSubmission(honeypot)) {
+      setSubmitted(true)
+      return
+    }
+
     setSubmitting(true)
     try {
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
@@ -171,6 +181,8 @@ export default function MemoriesPage() {
             onSubmit={handleSubmit}
             className="rounded-2xl border border-[#dfe9e2] bg-white p-6 shadow-card sm:p-8"
           >
+            <HoneypotField value={honeypot} onChange={setHoneypot} />
+
             {/* Photo */}
             <label className="block">
               <span className="text-sm font-semibold text-[#14201a]">Your photo *</span>

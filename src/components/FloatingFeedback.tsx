@@ -7,6 +7,8 @@ import { Label } from './ui/label';
 import { toast } from 'sonner';
 import { notifications } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import HoneypotField from './HoneypotField';
+import { isSpamSubmission } from '@/lib/spam';
 
 interface FloatingFeedbackProps {
   context?: 'course' | 'host' | 'general';
@@ -23,12 +25,22 @@ export function FloatingFeedback({ context = 'general', userEmail = '', userName
     subject: '',
     message: ''
   });
+  const [honeypot, setHoneypot] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.email || !formData.message) {
       toast.error('Please fill in your email and message');
+      return;
+    }
+
+    // Bot: show the normal success state without sending anything.
+    if (isSpamSubmission(honeypot)) {
+      toast.success('Thank you for your feedback! We\'ll get back to you soon.');
+      setFormData({ name: userName, email: userEmail, subject: '', message: '' });
+      setHoneypot('');
+      setTimeout(() => setIsOpen(false), 2000);
       return;
     }
 
@@ -105,6 +117,7 @@ export function FloatingFeedback({ context = 'general', userEmail = '', userName
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            <HoneypotField value={honeypot} onChange={setHoneypot} />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="name" className="text-sm">Name (optional)</Label>
