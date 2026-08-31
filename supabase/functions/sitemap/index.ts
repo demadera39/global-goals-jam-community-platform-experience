@@ -49,9 +49,13 @@ Deno.serve(async () => {
   } catch (_) { /* articles unavailable — static routes still serve */ }
 
   try {
+    // Only events the public can actually see. Drafts (including test
+    // records) must never reach the index — they read as junk pages to a
+    // crawler and dilute the real jam pages.
     const { data: events } = await supabase
       .from('events')
-      .select('id, updated_at, location')
+      .select('id, updated_at, location, status')
+      .in('status', ['published', 'completed'])
       .limit(500)
     const cities = new Set<string>()
     for (const e of events || []) {
