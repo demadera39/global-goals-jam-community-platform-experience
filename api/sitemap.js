@@ -22,7 +22,11 @@ export default async function handler(_req, res) {
     }
 
     res.setHeader('Content-Type', 'application/xml; charset=utf-8')
-    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=21600')
+    // Short edge cache on purpose: articles are published from the admin and
+    // by the weekly editorial agent, and a freshly published piece should be
+    // discoverable within minutes rather than waiting out a long TTL. The
+    // upstream call is small and fast, so this costs nothing.
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=600')
     res.status(200).send(xml)
   } catch (error) {
     console.error('sitemap proxy error', error)
