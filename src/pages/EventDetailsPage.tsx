@@ -18,6 +18,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { db, auth, safeDbCall } from '../lib/supabase'
+import { usePageMeta } from '@/lib/usePageMeta'
 import { getFullUser, isCertifiedHost } from '../lib/userProfile'
 import EventMediaSection from '../components/EventMediaSection'
 import { cn, sdgNumberFromFocus, sdgBg, sdgText, sdgBorder, sdgTheme, sdgName } from '../lib/utils'
@@ -90,6 +91,50 @@ export default function EventDetailsPage() {
   const [teamMembers, setTeamMembers] = useState<string[]>([])
   const [hostCertified, setHostCertified] = useState<boolean>(false)
   const [headerImage, setHeaderImage] = useState<string | null>(null)
+
+  // Per-jam SEO. Each jam is a real, local, dated event, so it gets its own
+  // title, description and Event structured data — that is what makes a jam
+  // eligible for Google's event results when someone searches for a design
+  // sprint or SDG workshop in their city.
+  const eventPlace = event?.location?.trim()
+  usePageMeta({
+    title: event ? `${event.title}${eventPlace ? ` — ${eventPlace}` : ''}` : 'Jam',
+    description: event
+      ? `${event.title}: a 2-day Global Goals Jam design sprint${eventPlace ? ` in ${eventPlace}` : ''}${
+          event.eventDate ? ` on ${new Date(event.eventDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''
+        }. ${(event.description || '').slice(0, 140)}`.trim()
+      : undefined,
+    path: id ? `/events/${id}` : undefined,
+    image: event?.coverImage || headerImage || undefined,
+    jsonLd: event
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name: event.title,
+          description: (event.description || '').slice(0, 500) || undefined,
+          startDate: event.startTime ? `${event.eventDate}T${event.startTime}` : event.eventDate,
+          endDate: event.endTime ? `${event.eventDate}T${event.endTime}` : undefined,
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+          image: event.coverImage || headerImage || undefined,
+          url: `https://www.globalgoalsjam.org/events/${event.id}`,
+          location: eventPlace
+            ? { '@type': 'Place', name: eventPlace, address: eventPlace }
+            : undefined,
+          organizer: {
+            '@type': 'Organization',
+            name: hostDisplayName || 'Global Goals Jam',
+            url: 'https://www.globalgoalsjam.org',
+          },
+          isAccessibleForFree: true,
+          superEvent: {
+            '@type': 'EventSeries',
+            name: 'Global Goals Jam',
+            url: 'https://www.globalgoalsjam.org',
+          },
+        }
+      : null,
+  })
 
   useEffect(() => {
     // onAuthStateChanged passes the user object (or null) — NOT a

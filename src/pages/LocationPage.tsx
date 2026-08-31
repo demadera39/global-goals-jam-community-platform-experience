@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+import { usePageMeta } from '@/lib/usePageMeta'
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar'
 import { 
   MapPin, 
@@ -96,6 +97,18 @@ export default function LocationPage() {
   const [media, setMedia] = useState<Media[]>([])
   const [registrations, setRegistrations] = useState<Registration[]>([])
   const [hostInfo, setHostInfo] = useState<User | null>(null)
+
+  // City pages are the site's local-search surface: someone looking for a
+  // design sprint or SDG workshop in their own city should be able to land
+  // straight here. Runs before the early returns so the hook order is stable.
+  const cityName = location ? decodeURIComponent(location) : ''
+  usePageMeta({
+    title: cityName ? `Global Goals Jam ${cityName}` : 'Jam location',
+    description: cityName
+      ? `Global Goals Jam in ${cityName}: 2-day design sprints where local teams prototype solutions for the UN Sustainable Development Goals. See past and upcoming jams in ${cityName} and join the next one.`
+      : undefined,
+    path: location ? `/location/${location}` : undefined,
+  })
 
   useEffect(() => {
     const update = async () => {

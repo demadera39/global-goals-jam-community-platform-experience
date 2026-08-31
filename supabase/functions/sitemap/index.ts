@@ -12,7 +12,9 @@ const STATIC_ROUTES: Array<{ path: string; priority: string; changefreq: string 
   { path: '/course/enroll', priority: '0.9', changefreq: 'monthly' },
   { path: '/toolkit', priority: '0.8', changefreq: 'monthly' },
   { path: '/articles', priority: '0.8', changefreq: 'weekly' },
+  { path: '/ten', priority: '0.8', changefreq: 'monthly' },
   { path: '/process', priority: '0.7', changefreq: 'yearly' },
+  { path: '/memories', priority: '0.6', changefreq: 'weekly' },
   { path: '/theme', priority: '0.7', changefreq: 'yearly' },
   { path: '/about', priority: '0.6', changefreq: 'yearly' },
   { path: '/faq', priority: '0.6', changefreq: 'monthly' },
@@ -49,12 +51,20 @@ Deno.serve(async () => {
   try {
     const { data: events } = await supabase
       .from('events')
-      .select('id, updated_at')
+      .select('id, updated_at, location')
       .limit(500)
+    const cities = new Set<string>()
     for (const e of events || []) {
       if (!e.id) continue
       const lastmod = (e.updated_at || '').slice(0, 10)
       urls.push(`<url><loc>${BASE}/events/${esc(String(e.id))}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}<changefreq>monthly</changefreq><priority>0.5</priority></url>`)
+      const city = (e.location || '').trim()
+      if (city) cities.add(city)
+    }
+    // One page per city that has ever hosted a jam — the local-search surface
+    // for "Global Goals Jam <city>" and similar queries.
+    for (const city of cities) {
+      urls.push(`<url><loc>${BASE}/location/${esc(encodeURIComponent(city))}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>`)
     }
   } catch (_) { /* events unavailable */ }
 

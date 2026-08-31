@@ -2,5 +2,14 @@
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://kzeoegabvbaonypooaev.supabase.co/functions/v1/sitemap" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "comment": "The sitemap function sets application/xml, but Supabase's edge gateway rewrites it to text/plain. Search engines want an XML content type, so pin it here at the edge that actually serves globalgoalsjam.org.",
+      "source": "/sitemap.xml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/xml; charset=utf-8" }
+      ]
+    }
   ]
 }
