@@ -755,6 +755,11 @@
   font-family: var(--font-display, inherit); font-weight: 800; letter-spacing: -0.01em;
   font-size: 1.22rem; color: #14201a; margin: 1.6em 0 0.5em;
 }
+/* Fourth level — used by event pages for the individual project themes. */
+.article-prose h4 {
+  font-family: var(--font-display, inherit); font-weight: 700;
+  font-size: 1.04rem; color: #00713a; margin: 1.5em 0 0.4em;
+}
 .article-prose a { color: #00713a; font-weight: 600; text-decoration: underline; text-decoration-color: rgba(0,166,81,0.35); text-underline-offset: 3px; }
 .article-prose a:hover { text-decoration-color: #00A651; }
 .article-prose blockquote {

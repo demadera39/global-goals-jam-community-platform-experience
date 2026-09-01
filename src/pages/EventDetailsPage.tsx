@@ -471,7 +471,11 @@ export default function EventDetailsPage() {
                   )}
                 </div>
                 <CardTitle className="text-3xl font-display mb-4">{event.title}</CardTitle>
-                <div className="text-lg text-muted-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: event.description }} />
+                {/* .article-prose, not Tailwind's `prose`: the typography
+                    plugin isn't installed here, so `prose` renders headings
+                    and lists unstyled. This is the same magazine styling the
+                    articles use. */}
+                <div className="article-prose max-w-none" dangerouslySetInnerHTML={{ __html: event.description }} />
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={shareEvent}>
@@ -565,7 +569,7 @@ export default function EventDetailsPage() {
                   <CardTitle>Agenda</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: event.agenda }} />
+                  <div className="article-prose max-w-none" dangerouslySetInnerHTML={{ __html: event.agenda }} />
                 </CardContent>
               </Card>
             )}
@@ -577,7 +581,7 @@ export default function EventDetailsPage() {
                   <CardTitle>Requirements</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: event.requirements }} />
+                  <div className="article-prose max-w-none" dangerouslySetInnerHTML={{ __html: event.requirements }} />
                 </CardContent>
               </Card>
             )}
