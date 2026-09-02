@@ -98,8 +98,11 @@ export default function EventsPage() {
   const loadEvents = useCallback(async (retryCount = 0) => {
     try {
       setLoadError(null)
+      // Newest first: the most recent and upcoming jams belong at the top of
+      // the list. (The homepage spotlight keeps ascending order, where the
+      // soonest jam is the useful one.)
       const allEvents = await db.events.list({
-        orderBy: { eventDate: 'asc' },
+        orderBy: { eventDate: 'desc' },
         limit: 200
       })
       setEvents(allEvents)
